@@ -1,0 +1,24 @@
+// class Bar {
+
+//     let a = "Hello";
+//     let b = "World";
+// };
+
+
+
+// class Foo : Bar {
+//     let x = 0;
+//     let y = 0;
+//     let z = 0;
+
+//     fn bar(){
+
+//     }
+
+//     fn bar2(){
+        
+//     }
+// };
+
+// let x = Foo();
+// print(x);

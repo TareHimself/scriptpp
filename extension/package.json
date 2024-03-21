@@ -1,0 +1,25 @@
+{
+  "name": "vs",
+  "displayName": "vscript",
+  "description": "VScript Language Extension",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.87.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "vs",
+      "aliases": ["VScript", "vs"],
+      "extensions": [".vs"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "vs",
+      "scopeName": "source.vs",
+      "path": "./syntaxes/vs.tmLanguage.json"
+    }]
+  }
+}

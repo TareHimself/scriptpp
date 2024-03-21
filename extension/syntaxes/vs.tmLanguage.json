@@ -1,0 +1,32 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "VScript",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#strings"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.vs",
+				"match": "\\b(when|return|else|fn)\\b"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.double.vs",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.vs",
+					"match": "\\\\."
+				}
+			]
+		}
+	},
+	"scopeName": "source.vs"
+}
