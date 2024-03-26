@@ -12,18 +12,19 @@ namespace vs::frontend
     {
         
     public:
-        Module(const TSmartPtrType<ModuleScope>& scope);
+        Module(const TSmartPtrType<Program>& scope);
         EObjectType GetType() const override;
         std::string ToString() override;
         bool ToBoolean() const override;
-    };
-
-    class ModuleScope : public Scope
-    {
-    public:
-        ModuleScope(const TSmartPtrType<Program>& scope);
         EScopeType GetScopeType() const override;
     };
+
+    // class ModuleScope : public Scope
+    // {
+    // public:
+    //     ModuleScope(const TSmartPtrType<Program>& scope);
+    //     EScopeType GetScopeType() const override;
+    // };
 
     TSmartPtrType<ModuleScope> makeModuleScope(const TSmartPtrType<Program>& scope);
     TSmartPtrType<Module> makeModule(const TSmartPtrType<ModuleScope>& scope);

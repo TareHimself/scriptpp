@@ -120,7 +120,7 @@ namespace vs::frontend
 
     TSmartPtrType<Object> DynamicObject::Get(const std::string& key)
     {
-        return Find(key);
+        return Find(key,false);
     }
 
     TSmartPtrType<Object> DynamicObject::Get(const TSmartPtrType<Object>& key)
@@ -175,6 +175,11 @@ namespace vs::frontend
         if(_properties.contains(id))
         {
             return makeReference(this->ToRef().Reserve().Cast<DynamicObject>(),_properties[id]);
+        }
+
+        if(searchParent && _outer.IsValid())
+        {
+            return _outer->Find(id);
         }
         
         return makeNull();

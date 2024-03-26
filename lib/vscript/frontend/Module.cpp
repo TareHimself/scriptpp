@@ -1,7 +1,7 @@
 ﻿#include "vscript/frontend/Module.hpp"
 namespace vs::frontend
 {
-    Module::Module(const TSmartPtrType<ModuleScope>& scope) : DynamicObject(scope)
+    Module::Module(const TSmartPtrType<Program>& scope) : DynamicObject(makeRefScopeProxy(scope.CastStatic<ScopeLike>()))
     {
     }
 
@@ -19,23 +19,28 @@ namespace vs::frontend
     {
         return true;
     }
-    
-    ModuleScope::ModuleScope(const TSmartPtrType<Program>& scope) : Scope(makeRefScopeProxy(scope.CastStatic<ScopeLike>()))
-    {
-        
-    }
 
-    EScopeType ModuleScope::GetScopeType() const
+    EScopeType Module::GetScopeType() const
     {
         return ST_Module;
     }
 
-    TSmartPtrType<ModuleScope> makeModuleScope(const TSmartPtrType<Program>& scope)
-    {
-        return manage<ModuleScope>(scope);
-    }
+    // ModuleScope::ModuleScope(const TSmartPtrType<Program>& scope) : Scope(makeRefScopeProxy(scope.CastStatic<ScopeLike>()))
+    // {
+    //     
+    // }
+    //
+    // EScopeType ModuleScope::GetScopeType() const
+    // {
+    //     return ST_Module;
+    // }
+    //
+    // TSmartPtrType<ModuleScope> makeModuleScope(const TSmartPtrType<Program>& scope)
+    // {
+    //     return manage<ModuleScope>(scope);
+    // }
 
-    TSmartPtrType<Module> makeModule(const TSmartPtrType<ModuleScope>& scope)
+    TSmartPtrType<Module> makeModule(const TSmartPtrType<Program>& scope)
     {
         return manage<Module>(scope);
     }
