@@ -494,23 +494,18 @@ namespace vs::frontend
     }
 
     TSmartPtrType<Module> evalModule(const std::shared_ptr<backend::ModuleNode>& ast,
-                                     const TSmartPtrType<ModuleScope>& scope)
+                                     const TSmartPtrType<Program>& program)
     {
+        auto mod = makeModule(program);
+        
         for (auto& statement : ast->statements)
         {
-            evalStatement(statement, scope);
+            evalStatement(statement, mod);
         }
 
-        return makeModule(scope);
+        return mod;
     }
-
-
-    TSmartPtrType<Module> evalModule(const std::shared_ptr<backend::ModuleNode>& ast,const TSmartPtrType<Program>& program)
-    {
-        const auto scope = makeModuleScope(program);
-        return evalModule(ast, scope);
-    }
-
+    
     TSmartPtrType<Prototype> evalClass(const std::shared_ptr<backend::PrototypeNode>& ast,
                                        const TSmartPtrType<ScopeLike>& scope)
     {

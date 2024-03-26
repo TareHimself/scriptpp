@@ -36,7 +36,7 @@ void runRepl()
         });
         
     std::string input;
-    const auto scope = frontend::makeModuleScope(program);
+    const auto mod = frontend::makeModule(program);
 
     program->AddLambda("print", {}, [](frontend::TSmartPtrType<frontend::FunctionScope>& scope)
         {
@@ -68,7 +68,7 @@ void runRepl()
             const auto ast = backend::parse(tokens);
             for (auto& statement : ast->statements)
             {
-                if (const auto result = frontend::evalStatement(statement, scope);
+                if (const auto result = frontend::evalStatement(statement, mod);
                     result.IsValid())
                 {
                     std::cout << result->ToString() << std::endl;

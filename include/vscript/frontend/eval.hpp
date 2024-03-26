@@ -30,8 +30,6 @@ namespace vs::frontend
     TSmartPtrType<Object> evalAccess2(const std::shared_ptr<backend::AccessNode2>& ast, const TSmartPtrType<ScopeLike>& scope);
     TSmartPtrType<Object> evalAssign(const std::shared_ptr<backend::AssignNode>& ast, const TSmartPtrType<ScopeLike>& scope);
     TSmartPtrType<Module> evalModule(const std::shared_ptr<backend::ModuleNode>& ast, const TSmartPtrType<Program>& scope);
-    
-    TSmartPtrType<Module> evalModule(const std::shared_ptr<backend::ModuleNode>& ast,const TSmartPtrType<ProgramScope>& program);
     TSmartPtrType<Prototype> evalClass(const std::shared_ptr<backend::PrototypeNode>& ast,const TSmartPtrType<ScopeLike>& scope);
     TSmartPtrType<DynamicObject> createDynamicFromPrototype(const std::shared_ptr<backend::PrototypeNode>& ast,const TSmartPtrType<ScopeLike>& scope);
     TSmartPtrType<Object> eval(const std::shared_ptr<backend::Node>& ast);

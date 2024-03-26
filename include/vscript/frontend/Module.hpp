@@ -26,6 +26,6 @@ namespace vs::frontend
     //     EScopeType GetScopeType() const override;
     // };
 
-    TSmartPtrType<ModuleScope> makeModuleScope(const TSmartPtrType<Program>& scope);
-    TSmartPtrType<Module> makeModule(const TSmartPtrType<ModuleScope>& scope);
+    // TSmartPtrType<ModuleScope> makeModuleScope(const TSmartPtrType<Program>& scope);
+    TSmartPtrType<Module> makeModule(const TSmartPtrType<Program>& scope);
 }
