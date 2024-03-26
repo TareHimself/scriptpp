@@ -109,56 +109,56 @@ T profile(const std::string& name, const std::function<T()>& operation)
 
 int main()
 {
-    runRepl();
-    return 0;
-    // try
-    // {
+    // runRepl();
+    // return 0;
+    try
+    {
     
-    //     auto program = frontend::makeProgram();
+        auto program = frontend::makeProgram();
 
-    //     program->AddLambda("print", {}, [](frontend::TSmartPtrType<frontend::FunctionScope>& scope)
-    //     {
-    //         for (const auto& arg : scope->GetArgs())
-    //         {
-    //             auto b = arg->ToBoolean();
-    //             auto s = arg->ToString();
-    //             std::cout << arg->ToString() << " ";
-    //         }
-    //         std::cout << std::endl;
+        program->AddLambda("print", {}, [](frontend::TSmartPtrType<frontend::FunctionScope>& scope)
+        {
+            for (const auto& arg : scope->GetArgs())
+            {
+                auto b = arg->ToBoolean();
+                auto s = arg->ToString();
+                std::cout << arg->ToString() << " ";
+            }
+            std::cout << std::endl;
         
-    //         return frontend::makeNull();
-    //     });
+            return frontend::makeNull();
+        });
         
-    //     program->AddLambda("input", {"prompt"}, [](frontend::TSmartPtrType<frontend::FunctionScope>& scope)
-    //     {
-    //         if (auto prompt = scope->Find("prompt", false); prompt != frontend::makeNull())
-    //         {
-    //             std::cout << prompt->ToString() << std::endl;
-    //         }
+        program->AddLambda("input", {"prompt"}, [](frontend::TSmartPtrType<frontend::FunctionScope>& scope)
+        {
+            if (auto prompt = scope->Find("prompt", false); prompt != frontend::makeNull())
+            {
+                std::cout << prompt->ToString() << std::endl;
+            }
         
-    //         std::string result;
-    //         std::getline(std::cin, result);
+            std::string result;
+            std::getline(std::cin, result);
         
-    //         return frontend::makeString(result);
-    //     });
+            return frontend::makeString(result);
+        });
         
         
         
-    //     // if (auto mod = program->ImportModule(R"(D:\Github\vscript\nativeModuleTest\build\Debug\native_module.vsnative)"); mod.IsValid())
-    //     // {
-    //     //     mod->GetScope()->Find("test").Cast<runtime::Function>()->Call();
-    //     // }
+        // if (auto mod = program->ImportModule(R"(D:\Github\vscript\nativeModuleTest\build\Debug\native_module.vsnative)"); mod.IsValid())
+        // {
+        //     mod->GetScope()->Find("test").Cast<runtime::Function>()->Call();
+        // }
         
-    //     const auto module = program->ImportModule("D:\\Github\\vscript\\list.vs");
+        const auto module = program->ImportModule("D:\\Github\\vscript\\examples\\main.vs");
         
-    //     // if(const auto fn = std::dynamic_pointer_cast<runtime::Function>(module->GetScope()->Find("foo")))
-    //     // {
-    //     //     fn->Call();
-    //     // }
-    // }
-    // catch (std::runtime_error& e)
-    // {
-    //     std::cerr << e.what() << std::endl;
-    // }
+        // if(const auto fn = std::dynamic_pointer_cast<runtime::Function>(module->GetScope()->Find("foo")))
+        // {
+        //     fn->Call();
+        // }
+    }
+    catch (std::runtime_error& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
     return 0;
 }

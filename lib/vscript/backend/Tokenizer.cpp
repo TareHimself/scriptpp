@@ -481,7 +481,7 @@ namespace vs::backend
             case TT_Break:
             case TT_Continue:
                 {
-                    input.RemoveBack();
+                    input.RemoveFront();
                     input.ExpectFront(Token::KeyWordMap[TT_StatementEnd]).RemoveBack();
                     tokens.emplace_back(r->token);
                 }

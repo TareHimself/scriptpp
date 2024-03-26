@@ -20,6 +20,8 @@ namespace vs::frontend
 
         virtual TSmartPtrType<Module> ImportModule(const std::string& id);
 
+        virtual TSmartPtrType<Module> ModuleFromFile(const std::filesystem::path& path);
+
         virtual TSmartPtrType<Module> ImportModule(TSmartPtrType<FunctionScope>& scope, const std::string& id);
 
         TSmartPtrType<Object> Find(const std::string& id, bool searchParent) override;

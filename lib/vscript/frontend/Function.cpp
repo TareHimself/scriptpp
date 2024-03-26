@@ -37,7 +37,7 @@ namespace vs::frontend
                 Create(ARGUMENTS_KEY,makeList(_args));
             }
 
-            return makeReference(this->ToRef().Reserve().Cast<FunctionScope>(),Scope::Find(ARGUMENTS_KEY,false));
+            return makeReferenceWithId(id,this->ToRef().Reserve().Cast<FunctionScope>(),Scope::Find(ARGUMENTS_KEY,false));
         }
         
         if(_argIndexes.contains(id))

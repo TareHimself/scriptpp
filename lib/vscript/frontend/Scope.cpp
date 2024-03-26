@@ -249,6 +249,11 @@ namespace vs::frontend
 
     TSmartPtrType<Object> resolveReference(const TSmartPtrType<Object>& obj)
     {
+        if(!obj.IsValid())
+        {
+            return obj;
+        }
+        
         if(obj->GetType() == OT_Reference)
         {
             return obj.Cast<Reference>()->Get();

@@ -174,7 +174,7 @@ namespace vs::frontend
     {
         if(_properties.contains(id))
         {
-            return makeReference(this->ToRef().Reserve().Cast<DynamicObject>(),_properties[id]);
+            return makeReferenceWithId(id,this->ToRef().Reserve().Cast<DynamicObject>(),_properties[id]);
         }
 
         if(searchParent && _outer.IsValid())

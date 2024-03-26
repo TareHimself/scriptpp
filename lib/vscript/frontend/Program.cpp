@@ -69,8 +69,19 @@ namespace vs::frontend
             return native;
         }
         
+        auto mod = ModuleFromFile(absPath);
+
+        if(mod.IsValid())
+        {
+            _modules[targetPath] = mod;
+        }
         
-        std::ifstream file(absPath, std::ios::binary);
+        return mod;
+    }
+
+    TSmartPtrType<Module> Program::ModuleFromFile(const std::filesystem::path& path)
+    {
+        std::ifstream file(path, std::ios::binary);
         const std::string fileContent((std::istreambuf_iterator<char>(file)),
                                       std::istreambuf_iterator<char>());
         
@@ -79,14 +90,7 @@ namespace vs::frontend
 
         const auto ast = parse(tokens);
 
-        auto mod = evalModule(ast,this->ToRef().Reserve().Cast<Program>());
-
-        if(mod.IsValid())
-        {
-            _modules[targetPath] = mod;
-        }
-        
-        return mod;
+        return evalModule(ast,this->ToRef().Reserve().Cast<Program>());
     }
 
     TSmartPtrType<Module> Program::ImportModule(TSmartPtrType<FunctionScope>& scope, const std::string& id)

@@ -15,38 +15,38 @@ namespace vs::frontend
     TSmartPtrType<Object> evalBinaryOperation(const std::shared_ptr<backend::BinaryOpNode>& ast,
                                               const TSmartPtrType<ScopeLike>& scope)
     {
+        auto left = resolveReference(evalExpression(ast->left,scope));
+        auto right = resolveReference(evalExpression(ast->right,scope));
         switch (ast->op)
         {
         case backend::BinaryOpNode::BO_Divide:
-            return evalExpression(ast->left, scope)->Divide(evalExpression(ast->right, scope));
+            return left->Divide(right);
         case backend::BinaryOpNode::BO_Multiply:
-            return evalExpression(ast->left, scope)->Multiply(evalExpression(ast->right, scope));
+            return left->Multiply(right);
         case backend::BinaryOpNode::BO_Add:
-            return evalExpression(ast->left, scope)->Add(evalExpression(ast->right, scope));
+            return left->Add(right);
         case backend::BinaryOpNode::BO_Subtract:
-            return evalExpression(ast->left, scope)->Subtract(evalExpression(ast->right, scope));
+            return left->Subtract(right);
         case backend::BinaryOpNode::BO_Mod:
-            return evalExpression(ast->left, scope)->Subtract(evalExpression(ast->right, scope));
+            return left->Subtract(right);
         case backend::BinaryOpNode::BO_And:
-            return makeBoolean(
-                evalExpression(ast->left, scope)->ToBoolean() && evalExpression(ast->right, scope)->ToBoolean());
+            return makeBoolean(left->ToBoolean() && right->ToBoolean());
         case backend::BinaryOpNode::BO_Or:
-            return makeBoolean(
-                evalExpression(ast->left, scope)->ToBoolean() || evalExpression(ast->right, scope)->ToBoolean());
+            return makeBoolean(left->ToBoolean() || right->ToBoolean());
         case backend::BinaryOpNode::BO_Not:
-            throw std::runtime_error("This need work");
+            throw std::runtime_error("This needs work");
         case backend::BinaryOpNode::BO_Equal:
-            return makeBoolean(evalExpression(ast->left, scope)->Equal(evalExpression(ast->right, scope)));
+            return makeBoolean(left->Equal(right));
         case backend::BinaryOpNode::BO_NotEqual:
-            return makeBoolean(evalExpression(ast->left, scope)->NotEqual(evalExpression(ast->right, scope)));
+            return makeBoolean(left->NotEqual(right));
         case backend::BinaryOpNode::BO_Less:
-            return makeBoolean(evalExpression(ast->left, scope)->Less(evalExpression(ast->right, scope)));
+            return makeBoolean(left->Less(right));
         case backend::BinaryOpNode::BO_LessEqual:
-            return makeBoolean(evalExpression(ast->left, scope)->LessEqual(evalExpression(ast->right, scope)));
+            return makeBoolean(left->LessEqual(right));
         case backend::BinaryOpNode::BO_Greater:
-            return makeBoolean(evalExpression(ast->left, scope)->Greater(evalExpression(ast->right, scope)));
+            return makeBoolean(left->Greater(right));
         case backend::BinaryOpNode::BO_GreaterEqual:
-            return makeBoolean(evalExpression(ast->left, scope)->GreaterEqual(evalExpression(ast->right, scope)));
+            return makeBoolean(left->GreaterEqual(right));
         }
 
         return makeNull();
@@ -236,9 +236,9 @@ namespace vs::frontend
     {
         TSmartPtrType<Object> result = makeNull();
         evalStatement(ast->init, scope);
-        while (evalStatement(ast->condition, scope)->ToBoolean())
+        while (resolveReference(evalStatement(ast->condition, scope))->ToBoolean())
         {
-            if (auto temp = runScope(ast->body, scope); temp.IsValid())
+            if (auto temp = resolveReference(runScope(ast->body, scope)); temp.IsValid())
             {
                 if (temp->GetType() == OT_ReturnValue)
                 {
@@ -257,6 +257,7 @@ namespace vs::frontend
                         }
                         else if (flow->GetValue() == FlowControl::Continue)
                         {
+                            evalStatement(ast->update, scope);
                             continue;
                         }
                     }
@@ -275,7 +276,7 @@ namespace vs::frontend
                                     const TSmartPtrType<ScopeLike>& scope)
     {
         TSmartPtrType<Object> result = makeNull();
-        while (evalStatement(ast->condition, scope)->ToBoolean())
+        while (resolveReference(evalStatement(ast->condition, scope))->ToBoolean())
         {
             if (auto temp = runScope(ast->body, scope); temp.IsValid())
             {
