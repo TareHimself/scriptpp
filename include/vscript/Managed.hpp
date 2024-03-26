@@ -6,8 +6,8 @@
 
 namespace vs
 {
- 
-template <typename T, typename E, typename = std::enable_if_t<!std::is_base_of_v<T, E>>>
+ template <typename T, typename E, typename = std::enable_if_t<!std::is_base_of_v
+            <T, E>>>
 std::function<void(E *)> makeNewDeleter(std::function<void(T *)> oldDeleter,
                                         float n = 0) {
   return [oldDeleter](E *ptr) {
@@ -22,6 +22,18 @@ std::function<void(E *)> makeNewDeleter(std::function<void(T *)> oldDeleter) {
     oldDeleter(dynamic_cast<T *>(ptr));
   };
 }
+
+  template<typename Base,typename T,typename = std::enable_if_t<std::is_base_of_v<Base,T>>>
+  Base * castToBase(T * data,float _ = 0)
+ {
+   return static_cast<Base*>(data);
+ }
+
+  template<typename Base,typename T,typename = std::enable_if_t<!std::is_base_of_v<Base,T>>>
+  Base * castToBase(T * data)
+ {
+   return nullptr;
+ }
 
 template <class T>
 class Ref;
@@ -203,7 +215,12 @@ struct RefContainer {
 
 struct RefThisBase {
   RefContainer _managed_weak;
+  virtual void OnRefSet();
 };
+
+inline void RefThisBase::OnRefSet()
+{
+}
 
 
 template <class T>
@@ -231,15 +248,16 @@ template <class T> void ManagedBlock<T>::RemoveWeak(RefBase *ptr) const {
 }
 
 template <class T> void ManagedBlock<T>::SetData(T *newData) {
-  if (std::is_base_of_v<RefThisBase, T>) {
+  data = newData;
 
-    data = newData;
-    if (data != nullptr) {
-      const auto casted = (RefThisBase *)(data);
-      casted->_managed_weak.ref = new Ref<T>(this);
+  if(auto asBase = castToBase<RefThisBase>(data))
+  {
+    if(asBase->_managed_weak.ref == nullptr)
+    {
+      asBase->_managed_weak.ref = new Ref<T>(this);
+      asBase->OnRefSet();
     }
   }
-  data = newData;
 }
 
 template <class T> bool ManagedBlock<T>::IsUsable() const {
@@ -323,16 +341,17 @@ template <class T> Managed<T>::Managed(SharedInfo *shared, T *data,
 
 template <class T> Managed<T>::Managed(T *data) {
   _block = new ManagedBlock<T>;
-  _block->SetData(data);
   _block->AddStrong(this);
+  _block->SetData(data);
+  
 }
 
 template <class T> Managed<T>::Managed(T *data,
                                        const std::function<void(
                                            T *)> &deleter) {
   _block = new ManagedBlock<T>;
-  _block->SetData(data);
   _block->AddStrong(this);
+  _block->SetData(data);
   _block->deleter = deleter;
 }
 
@@ -354,7 +373,7 @@ template <class T> template <typename E, typename> Managed<T>::Managed(
 }
 
 template <class T> Managed<T> &Managed<T>::operator=(const Managed &other) {
-  if (&other != this) {
+  if (*this != other) {
     UseBlock(other._block);
   }
   return *this;
@@ -362,7 +381,7 @@ template <class T> Managed<T> &Managed<T>::operator=(const Managed &other) {
 
 template <class T> Managed<T> &Managed<T>::operator
 =(Managed &&other) noexcept {
-  if (&other != this) {
+  if (*this != other) {
     UseBlock(other._block);
   }
   return *this;
@@ -370,7 +389,7 @@ template <class T> Managed<T> &Managed<T>::operator
 
 template <class T> template <typename E> Managed<T> &Managed<T>::
 operator=(const Managed<E> &other) {
-  if (&other != this) {
+  if (*this != other) {
     *this = other.template CastStatic<T>();
   }
   return *this;
@@ -378,7 +397,7 @@ operator=(const Managed<E> &other) {
 
 template <class T> template <typename E> Managed<T> &Managed<T>::
 operator=(Managed<E> &&other) noexcept {
-  if (&other != this) {
+  if (*this != other) {
     *this = other.template CastStatic<T>();
   }
   return *this;
@@ -530,7 +549,7 @@ template <class T> template <typename E, typename> Ref<T>::Ref(
 
 template <class T> Ref<T> &Ref<T>::operator=(
     const Ref &other) {
-  if (&other != this) {
+  if (*this != other) {
     UseBlock(other._block);
   }
   return *this;
@@ -538,7 +557,7 @@ template <class T> Ref<T> &Ref<T>::operator=(
 
 template <class T> Ref<T> &Ref<T>::operator=(
     Ref &&other) noexcept {
-  if (&other != this) {
+  if (*this != other) {
     UseBlock(other._block);
   }
   return *this;
@@ -624,14 +643,8 @@ Managed<T> manage(T *data) {
   return Managed<T>(data);
 }
 
-template <typename T>
-Managed<T> manage() {
-  return Managed<T>(new T);
-}
-
 template <typename T, typename... Args>
-Managed<T> manage(Args &&... args) {
+  std::enable_if_t<std::is_constructible_v<T, Args...>, Managed<T>> manage(Args &&... args) {
   return Managed<T>(new T(std::forward<Args>(args)...));
 }
-
 }

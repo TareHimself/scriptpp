@@ -1,19 +1,18 @@
 ﻿#pragma once
 #include <filesystem>
-#include "vscript/runtime/Module.hpp"
-#include "vscript/runtime/Object.hpp"
+#include "frontend\frontend.hpp"
 
 namespace vs::api
 {
-    typedef void (__stdcall* _vs_import)(vs::runtime::TSmartPtrType<runtime::Module>& mod,vs::runtime::TSmartPtrType<runtime::ProgramScope>& scope);
+    typedef void (__stdcall* _vs_import)(vs::frontend::TSmartPtrType<frontend::Module>& mod,vs::frontend::TSmartPtrType<frontend::Program>& scope);
 
 #define VS_API_MODULE(name,func) \
     auto _create_fn = ##func; \
-    extern "C" __declspec(dllexport) void _vs_import(vs::runtime::TSmartPtrType<vs::runtime::Module>& mod,vs::runtime::TSmartPtrType<vs::runtime::ProgramScope>& scope) \
+    extern "C" __declspec(dllexport) void _vs_import(vs::runtime::TSmartPtrType<vs::runtime::Module>& mod,vs::runtime::TSmartPtrType<vs::runtime::Program>& scope) \
     { \
         mod = _create_fn(scope); \
     }
 
 
-    runtime::TSmartPtrType<runtime::Module> importNative(const std::filesystem::path& path,runtime::TSmartPtrType<runtime::ProgramScope>& program);
+    frontend::TSmartPtrType<frontend::Module> importNative(const std::filesystem::path& path,frontend::TSmartPtrType<frontend::Program>& program);
 }

@@ -13,7 +13,11 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.vs",
-				"match": "\\b(when|return|else|fn)\\b"
+				"match": "\\b(when|return|else|fn|class|let|for|while|break|continue)\\b"
+			},
+			{
+				"name": "keyword.operator.vs",
+				"match": "!|==|!=|<|<=|>|>=|&&|\\|\\|"
 			}]
 		},
 		"strings": {

@@ -5,7 +5,7 @@
 namespace vs::api
 {
     
-    runtime::TSmartPtrType<runtime::Module> importNative(const std::filesystem::path& path,runtime::TSmartPtrType<runtime::ProgramScope>& program)
+    frontend::TSmartPtrType<frontend::Module> importNative(const std::filesystem::path& path,frontend::TSmartPtrType<frontend::Program>& program)
     {
         const HINSTANCE dll = LoadLibrary(path.string().c_str());
 
@@ -22,7 +22,7 @@ namespace vs::api
             throw std::runtime_error("Failed to find entry in native module");
         }
 
-        runtime::TSmartPtrType<runtime::Module> mod;
+        frontend::TSmartPtrType<frontend::Module> mod;
         importFn(mod,program);
 
         return mod;

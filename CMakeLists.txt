@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 project(vscript VERSION 1.0.0 LANGUAGES CXX)
 
-
+option(BUILD_DEV "Build Dev Project" ${PROJECT_IS_TOP_LEVEL})
 
 file(GLOB_RECURSE SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/lib/*.cpp" )
 
@@ -21,8 +21,15 @@ target_include_directories(
         $<INSTALL_INTERFACE:include>
 )
 
-add_executable(Test ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
-target_link_libraries(Test ${PROJECT_NAME})
+if(MSVC)
+ target_compile_options(${PROJECT_NAME} PRIVATE "/MP")
+endif()
+
+if(BUILD_DEV)
+        add_executable(vscript_repl ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
+        set_target_properties(vscript_repl PROPERTIES OUTPUT_NAME "vscript")
+        target_link_libraries(vscript_repl ${PROJECT_NAME})  
+endif()
 
 
 install(
