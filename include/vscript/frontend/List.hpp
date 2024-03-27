@@ -39,6 +39,7 @@ namespace vs::frontend
         TSmartPtrType<Object> FindIndex(const TSmartPtrType<FunctionScope>& fnScope);
         TSmartPtrType<Object> Sort(const TSmartPtrType<FunctionScope>& fnScope);
         TSmartPtrType<Object> Size(const TSmartPtrType<FunctionScope>& fnScope);
+        TSmartPtrType<Object> Join(const TSmartPtrType<FunctionScope>& fnScope);
         
 
         static TSmartPtrType<ListPrototype> Prototype;

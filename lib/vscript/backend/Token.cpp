@@ -199,6 +199,7 @@ namespace vs::backend {
         {"for",TT_For},
         {"while",TT_While},
         {".",TT_Access},
+        {",",TT_Comma},
         {"break",TT_Break},
         {"continue",TT_Continue}
     };

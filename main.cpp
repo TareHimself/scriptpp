@@ -109,8 +109,8 @@ T profile(const std::string& name, const std::function<T()>& operation)
 
 int main()
 {
-    // runRepl();
-    // return 0;
+    runRepl();
+    return 0;
     try
     {
     

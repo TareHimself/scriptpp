@@ -7,12 +7,23 @@ namespace vs
     inline void split(std::vector<std::string>& result,const std::string& str,const std::string& delimiter = " ")
     {
         std::string remaining = str.substr();
-        auto pos = remaining.find_first_of(delimiter);
-        while(pos != std::string::npos)
+        if(delimiter.empty())
         {
-            result.push_back(remaining.substr(0,pos));
-            remaining = remaining.substr(pos + delimiter.size());
-            pos = remaining.find_first_of(delimiter);
+            for(auto &r : remaining)
+            {
+                result.emplace_back(1,r);
+            }
+            remaining = "";
+        }
+        else
+        {
+            auto pos = remaining.find_first_of(delimiter);
+            while(pos != std::string::npos)
+            {
+                result.push_back(remaining.substr(0,pos));
+                remaining = remaining.substr(pos + delimiter.size());
+                pos = remaining.find_first_of(delimiter);
+            }
         }
 
         if(!remaining.empty())

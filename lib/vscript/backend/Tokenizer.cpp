@@ -280,7 +280,12 @@ namespace vs::backend
                         tokens.emplace_back(input.RemoveFront());
                     }
                     break;
+                case TT_Comma:
                 case TT_Null:
+                    if(r->before)
+                    {
+                        TokenizeExpression(tokens,r->before);
+                    }
                     tokens.emplace_back(input.RemoveFront());
                     break;
                 case TT_When:

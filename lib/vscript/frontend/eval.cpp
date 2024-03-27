@@ -127,6 +127,20 @@ namespace vs::frontend
                 }
                 throw std::runtime_error("Expected boolean literal");
             }
+        case backend::NT_ListLiteral:
+            {
+                if (const auto r = std::dynamic_pointer_cast<backend::ListLiteralNode>(ast))
+                {
+                    std::vector<TSmartPtrType<Object>> items;
+                    for(auto &it : r->values)
+                    {
+                        auto evalResult = evalExpression(it,scope);
+                        items.push_back(resolveReference(evalResult));
+                    }
+                    return makeList(items);
+                }
+                throw std::runtime_error("Expected list literal");
+            }
         case backend::NT_NullLiteral:
             {
                 if (const auto r = std::dynamic_pointer_cast<backend::LiteralNode>(ast))
@@ -411,12 +425,13 @@ namespace vs::frontend
                                      const TSmartPtrType<ScopeLike>& scope)
     {
         auto target = evalExpression(ast->left, scope);
-        if (const auto rTarget = resolveReference(target); rTarget->GetType() == OT_Dynamic)
+        if (const auto rTarget = resolveReference(target).Cast<DynamicObject>(); rTarget.IsValid())
         {
-            if (const auto asDynamic = rTarget.Cast<DynamicObject>(); asDynamic.IsValid())
-            {
-                return evalExpression(ast->right, asDynamic);
-            }
+            return evalExpression(ast->right, rTarget);
+            // if (const auto asDynamic = rTarget.Cast<DynamicObject>(); asDynamic.IsValid())
+            // {
+            //     
+            // }
         }
 
         throw std::runtime_error(target->ToString() + " is not a dynamic object");
@@ -426,15 +441,12 @@ namespace vs::frontend
                                       const TSmartPtrType<ScopeLike>& scope)
     {
         auto target = evalExpression(ast->left, scope);
-        if (const auto rTarget = resolveReference(target); rTarget->GetType() == OT_Dynamic)
+        if (const auto rTarget = resolveReference(target).Cast<DynamicObject>(); rTarget.IsValid())
         {
             const auto within = evalExpression(ast->within, scope);
             const auto rWithin = resolveReference(within);
 
-            if (auto dyn = rTarget.Cast<DynamicObject>(); dyn.IsValid())
-            {
-                return dyn->Get(within);
-            }
+            return rTarget->Get(within);
         }
 
         throw std::runtime_error(target->ToString() + " is not a dynamic object");

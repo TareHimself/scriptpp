@@ -29,6 +29,8 @@ namespace vs::frontend
 
     TSmartPtrType<Boolean> makeBoolean(const bool& val)
     {
-        return manage<Boolean>(val);
+        static auto trueObj = manage<Boolean>(true);
+        static auto falseObj = manage<Boolean>(false);
+        return val ? trueObj : falseObj;
     }
 }

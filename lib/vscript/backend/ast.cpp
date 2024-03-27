@@ -64,6 +64,7 @@ namespace vs::backend
         right = inRight;
         op = inOp;
         type = ENodeType::NT_BinaryOp;
+        isStatic = left->isStatic && right->isStatic;
     }
 
     BinaryOpNode::BinaryOpNode(uint32_t inLine, uint32_t inCol, const std::shared_ptr<Node>& inLeft,
@@ -73,12 +74,24 @@ namespace vs::backend
         type = ENodeType::NT_BinaryOp;
             
         op = TokenTypeToBinaryOp(inOp);
+        isStatic = left->isStatic && right->isStatic;
     }
 
     LiteralNode::LiteralNode(uint32_t inLine, uint32_t inCol, const std::string& inValue,const ENodeType& inType) : Node(inLine,inCol)
     {
         value = inValue;
         type = inType;
+
+        if(type == NT_NullLiteral || type == NT_NumericLiteral || type == NT_BooleanLiteral)
+        {
+            isStatic = true;
+        }
+    }
+
+    ListLiteralNode::ListLiteralNode(uint32_t inLine, uint32_t inCol, const std::vector<std::shared_ptr<Node>>& inValues) : Node(inLine,inCol)
+    {
+        values = inValues;
+        type = NT_ListLiteral;
     }
 
     CreateAndAssignNode::CreateAndAssignNode(uint32_t inLine, uint32_t inCol, const std::string& inName,
@@ -232,37 +245,27 @@ namespace vs::backend
         return parseExpression(inParen);
     }
 
-    // std::shared_ptr<Node> parseAccess2(std::list<Token>& tokens)
-    // {
-    //     auto left= parsePrimary(tokens);
-    //
-    //     while (!tokens.empty() && tokens.front().type == TT_OpenBracket)
-    //     {
-    //         auto token = tokens.front();
-    //         tokens.pop_front();
-    //         std::list<Token> within;
-    //         getTokensTill(within,tokens,{TT_CloseBracket},1);
-    //         auto right = parseExpression(within);
-    //         left = std::make_shared<AccessNode2>(token.line,token.col,left, right);
-    //     }
-    //
-    //     return left;
-    // }
-    //
-    // std::shared_ptr<Node> parseAccess(std::list<Token>& tokens)
-    // {
-    //     auto left= parseAccess2(tokens);
-    //
-    //     while (!tokens.empty() && tokens.front().type == TT_Access)
-    //     {
-    //         auto token = tokens.front();
-    //         tokens.pop_front();
-    //         auto right = parseAccess2(tokens);
-    //         left = std::make_shared<AccessNode>(token.line,token.col,left, right);
-    //     }
-    //
-    //     return left;
-    // }
+    std::shared_ptr<ListLiteralNode> parseList(std::list<Token>& tokens)
+    {
+        auto token = tokens.front();
+        tokens.pop_front();
+        std::list<Token> listTokens;
+        getTokensTill(listTokens,tokens,{TT_CloseBracket},1);
+
+        std::vector<std::shared_ptr<Node>> items;
+        while(!listTokens.empty())
+        {
+            std::list<Token> itemTokens;
+            getTokensTill(itemTokens,listTokens,{TT_Comma});
+            if(!itemTokens.empty())
+            {
+                items.push_back(parseExpression(itemTokens));
+            }
+        }
+
+        return std::make_shared<ListLiteralNode>(token.line,token.col,items);
+    }
+    
 
     std::shared_ptr<Node> parsePrimary(std::list<Token>& tokens)
     {
@@ -301,6 +304,8 @@ namespace vs::backend
                 return std::make_shared<Node>(tok.line,tok.col,NT_Continue);
         case TT_Null:
             return std::make_shared<LiteralNode>(tok.line,tok.col,tok.value,NT_NullLiteral);
+        case TT_OpenBracket:
+            return parseList(tokens);
         default:
             throw std::runtime_error("Unknown primary token");
         }
@@ -308,18 +313,6 @@ namespace vs::backend
 
     std::shared_ptr<Node> parseAccessors(std::list<Token>& tokens)
     {
-        // auto left= parseAccess(tokens);
-        //
-        // while (!tokens.empty() && tokens.front().type == TT_CallBegin)
-        // {
-        //     auto token = tokens.front();
-        //     tokens.pop_front();
-        //     auto right = parseCallArguments(tokens);
-        //     left = std::make_shared<CallNode>(token.line,token.col,left, right);
-        // }
-        //
-        // return left;
-
         auto left= parsePrimary(tokens);
         
         while (!tokens.empty() && (tokens.front().type == TT_CallBegin || tokens.front().type == TT_Access || tokens.front().type == TT_OpenBracket))

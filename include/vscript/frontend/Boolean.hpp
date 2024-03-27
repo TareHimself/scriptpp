@@ -17,5 +17,6 @@ namespace vs::frontend
 
     TSmartPtrType<Boolean> makeBoolean(const std::string& val);
 
+    
     TSmartPtrType<Boolean> makeBoolean(const bool& val);
 }

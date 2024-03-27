@@ -6,6 +6,7 @@
 #include "vscript/frontend/Null.hpp"
 #include "vscript/frontend/Number.hpp"
 #include "vscript/frontend/Number.hpp"
+#include "vscript/frontend/String.hpp"
 
 namespace vs::frontend
 {
@@ -37,6 +38,7 @@ namespace vs::frontend
         AddNativeMemberFunction("findIndex",this,{"callback"},&List::FindIndex);
         AddNativeMemberFunction("sort",this,{"callback"},&List::Sort);
         AddNativeMemberFunction("size",this,{},&List::Size);
+        AddNativeMemberFunction("join",this,{"delimiter"},&List::Join);
     }
 
     std::string List::ToString()
@@ -44,7 +46,7 @@ namespace vs::frontend
         std::string result = "[";
         for(auto i = 0; i < _vec.size(); i++)
         {
-            result += _vec.at(i)->ToString();
+            result += _vec.at(i)->GetType() == OT_String ? "\"" + _vec.at(i)->ToString() + "\"" : _vec.at(i)->ToString();
             if(i != _vec.size() - 1)
             {
                 result += " , ";
@@ -282,6 +284,30 @@ namespace vs::frontend
     TSmartPtrType<Object> List::Size(const TSmartPtrType<FunctionScope>& fnScope)
     {
         return makeNumber(_vec.size());
+    }
+
+    TSmartPtrType<Object> List::Join(const TSmartPtrType<FunctionScope>& fnScope)
+    {
+        std::string result;
+
+        auto delimiter = resolveReference(fnScope->Find("delimiter"));
+        if(delimiter->Equal(makeNull()))
+        {
+            delimiter = makeString("");
+        }
+
+        const std::string delimiterStr = delimiter->ToString();
+
+        for(auto i = 0; i < _vec.size(); i++)
+        {
+            result += _vec.at(i)->ToString();
+            if(i != _vec.size() - 1)
+            {
+                result += delimiterStr;
+            }
+        }
+        
+        return makeString(result);
     }
 
     ListPrototype::ListPrototype() : Prototype(makeScope(), makeNativeFunction(

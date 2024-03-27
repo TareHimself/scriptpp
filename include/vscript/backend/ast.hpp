@@ -6,6 +6,7 @@
 #include "deque"
 
 #include "Token.hpp"
+#include "vscript/frontend/Object.hpp"
 
 
 namespace vs::backend
@@ -17,6 +18,7 @@ namespace vs::backend
         NT_StringLiteral,
         NT_NumericLiteral,
         NT_NullLiteral,
+        NT_ListLiteral,
         NT_Function,
         NT_Statement,
         NT_Module,
@@ -45,12 +47,14 @@ namespace vs::backend
         uint32_t line = 0;
         uint32_t col = 0;
 
+        // May be used for optimization later
+        bool isStatic = false;
+
         Node() = default;
 
         Node(uint32_t inLine,uint32_t inCol);
 
         Node(uint32_t inLine,uint32_t inCol,ENodeType inType);
-        
         
         virtual ~Node() = default;
     };
@@ -94,12 +98,19 @@ namespace vs::backend
         BinaryOpNode(uint32_t inLine,uint32_t inCol,const std::shared_ptr<Node>& inLeft, const std::shared_ptr<Node>& inRight, const ETokenType& inOp);
         
     };
-
+    
     struct LiteralNode : Node
     {
         std::string value;
 
         LiteralNode(uint32_t inLine,uint32_t inCol,const std::string& inValue,const ENodeType& inType);
+    };
+
+    struct ListLiteralNode : Node
+    {
+        std::vector<std::shared_ptr<Node>> values;
+
+        ListLiteralNode(uint32_t inLine,uint32_t inCol,const std::vector<std::shared_ptr<Node>>& inValues);
     };
 
     struct CreateAndAssignNode : Node
@@ -232,11 +243,9 @@ namespace vs::backend
     void parseFunctionBody(std::list<Token> &tokens,std::vector<std::shared_ptr<Node>>& body);
 
     std::shared_ptr<Node> parseParen(std::list<Token> &tokens);
-
-    // std::shared_ptr<Node> parseAccess2(std::list<Token> &tokens);
-    //
-    // std::shared_ptr<Node> parseAccess(std::list<Token> &tokens);
-
+    
+    std::shared_ptr<ListLiteralNode> parseList(std::list<Token> &tokens);
+    
     std::shared_ptr<Node> parsePrimary(std::list<Token> &tokens);
 
     std::shared_ptr<Node> parseAccessors(std::list<Token> &tokens);
