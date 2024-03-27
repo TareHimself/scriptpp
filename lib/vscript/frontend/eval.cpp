@@ -446,7 +446,7 @@ namespace vs::frontend
             const auto within = evalExpression(ast->within, scope);
             const auto rWithin = resolveReference(within);
 
-            return rTarget->Get(within);
+            return rTarget->Get(rWithin);
         }
 
         throw std::runtime_error(target->ToString() + " is not a dynamic object");
