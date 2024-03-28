@@ -31,7 +31,7 @@ namespace vs::frontend
 
         virtual EObjectType GetType() const = 0;
 
-        virtual std::string ToString() = 0;
+        virtual std::string ToString() const = 0;
 
         virtual bool ToBoolean() const;
 
@@ -63,7 +63,7 @@ namespace vs::frontend
 
         EObjectType GetType() const override;
 
-        std::string ToString() override;
+        std::string ToString() const override;
 
         TSmartPtrType<Object> GetValue() const;
     };
@@ -85,7 +85,7 @@ namespace vs::frontend
 
         EObjectType GetType() const override;
 
-        std::string ToString() override;
+        std::string ToString() const override;
 
         EFlowControlOp GetValue() const;
     };

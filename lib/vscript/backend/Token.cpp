@@ -2,45 +2,37 @@
 
 #include <stdexcept>
 
+#include "vscript/utils.hpp"
+
 namespace vs::backend {
-    void RawTokens::ThrowExpectedInput()
+    TokenDebugInfo::TokenDebugInfo(const uint32_t& inLine, const uint32_t& inCol)
     {
-        throw std::runtime_error("Unexpected end of input");
+        line = inLine;
+        col = inCol;
     }
 
-    void RawTokens::ThrowAtToken(const std::string& message, const RawToken& token)
+    TokenDebugInfo::TokenDebugInfo(const std::string& inFile, const uint32_t& inLine, const uint32_t& inCol) : TokenDebugInfo(inLine,inCol)
     {
-        throw std::runtime_error("Error at " + std::to_string(token.line) + ":" + std::to_string(token.col) + "\n" + message);
+        file = inFile;
+        
     }
 
-    RawToken RawTokens::RemoveFront()
+    std::string TokenDebugInfo::ToString() const
     {
-        if(_tokens.empty())
-        {
-            ThrowExpectedInput();
-        }
-        auto a = Front();
-        _tokens.pop_front();
-        return a;
+        return join({file,std::to_string(line),std::to_string(col)},":");
     }
 
-    RawToken RawTokens::RemoveBack()
+    void RawTokens::ThrowAt(const std::string& message, const RawToken& token)
     {
-        if(_tokens.empty())
-        {
-            ThrowExpectedInput();
-        }
-        auto a = Back();
-        _tokens.pop_back();
-        return a;
+        throw std::runtime_error(token.debugInfo.file + " " + std::to_string(token.debugInfo.line) + ":" + std::to_string(token.debugInfo.col) + "\n" + message);
     }
 
-    RawTokens& RawTokens::ExpectFront(const ETokenType& token)
+    TokenList<RawToken>& RawTokens::ExpectFront(const ETokenType& token)
     {
         return ExpectFront(Token::KeyWordMap[token]);
     }
 
-    RawTokens& RawTokens::ExpectFront(const std::string& token)
+    TokenList<RawToken>& RawTokens::ExpectFront(const std::string& token)
     {
         if(_tokens.empty())
         {
@@ -49,18 +41,18 @@ namespace vs::backend {
 
         if(_tokens.front().data != token)
         {
-            ThrowAtToken("Expected " + token + " but got " + _tokens.front().data,_tokens.front());
+            ThrowAt("Expected " + token + " but got " + _tokens.front().data,_tokens.front());
         }
 
         return *this;
     }
 
-    RawTokens& RawTokens::ExpectBack(const ETokenType& token)
+    TokenList<RawToken>& RawTokens::ExpectBack(const ETokenType& token)
     {
         return ExpectBack(Token::KeyWordMap[token]);
     }
 
-    RawTokens& RawTokens::ExpectBack(const std::string& token)
+    TokenList<RawToken>& RawTokens::ExpectBack(const std::string& token)
     {
         if(_tokens.empty())
         {
@@ -69,100 +61,82 @@ namespace vs::backend {
 
         if(_tokens.back().data != token)
         {
-            ThrowAtToken("Expected " + token + " but got " + _tokens.back().data,_tokens.back());
+            ThrowAt("Expected " + token + " but got " + _tokens.back().data,_tokens.back());
         }
 
         return *this;
     }
-
-    RawToken& RawTokens::Front()
-    {
-        if(_tokens.empty())
-        {
-            ThrowExpectedInput();
-        }
-
-        return _tokens.front();
-    }
-
-    RawToken& RawTokens::Back()
-    {
-        if(_tokens.empty())
-        {
-            ThrowExpectedInput();
-        }
-
-        return _tokens.back();
-    }
-
-    RawToken RawTokens::Get()
-    {
-        if(_tokens.empty())
-        {
-            ThrowExpectedInput();
-        }
-
-        auto tok = _tokens.front();
-        _tokens.pop_front();
-        return tok;
-    }
-
-    size_t RawTokens::Size() const
-    {
-        return _tokens.size();
-    }
-
-    RawTokens& RawTokens::InsertFront(const RawTokens& tokens)
-    {
-        std::list<RawToken> other = tokens._tokens;
-        while(!other.empty())
-        {
-            _tokens.push_front(other.back());
-            other.pop_back();
-        }
-
-        return *this;
-    }
-
-    RawTokens& RawTokens::InsertFront(const RawToken& token)
-    {
-        _tokens.push_front(token);
-        return *this;
-    }
-
-    RawTokens& RawTokens::InsertBack(const RawToken& token)
-    {
-        _tokens.push_back(token);
-        return *this;
-    }
-
-    RawTokens::operator bool() const
-    {
-        return !_tokens.empty();
-    }
-
+    
     Token::Token(ETokenType inType, uint32_t inLine, uint32_t inCol)
     {
         type = inType;
         value = KeyWordMap.contains(type) ? KeyWordMap[type] : "";
-        line = inLine;
-        col = inCol;
+        debugInfo.line = inLine;
+        debugInfo.col = inCol;
+    }
+
+    Token::Token(ETokenType inType, const TokenDebugInfo& inDebugInfo)
+    {
+        debugInfo = inDebugInfo;
     }
 
     Token::Token(ETokenType inType, const RawToken& token)
     {
         type = inType;
         value = token.data;
-        line = token.line;
-        col = token.col;
+        debugInfo = token.debugInfo;
     }
 
     Token::Token(const RawToken& token)
     {
         type = TokenMap[token.data];
         value = token.data;
-        line = token.line;
-        col = token.col;
+        debugInfo = token.debugInfo;
+    }
+
+    void Tokenized::ThrowAt(const std::string& message, const Token& token)
+    {
+        throw std::runtime_error("Error at " + token.debugInfo.file + " " + std::to_string(token.debugInfo.line) + ":" + std::to_string(token.debugInfo.col) + "\n" + message);
+    }
+
+    TokenList<Token>& Tokenized::ExpectFront(const ETokenType& token)
+    {
+        return ExpectFront(Token::KeyWordMap[token]);
+    }
+
+    TokenList<Token>& Tokenized::ExpectFront(const std::string& token)
+    {
+        if(_tokens.empty())
+        {
+            ThrowExpectedInput();
+        }
+
+        if(_tokens.front().value != token)
+        {
+            ThrowAt("Expected " + token + " but got " + _tokens.front().value,_tokens.front());
+        }
+
+        return *this;
+    }
+
+    TokenList<Token>& Tokenized::ExpectBack(const ETokenType& token)
+    {
+        return ExpectBack(Token::KeyWordMap[token]);
+    }
+
+    TokenList<Token>& Tokenized::ExpectBack(const std::string& token)
+    {
+        if(_tokens.empty())
+        {
+            ThrowExpectedInput();
+        }
+
+        if(_tokens.back().value != token)
+        {
+            ThrowAt("Expected " + token + " but got " + _tokens.back().value,_tokens.back());
+        }
+
+        return *this;
     }
 
     std::unordered_map<std::string, ETokenType> Token::TokenMap = {
@@ -201,7 +175,10 @@ namespace vs::backend {
         {".",TT_Access},
         {",",TT_Comma},
         {"break",TT_Break},
-        {"continue",TT_Continue}
+        {"continue",TT_Continue},
+        {"try",TT_Try},
+        {"catch",TT_Catch},
+        {"throw",TT_Throw}
     };
 
     std::unordered_map<ETokenType, std::string> Token::KeyWordMap = ([]

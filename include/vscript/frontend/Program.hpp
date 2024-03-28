@@ -13,10 +13,13 @@ namespace vs::frontend
     {
         std::unordered_map<std::string,TSmartPtrType<Module>> _modules;
         std::filesystem::path _cwd = std::filesystem::current_path();
+
+    protected:
+        void OnRefSet() override;
     public:
         Program();
 
-        void OnRefSet() override;
+        
 
         virtual TSmartPtrType<Module> ImportModule(const std::string& id);
 

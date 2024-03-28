@@ -23,11 +23,12 @@ namespace vs::frontend
         std::vector<TSmartPtrType<Object>> _vec;
     public:
         List(const std::vector<TSmartPtrType<Object>>& vec);
-        std::string ToString() override;
+        std::string ToString() const override;
         bool ToBoolean() const override;
 
         TSmartPtrType<Object> Get(const TSmartPtrType<Object>& key) override;
         void Set(const TSmartPtrType<Object>& key, const TSmartPtrType<Object>& val) override;
+        void Set(const std::string& key, const TSmartPtrType<Object>& val) override;
         virtual void Set(const size_t& index,const TSmartPtrType<Object>& val);
 
         TSmartPtrType<Object> Push(const TSmartPtrType<FunctionScope>& fnScope);
@@ -40,8 +41,9 @@ namespace vs::frontend
         TSmartPtrType<Object> Sort(const TSmartPtrType<FunctionScope>& fnScope);
         TSmartPtrType<Object> Size(const TSmartPtrType<FunctionScope>& fnScope);
         TSmartPtrType<Object> Join(const TSmartPtrType<FunctionScope>& fnScope);
-        
+        TSmartPtrType<Object> Reverse(const TSmartPtrType<FunctionScope>& fnScope);
 
+        virtual std::vector<TSmartPtrType<Object>>& GetNative();
         static TSmartPtrType<ListPrototype> Prototype;
     };
 
@@ -50,7 +52,7 @@ namespace vs::frontend
     public:
         ListPrototype();
 
-        std::string ToString() override;
+        std::string ToString() const override;
     };
 
 

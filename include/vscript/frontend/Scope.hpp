@@ -2,6 +2,15 @@
 #include <string>
 #include <unordered_map>
 #include "Object.hpp"
+#include "vscript/backend/Token.hpp"
+
+namespace vs
+{
+    namespace frontend
+    {
+        class Function;
+    }
+}
 
 namespace vs::frontend
 {
@@ -31,6 +40,8 @@ namespace vs::frontend
         virtual bool Has(const std::string& id, bool searchParent = true) const = 0;
 
         virtual TSmartPtrType<Object> Find(const std::string& id, bool searchParent = true) = 0;
+
+        virtual TSmartPtrType<ScopeLike> GetOuter() const = 0;
     };
     
     class Scope : public Object, public ScopeLike
@@ -42,7 +53,7 @@ namespace vs::frontend
     public:
         Scope();
         Scope(const TSmartPtrType<ScopeLike>& outer);
-        std::string ToString() override;
+        std::string ToString() const override;
         EObjectType GetType() const override;
         
         std::list<EScopeType> GetScopeStack() const override;
@@ -56,6 +67,8 @@ namespace vs::frontend
         bool Has(const std::string& id, bool searchParent = true) const override;
 
         TSmartPtrType<Object> Find(const std::string& id, bool searchParent = true) override;
+
+        TSmartPtrType<ScopeLike> GetOuter() const override;
     };
 
     class RefScopeProxy : public ScopeLike
@@ -71,6 +84,30 @@ namespace vs::frontend
         void Create(const std::string& id, const TSmartPtrType<Object>& var) override;
         bool Has(const std::string& id, bool searchParent) const override;
         TSmartPtrType<Object> Find(const std::string& id, bool searchParent) override;
+        TSmartPtrType<ScopeLike> GetOuter() const override;
+    };
+
+    // Used to track function calls
+    class CallScopeLayer : public ScopeLike
+    {
+    protected:
+        backend::TokenDebugInfo _calledAt;
+        TSmartPtrType<Function> _called;
+        TSmartPtrType<ScopeLike> _scope;
+    public:
+        CallScopeLayer(const backend::TokenDebugInfo& calledAt,const TSmartPtrType<Function>& called,const TSmartPtrType<ScopeLike>& scope);
+        std::list<EScopeType> GetScopeStack() const override;
+        bool HasScopeType(EScopeType type) const override;
+        EScopeType GetScopeType() const override;
+        void Assign(const std::string& id, const TSmartPtrType<Object>& var) override;
+        void Create(const std::string& id, const TSmartPtrType<Object>& var) override;
+        bool Has(const std::string& id, bool searchParent) const override;
+        TSmartPtrType<Object> Find(const std::string& id, bool searchParent) override;
+        TSmartPtrType<ScopeLike> GetOuter() const override;
+
+        std::string ToString() const;
+
+        TSmartPtrType<ScopeLike> GetScope() const;
     };
 
     class Reference : public Object
@@ -84,7 +121,7 @@ namespace vs::frontend
         virtual void Set(const TSmartPtrType<Object>& val);
 
         EObjectType GetType() const override;
-        std::string ToString() override;
+        std::string ToString() const override;
         bool ToBoolean() const override;
     };
 
@@ -118,6 +155,8 @@ namespace vs::frontend
     TSmartPtrType<Scope> makeScope();
 
     TSmartPtrType<RefScopeProxy> makeRefScopeProxy(const Ref<ScopeLike>& scope);
+
+    TSmartPtrType<CallScopeLayer> makeCallScopeLayer(const backend::TokenDebugInfo& calledAt,const TSmartPtrType<Function>& called,const TSmartPtrType<ScopeLike>& scope);
 
     TSmartPtrType<Object> resolveReference(const TSmartPtrType<Object>& obj);
 

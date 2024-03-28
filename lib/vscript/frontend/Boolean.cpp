@@ -17,7 +17,7 @@ namespace vs::frontend
         return _value;
     }
 
-    std::string Boolean::ToString()
+    std::string Boolean::ToString() const
     {
         return _value ? "true" : "false";
     }

@@ -39,9 +39,10 @@ namespace vs::frontend
         AddNativeMemberFunction("sort",this,{"callback"},&List::Sort);
         AddNativeMemberFunction("size",this,{},&List::Size);
         AddNativeMemberFunction("join",this,{"delimiter"},&List::Join);
+        AddNativeMemberFunction("reverse",this,{},&List::Reverse);
     }
 
-    std::string List::ToString()
+    std::string List::ToString() const
     {
         std::string result = "[";
         for(auto i = 0; i < _vec.size(); i++)
@@ -84,6 +85,11 @@ namespace vs::frontend
             Set(key.Cast<Number>()->GetValueAs<int>(),val);
             return;
         }
+        DynamicObject::Set(key, val);
+    }
+
+    void List::Set(const std::string& key, const TSmartPtrType<Object>& val)
+    {
         DynamicObject::Set(key, val);
     }
 
@@ -131,11 +137,12 @@ namespace vs::frontend
 
         if (auto fn = resolveReference(args[0]).Cast<Function>(); fn.IsValid())
         {
+            const auto self = this->ToRef().Reserve().Cast<DynamicObject>();
             const auto myRef = this->ToRef().Reserve();
             std::vector<TSmartPtrType<Object>> mapped;
             for (auto i = 0; i < _vec.size(); i++)
             {
-                mapped.push_back(fn->Call(_vec.at(i), makeNumber(i),myRef));
+                mapped.push_back(fn->Call(self,_vec.at(i), makeNumber(i),myRef));
             }
 
             return makeList(mapped);
@@ -154,10 +161,11 @@ namespace vs::frontend
 
         if (auto fn = resolveReference(args[0]).Cast<Function>(); fn.IsValid())
         {
+            const auto self = this->ToRef().Reserve().Cast<DynamicObject>();
             const auto myRef = this->ToRef().Reserve();
             for (auto i = 0; i < _vec.size(); i++)
             {
-                fn->Call(_vec.at(i), makeNumber(i),myRef);
+                fn->Call(self,_vec.at(i), makeNumber(i),myRef);
             }
         }
 
@@ -174,11 +182,11 @@ namespace vs::frontend
 
         if (auto fn = resolveReference(args[0]).Cast<Function>(); fn.IsValid())
         {
-            const auto myRef = this->ToRef().Reserve();
+            const auto self = this->ToRef().Reserve().Cast<DynamicObject>();
             std::vector<TSmartPtrType<Object>> filtered;
             for (auto i = 0; i < _vec.size(); i++)
             {
-                if (fn->Call(_vec.at(i), makeNumber(i),myRef)->ToBoolean())
+                if (fn->Call(self,_vec.at(i), makeNumber(i),self)->ToBoolean())
                 {
                     filtered.push_back(_vec.at(i));
                 }
@@ -200,10 +208,10 @@ namespace vs::frontend
 
         if (auto fn = resolveReference(args[0]).Cast<Function>(); fn.IsValid())
         {
-            const auto myRef = this->ToRef().Reserve();
+            const auto self = this->ToRef().Reserve().Cast<DynamicObject>();
             for (auto i = 0; i < _vec.size(); i++)
             {
-                if (fn->Call(_vec.at(i), makeNumber(i),myRef)->ToBoolean())
+                if (fn->Call(self,_vec.at(i), makeNumber(i),self)->ToBoolean())
                 {
                     return _vec.at(i);
                 }
@@ -223,10 +231,10 @@ namespace vs::frontend
 
         if (auto fn = resolveReference(args[0]).Cast<Function>(); fn.IsValid())
         {
-            const auto myRef = this->ToRef().Reserve();
+            const auto self = this->ToRef().Reserve().Cast<DynamicObject>();
             for (auto i = 0; i < _vec.size(); i++)
             {
-                if (fn->Call(_vec.at(i), makeNumber(i),myRef)->ToBoolean())
+                if (fn->Call(self,_vec.at(i), makeNumber(i),self)->ToBoolean())
                 {
                     return makeNumber(i);
                 }
@@ -244,10 +252,10 @@ namespace vs::frontend
         std::function<int(const void*,const void*)> sortFn;
         if (const auto fn = args.empty() ? TSmartPtrType<Function>(nullptr) : resolveReference(args[0]).Cast<Function>(); fn.IsValid())
         {
-
-            std::ranges::sort(_vec,[fn] (const TSmartPtrType<Object>& a,const TSmartPtrType<Object>& b)
+            const auto self = this->ToRef().Reserve().Cast<DynamicObject>();
+            std::ranges::sort(_vec,[fn,self] (const TSmartPtrType<Object>& a,const TSmartPtrType<Object>& b)
             {
-                if(auto r = fn->Call(a,b); r->GetType() == OT_Number)
+                if(auto r = fn->Call(self,a,b); r->GetType() == OT_Number)
                 {
                     return r.Cast<Number>()->GetValueAs<int>();
                 }
@@ -310,6 +318,18 @@ namespace vs::frontend
         return makeString(result);
     }
 
+    TSmartPtrType<Object> List::Reverse(const TSmartPtrType<FunctionScope>& fnScope)
+    {
+        std::vector<TSmartPtrType<Object>> vec = _vec;
+        std::ranges::reverse(vec);
+        return makeList(vec);
+    }
+
+    std::vector<TSmartPtrType<Object>>& List::GetNative()
+    {
+        return _vec;
+    }
+
     ListPrototype::ListPrototype() : Prototype(makeScope(), makeNativeFunction(
                                                    {}, ReservedDynamicFunctions::CALL, {},
                                                    [](const TSmartPtrType<FunctionScope>& fnScope)
@@ -319,7 +339,7 @@ namespace vs::frontend
     {
     }
 
-    std::string ListPrototype::ToString()
+    std::string ListPrototype::ToString() const
     {
         return "<Prototype : List>";
     }

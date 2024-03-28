@@ -10,7 +10,7 @@ namespace vs::frontend
         return OT_Module;
     }
 
-    std::string Module::ToString()
+    std::string Module::ToString() const
     {
         return "module";
     }

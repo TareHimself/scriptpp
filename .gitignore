@@ -2,3 +2,4 @@ node_modules
 *.vsix
 build
 install_*
+*.exe

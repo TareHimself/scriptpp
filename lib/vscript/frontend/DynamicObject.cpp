@@ -44,6 +44,11 @@ namespace vs::frontend
         return _outer->Find(id,false);
     }
 
+    TSmartPtrType<ScopeLike> OneLayerScopeProxy::GetOuter() const
+    {
+        return _outer->GetOuter();
+    }
+
     DynamicObjectCallScope::DynamicObjectCallScope(const Ref<DynamicObject>& scope)
     {
         _outer = scope;
@@ -111,6 +116,16 @@ namespace vs::frontend
         }
 
         return makeNull();
+    }
+
+    TSmartPtrType<ScopeLike> DynamicObjectCallScope::GetOuter() const
+    {
+        if(auto obj = _outer.Reserve(); obj.IsValid())
+        {
+            return obj->GetOuter();
+        }
+
+        return {};
     }
 
     DynamicObject::DynamicObject(const TSmartPtrType<ScopeLike>& scope)
@@ -218,7 +233,7 @@ namespace vs::frontend
         return OT_Dynamic;
     }
 
-    std::string DynamicObject::ToString()
+    std::string DynamicObject::ToString() const
     {
         return "<Dynamic Object " + std::to_string(GetAddress()) + ">";
     }
@@ -232,6 +247,11 @@ namespace vs::frontend
         const std::function<TSmartPtrType<Object>(TSmartPtrType<FunctionScope>&)>& func)
     {
         DynamicObject::Set(name, makeNativeFunction(_callScope, name, args,func, false));
+    }
+
+    TSmartPtrType<ScopeLike> DynamicObject::GetOuter() const
+    {
+        return _outer;
     }
 
     void DynamicObject::OnRefSet()

@@ -10,7 +10,7 @@ namespace vs::frontend
     public:
         String(const std::string&str);
         EObjectType GetType() const override;
-        std::string ToString() override;
+        std::string ToString() const override;
         bool ToBoolean() const override;
         void OnRefSet() override;
         TSmartPtrType<Object> Add(const TSmartPtrType<Object>& other) override;

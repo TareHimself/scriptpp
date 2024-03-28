@@ -17,7 +17,7 @@ namespace vs::frontend
         return OT_String;
     }
 
-    std::string String::ToString()
+    std::string String::ToString() const
     {
         return _str;
     }

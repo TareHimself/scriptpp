@@ -18,7 +18,7 @@ namespace vs::frontend
     {
         TSmartPtrType<ScopeLike> _outer;
     public:
-        OneLayerScopeProxy(const TSmartPtrType<ScopeLike>& scope);
+        explicit OneLayerScopeProxy(const TSmartPtrType<ScopeLike>& scope);
 
         std::list<EScopeType> GetScopeStack() const override;
         bool HasScopeType(EScopeType type) const override;
@@ -27,13 +27,14 @@ namespace vs::frontend
         void Create(const std::string& id, const TSmartPtrType<Object>& var) override;
         void Assign(const std::string& id, const TSmartPtrType<Object>& var) override;
         TSmartPtrType<Object> Find(const std::string& id, bool searchParent) override;
+        TSmartPtrType<ScopeLike> GetOuter() const override;
     };
 
     class DynamicObjectCallScope : public ScopeLike
     {
         Ref<DynamicObject> _outer;
     public:
-        DynamicObjectCallScope(const Ref<DynamicObject>& scope);
+        explicit DynamicObjectCallScope(const Ref<DynamicObject>& scope);
 
         std::list<EScopeType> GetScopeStack() const override;
         bool HasScopeType(EScopeType type) const override;
@@ -42,6 +43,7 @@ namespace vs::frontend
         void Create(const std::string& id, const TSmartPtrType<Object>& var) override;
         void Assign(const std::string& id, const TSmartPtrType<Object>& var) override;
         TSmartPtrType<Object> Find(const std::string& id, bool searchParent) override;
+        TSmartPtrType<ScopeLike> GetOuter() const override;
     };
     
     class DynamicObject : public Object, public ScopeLike
@@ -50,9 +52,10 @@ namespace vs::frontend
         TSmartPtrType<ScopeLike> _outer;
         TSmartPtrType<DynamicObjectCallScope> _callScope;
         std::unordered_map<std::string,TSmartPtrType<Object>> _properties;
-    public:
 
-        DynamicObject(const TSmartPtrType<ScopeLike>& scope);
+        void OnRefSet() override;
+    public:
+        explicit DynamicObject(const TSmartPtrType<ScopeLike>& scope);
         
         virtual void Set(const std::string& key, const TSmartPtrType<Object>& val);
 
@@ -76,7 +79,7 @@ namespace vs::frontend
         virtual TSmartPtrType<DynamicObjectCallScope> CreateCallScope();
         EObjectType GetType() const override;
 
-        std::string ToString() override;
+        std::string ToString() const override;
         bool ToBoolean() const override;
 
         template<typename T>
@@ -94,7 +97,7 @@ namespace vs::frontend
         
         void AddLambda(const std::string& name,const std::vector<std::string>& args,const std::function<TSmartPtrType<Object>(TSmartPtrType<FunctionScope>&)>& func);
 
-        void OnRefSet() override;
+        TSmartPtrType<ScopeLike> GetOuter() const override;
         
     };
 

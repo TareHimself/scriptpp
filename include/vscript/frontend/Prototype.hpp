@@ -16,7 +16,7 @@ namespace vs::frontend
 
         Prototype(const TSmartPtrType<ScopeLike>& scope,const TSmartPtrType<NativeFunction>& func);
         
-        std::string ToString() override;
+        std::string ToString() const override;
         bool ToBoolean() const override;
     };
 
@@ -28,7 +28,7 @@ namespace vs::frontend
     public:
         RuntimePrototype(const TSmartPtrType<ScopeLike>& scope,const std::shared_ptr<backend::PrototypeNode>& prototype);
 
-        std::string ToString() override;
+        std::string ToString() const override;
 
         TSmartPtrType<Object> Create(TSmartPtrType<FunctionScope>& fnScope);
     };

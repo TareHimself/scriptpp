@@ -14,7 +14,7 @@ namespace vs::frontend
     public:
         Module(const TSmartPtrType<Program>& scope);
         EObjectType GetType() const override;
-        std::string ToString() override;
+        std::string ToString() const override;
         bool ToBoolean() const override;
         EScopeType GetScopeType() const override;
     };

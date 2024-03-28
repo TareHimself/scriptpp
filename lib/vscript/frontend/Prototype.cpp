@@ -15,7 +15,7 @@ namespace vs::frontend
         DynamicObject::Set(ReservedDynamicFunctions::CALL,func);
     }
 
-    std::string Prototype::ToString()
+    std::string Prototype::ToString() const
     {
         return "<Prototype>";
     }
@@ -48,7 +48,7 @@ namespace vs::frontend
         AddNativeMemberFunction(ReservedDynamicFunctions::CALL,this,args,&RuntimePrototype::Create);
     }
 
-    std::string RuntimePrototype::ToString()
+    std::string RuntimePrototype::ToString() const
     {
         return "<Prototype : " + _prototype->id + ">";
     }

@@ -88,7 +88,7 @@ namespace vs::frontend
         return OT_ReturnValue;
     }
 
-    std::string ReturnValue::ToString()
+    std::string ReturnValue::ToString() const
     {
         return "Return Value >> " + _value->ToString();
     }
@@ -108,7 +108,7 @@ namespace vs::frontend
         return OT_FlowControl;
     }
 
-    std::string FlowControl::ToString()
+    std::string FlowControl::ToString() const
     {
         switch (_op)
         {

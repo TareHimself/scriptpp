@@ -17,9 +17,10 @@ namespace vs::frontend
         std::unordered_map<std::string,uint32_t> _argIndexes;
         TSmartPtrType<Object> _result;
         Ref<Function> _fn;
+        TSmartPtrType<ScopeLike> _callerScope;
         static std::string ARGUMENTS_KEY;
     public:
-        FunctionScope(const Ref<Function>& fn,const TSmartPtrType<ScopeLike>& scope,const std::vector<std::string>& argNames,const std::vector<TSmartPtrType<Object>>& args);
+        FunctionScope(const Ref<Function>& fn,const TSmartPtrType<ScopeLike>& calledFrom,const TSmartPtrType<ScopeLike>& scope,const std::vector<std::string>& argNames,const std::vector<TSmartPtrType<Object>>& args);
 
         EScopeType GetScopeType() const override;
 
@@ -29,9 +30,11 @@ namespace vs::frontend
 
         virtual std::vector<TSmartPtrType<Object>> GetArgs() const;
 
+        TSmartPtrType<ScopeLike> GetCallerScope() const;
+
     };
 
-    TSmartPtrType<FunctionScope> makeFunctionScope(const Ref<Function>& fn,const TSmartPtrType<ScopeLike>& parent,const std::vector<std::string>& argNames,const std::vector<TSmartPtrType<Object>>& args);
+    TSmartPtrType<FunctionScope> makeFunctionScope(const Ref<Function>& fn,const TSmartPtrType<ScopeLike>& callerScope,const TSmartPtrType<ScopeLike>& parent,const std::vector<std::string>& argNames,const std::vector<TSmartPtrType<Object>>& args);
     
     class Function : public Object
     {
@@ -42,29 +45,31 @@ namespace vs::frontend
         Function(const TSmartPtrType<ScopeLike>& scope,const std::string& name,const std::vector<std::string>& args);
         EObjectType GetType() const override;
         bool ToBoolean() const override;
-        std::string ToString() override;
+        std::string ToString() const override;
 
-        virtual TSmartPtrType<Object> Call(const std::vector<TSmartPtrType<Object>>& args = {});
+        virtual TSmartPtrType<Object> Call(const TSmartPtrType<ScopeLike>& callerScope,const std::vector<TSmartPtrType<Object>>& args = {});
 
         template<typename ...TArgs, typename = std::enable_if_t<((std::is_convertible_v<TArgs, TSmartPtrType<Object>>) && ...)>>
-        TSmartPtrType<Object> Call(TArgs... args);
+        TSmartPtrType<Object> Call(const TSmartPtrType<ScopeLike>& callerScope,TArgs... args);
         
         virtual TSmartPtrType<Object> HandleCall(TSmartPtrType<FunctionScope>& scope) = 0;
+        
     };
 
     template <typename ... TArgs, typename>
-    TSmartPtrType<Object> Function::Call(TArgs... args)
+    TSmartPtrType<Object> Function::Call(const TSmartPtrType<ScopeLike>& callerScope,TArgs... args)
     {
         std::vector<TSmartPtrType<Object>> vecArgs;
         (vecArgs.push_back(args),...);
-        return Call(vecArgs);
+        return Call(callerScope,vecArgs);
     }
 
     class RuntimeFunction : public Function
     {
-        std::shared_ptr<backend::ScopeNode> _body;
+        
+        std::shared_ptr<backend::FunctionNode> _function;
     public:
-        RuntimeFunction(const TSmartPtrType<ScopeLike>& scope,const std::string& name, const std::vector<std::string>& args,const std::shared_ptr<backend::ScopeNode>& body);
+        RuntimeFunction(const TSmartPtrType<ScopeLike>& scope,const std::shared_ptr<backend::FunctionNode>& function);
 
         TSmartPtrType<Object> HandleCall(TSmartPtrType<FunctionScope>& scope) override;
     };
@@ -80,7 +85,7 @@ namespace vs::frontend
         TSmartPtrType<Object> HandleCall(TSmartPtrType<FunctionScope>& scope) override;
     };
     
-    TSmartPtrType<RuntimeFunction> makeRuntimeFunction(const TSmartPtrType<ScopeLike>& scope,const std::string& name, const std::vector<std::string>& args,const std::shared_ptr<backend::ScopeNode>& body,bool addToScope = true);
+    TSmartPtrType<RuntimeFunction> makeRuntimeFunction(const TSmartPtrType<ScopeLike>& scope,const std::shared_ptr<backend::FunctionNode>& function,bool addToScope = true);
 
     TSmartPtrType<NativeFunction> makeNativeFunction(const TSmartPtrType<ScopeLike>& scope,const std::string& name, const std::vector<std::string>& args,const NativeFunctionType& nativeFunction,bool addToScope = true);
 }

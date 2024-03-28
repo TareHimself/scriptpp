@@ -1,5 +1,7 @@
 ﻿#include "vscript/frontend/Scope.hpp"
 #include <stdexcept>
+
+#include "vscript/utils.hpp"
 #include "vscript/frontend/Function.hpp"
 #include "vscript/frontend/Null.hpp"
 
@@ -24,7 +26,7 @@ namespace vs::frontend
         }
     }
 
-    std::string Scope::ToString()
+    std::string Scope::ToString() const
     {
         return "scope";
     }
@@ -67,6 +69,11 @@ namespace vs::frontend
         }
 
         return makeNull();
+    }
+
+    TSmartPtrType<ScopeLike> Scope::GetOuter() const
+    {
+        return _outer;
     }
 
     RefScopeProxy::RefScopeProxy(const Ref<ScopeLike>& scope)
@@ -140,6 +147,74 @@ namespace vs::frontend
         return makeNull();
     }
 
+    TSmartPtrType<ScopeLike> RefScopeProxy::GetOuter() const
+    {
+        if(auto s = _scope.Reserve(); s.IsValid())
+        {
+            return s->GetOuter();
+        }
+
+        return {};
+    }
+
+    CallScopeLayer::CallScopeLayer(const backend::TokenDebugInfo& calledAt, const TSmartPtrType<Function>& called,
+        const TSmartPtrType<ScopeLike>& scope)
+    {
+        _calledAt = calledAt;
+        _called = called;
+        _scope = scope;
+    }
+
+    std::list<EScopeType> CallScopeLayer::GetScopeStack() const
+    {
+        return _scope->GetScopeStack();
+    }
+
+    bool CallScopeLayer::HasScopeType(EScopeType type) const
+    {
+        return _scope->HasScopeType(type);
+    }
+
+    EScopeType CallScopeLayer::GetScopeType() const
+    {
+        return _scope->GetScopeType();
+    }
+
+    void CallScopeLayer::Assign(const std::string& id, const TSmartPtrType<Object>& var)
+    {
+        _scope->Assign(id,var);
+    }
+
+    void CallScopeLayer::Create(const std::string& id, const TSmartPtrType<Object>& var)
+    {
+        _scope->Create(id,var);
+    }
+
+    bool CallScopeLayer::Has(const std::string& id, bool searchParent) const
+    {
+        return _scope->Has(id,searchParent);
+    }
+
+    TSmartPtrType<Object> CallScopeLayer::Find(const std::string& id, bool searchParent)
+    {
+        return _scope->Find(id,searchParent);
+    }
+
+    TSmartPtrType<ScopeLike> CallScopeLayer::GetOuter() const
+    {
+        return _scope->GetOuter();
+    }
+
+    std::string CallScopeLayer::ToString() const
+    {
+        return join({_called->ToString(),_calledAt.ToString()}," @ ");
+    }
+
+    TSmartPtrType<ScopeLike> CallScopeLayer::GetScope() const
+    {
+        return _scope;
+    }
+
     Reference::Reference(const TSmartPtrType<ScopeLike>& scope, const TSmartPtrType<Object>& val)
     {
         _scope = scope;
@@ -181,7 +256,7 @@ namespace vs::frontend
         return OT_Reference;
     }
 
-    std::string Reference::ToString()
+    std::string Reference::ToString() const
     {
         return _data->ToString();
     }
@@ -245,6 +320,11 @@ namespace vs::frontend
     TSmartPtrType<RefScopeProxy> makeRefScopeProxy(const Ref<ScopeLike>& scope)
     {
         return manage<RefScopeProxy>(scope);
+    }
+
+    TSmartPtrType<CallScopeLayer> makeCallScopeLayer(const backend::TokenDebugInfo& calledAt,const TSmartPtrType<Function>& called,const TSmartPtrType<ScopeLike>& scope)
+    {
+        return manage<CallScopeLayer>(calledAt,called,scope);
     }
 
     TSmartPtrType<Object> resolveReference(const TSmartPtrType<Object>& obj)

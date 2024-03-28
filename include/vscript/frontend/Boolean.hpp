@@ -10,13 +10,12 @@ namespace vs::frontend
         Boolean(const bool&val);
         EObjectType GetType() const override;
         bool ToBoolean() const override;
-        std::string ToString() override;
+        std::string ToString() const override;
         
     };
 
 
     TSmartPtrType<Boolean> makeBoolean(const std::string& val);
-
     
     TSmartPtrType<Boolean> makeBoolean(const bool& val);
 }

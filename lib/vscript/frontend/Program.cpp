@@ -4,6 +4,7 @@
 
 #include "vscript/api.hpp"
 #include "vscript/backend/Tokenizer.hpp"
+#include "vscript/frontend/Error.hpp"
 #include "vscript/frontend/eval.hpp"
 #include "vscript/frontend/Null.hpp"
 
@@ -19,12 +20,12 @@ namespace vs::frontend
         DynamicObject::OnRefSet();
         AddLambda("import",{"moduleId"},[this](const TSmartPtrType<FunctionScope>& scope)
          {
-             if(const auto mod = ImportModule(scope->Find("moduleId")->ToString()); mod.IsValid())
-             {
-                 return mod.CastStatic<Object>();
-             }
+            if(const auto mod = ImportModule(scope->Find("moduleId")->ToString()); mod.IsValid())
+            {
+                return mod.CastStatic<Object>();
+            }
 
-             return makeNull().CastStatic<Object>();
+            return makeNull().CastStatic<Object>();
          });
         
         AddLambda("cwd",{},[this](const TSmartPtrType<FunctionScope>& fs)
@@ -37,8 +38,6 @@ namespace vs::frontend
 
     TSmartPtrType<Module> Program::ImportModule(const std::string& id)
     {
-        
-        
         if(_modules.contains(id))
         {
             return _modules[id];
@@ -81,12 +80,15 @@ namespace vs::frontend
 
     TSmartPtrType<Module> Program::ModuleFromFile(const std::filesystem::path& path)
     {
-        std::ifstream file(path, std::ios::binary);
-        const std::string fileContent((std::istreambuf_iterator<char>(file)),
-                                      std::istreambuf_iterator<char>());
         
-        std::list<backend::Token> tokens;
-        tokenize(tokens,fileContent);
+        
+        backend::Tokenized tokens;
+        tokenize(tokens,path);
+
+        for(auto &token : tokens.GetList())
+        {
+            token.debugInfo.file = path.string();
+        }
 
         const auto ast = parse(tokens);
 

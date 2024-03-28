@@ -14,7 +14,7 @@ namespace vs::frontend
 
     TSmartPtrType<Object> Number::Add(const TSmartPtrType<Object>& other)
     {
-        if(const auto str = other.Cast<String>(); other.IsValid())
+        if(const auto str = other.Cast<String>(); str.IsValid())
         {
             return makeString(ToString() + str->ToString());
         }

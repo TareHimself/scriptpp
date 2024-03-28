@@ -1,4 +1,5 @@
 #pragma once
+#include <filesystem>
 #include <functional>
 #include <optional>
 #include <vector>
@@ -224,9 +225,13 @@ namespace vs::backend
         std::list<std::string> _lines;
         std::stringstream _currentLine;
     public:
+        std::string sourcePath = TokenDebugInfo().file;
         uint32_t lineNo = 0;
         uint32_t colNo = 0;
-        TextStream(const std::string& text);
+        TextStream() = default;
+        explicit TextStream(const std::filesystem::path& path);
+        explicit TextStream(const std::string& data,const std::string& file);
+        void PopulateFromString(const std::string& text);
         int Peak();
         bool Get(char & result);
         bool IsEmpty();
@@ -238,37 +243,39 @@ namespace vs::backend
 
         std::optional<TokenMatchResult> FindNextToken(RawTokens& input);
 
-        void TokenizeAssign(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeAssign(Tokenized& tokens, RawTokens& input);
 
-        void TokenizeFor(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeFor(Tokenized& tokens, RawTokens& input);
 
-        void TokenizeWhile(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeWhile(Tokenized& tokens, RawTokens& input);
         
-        void TokenizeWhenBranch(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeWhenBranch(Tokenized& tokens, RawTokens& input);
         
-        void TokenizeWhen(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeWhen(Tokenized& tokens, RawTokens& input);
     
-        void TokenizeLet(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeLet(Tokenized& tokens, RawTokens& input);
 
-        void TokenizeLiteral(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeLiteral(Tokenized& tokens, RawTokens& input);
 
-        void TokenizeExpression(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeExpression(Tokenized& tokens, RawTokens& input);
         
-        void TokenizeFunctionCall(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeFunctionCall(Tokenized& tokens, RawTokens& input);
         
-        void TokenizeFunction(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeFunction(Tokenized& tokens, RawTokens& input);
 
-        void TokenizeClass(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeClass(Tokenized& tokens, RawTokens& input);
+
+        void TokenizeTryCatch(Tokenized& tokens,RawTokens& input);
     
-        void TokenizeStatement(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeStatement(Tokenized& tokens, RawTokens& input);
     
-        void TokenizeScope(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeScope(Tokenized& tokens, RawTokens& input);
     
-        void TokenizeAll(std::list<Token>& tokens, RawTokens& input);
+        void TokenizeAll(Tokenized& tokens, RawTokens& input);
 
         void ConsumeTill(RawTokens& result, RawTokens& input, const std::string& target, int initialScope = 0);
 
-        std::string ConsumeTill(TextStream& data, char token);
+        std::string ConsumeTill(TextStream& data, const std::set<char>& tokens);
 
         std::string ConsumeTill(TextStream& data, const std::string& token);
 
@@ -276,10 +283,12 @@ namespace vs::backend
         
         void Preprocess(RawTokens& tokens, TextStream& data);
 
-        void operator()(std::list<Token>& tokens,const std::string& data);
+        void operator()(Tokenized& tokens,const std::string& data,const std::string& fileName);
+
+        void operator()(Tokenized& tokens,const std::filesystem::path& file);
     };
 
-    
+    void tokenize(Tokenized& tokens,const std::string& data,const std::string& fileName);
 
-    void tokenize(std::list<Token>& tokens,const std::string& data);
+    void tokenize(Tokenized& tokens,const std::filesystem::path& file);
 }

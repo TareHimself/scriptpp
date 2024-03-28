@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include "vscript/frontend/Boolean.hpp"
+#include "vscript/frontend/Error.hpp"
 #include "vscript/frontend/List.hpp"
 #include "vscript/frontend/Null.hpp"
 #include "vscript/frontend/Number.hpp"
@@ -28,7 +29,7 @@ namespace vs::frontend
         case backend::BinaryOpNode::BO_Subtract:
             return left->Subtract(right);
         case backend::BinaryOpNode::BO_Mod:
-            return left->Subtract(right);
+            return left->Mod(right);
         case backend::BinaryOpNode::BO_And:
             return makeBoolean(left->ToBoolean() && right->ToBoolean());
         case backend::BinaryOpNode::BO_Or:
@@ -81,7 +82,8 @@ namespace vs::frontend
     {
         for (auto& branch : ast->branches)
         {
-            if (evalExpression(branch.expression, scope)->ToBoolean())
+            auto e = evalExpression(branch.expression, scope);
+            if (e->ToBoolean())
             {
                 return evalStatement(branch.statement, scope);
             }
@@ -101,7 +103,7 @@ namespace vs::frontend
                 {
                     return scope->Find(r->value);
                 }
-                throw std::runtime_error("Expected variable");
+                throw makeError(scope,"Expected variable",ast->debugInfo);
             }
         case backend::NT_StringLiteral:
             {
@@ -109,7 +111,7 @@ namespace vs::frontend
                 {
                     return makeString(r->value);
                 }
-                throw std::runtime_error("Expected string literal");
+                throw makeError(scope,"Expected string literal",ast->debugInfo);
             }
         case backend::NT_NumericLiteral:
             {
@@ -117,7 +119,7 @@ namespace vs::frontend
                 {
                     return makeNumber(r->value);
                 }
-                throw std::runtime_error("Expected numeric literal");
+                throw makeError(scope,"Expected numeric literal",ast->debugInfo);
             }
         case backend::NT_BooleanLiteral:
             {
@@ -125,7 +127,7 @@ namespace vs::frontend
                 {
                     return makeBoolean(r->value);
                 }
-                throw std::runtime_error("Expected boolean literal");
+                throw makeError(scope,"Expected boolean literal",ast->debugInfo);
             }
         case backend::NT_ListLiteral:
             {
@@ -139,7 +141,7 @@ namespace vs::frontend
                     }
                     return makeList(items);
                 }
-                throw std::runtime_error("Expected list literal");
+                throw makeError(scope,"Expected list literal",ast->debugInfo);
             }
         case backend::NT_NullLiteral:
             {
@@ -147,7 +149,7 @@ namespace vs::frontend
                 {
                     return makeNull();
                 }
-                throw std::runtime_error("Expected null literal");
+                throw makeError(scope,"Expected null literal",ast->debugInfo);
             }
         case backend::NT_BinaryOp:
             {
@@ -155,7 +157,7 @@ namespace vs::frontend
                 {
                     return evalBinaryOperation(r, scope);
                 }
-                throw std::runtime_error("Expected binary operation");
+                throw makeError(scope,"Expected binary operation",ast->debugInfo);
             }
         case backend::NT_When:
             if (const auto r = std::dynamic_pointer_cast<backend::WhenNode>(ast))
@@ -188,14 +190,14 @@ namespace vs::frontend
                 return evalAccess2(r, scope);
             }
         default:
-            throw std::runtime_error("Unknown expression");
+            throw makeError(scope,"Unknown expression",ast->debugInfo);
         }
     }
 
     TSmartPtrType<Function> evalFunction(const std::shared_ptr<backend::FunctionNode>& ast,
                                          const TSmartPtrType<ScopeLike>& scope)
     {
-        return makeRuntimeFunction(scope, ast->name, ast->args, ast->body);
+        return makeRuntimeFunction(scope, ast);
     }
 
     TSmartPtrType<Object> callFunction(const std::shared_ptr<backend::CallNode>& ast, const TSmartPtrType<Function>& fn,
@@ -207,7 +209,7 @@ namespace vs::frontend
             args.push_back(evalExpression(arg, scope));
         }
 
-        return fn->Call(args);
+        return fn->Call(makeCallScopeLayer(ast->debugInfo,fn,scope),args);
     }
     
 
@@ -240,10 +242,10 @@ namespace vs::frontend
                 }
             }
 
-            throw std::runtime_error(target->ToString() + " is not callable");
+            throw makeError(scope,target->ToString() + " is not callable",ast->debugInfo);
         }
 
-        throw std::runtime_error("Unknown object during call");
+        throw makeError(scope,"Unknown object during call",ast->debugInfo);
     }
 
     TSmartPtrType<Object> evalFor(const std::shared_ptr<backend::ForNode>& ast, const TSmartPtrType<ScopeLike>& scope)
@@ -378,6 +380,22 @@ namespace vs::frontend
                 }
             }
             break;
+        case backend::NT_Throw:
+            {
+                if (const auto a = std::dynamic_pointer_cast<backend::ThrowNode>(ast))
+                {
+                    throw makeError(scope,evalExpression(a->expression,scope),ast->debugInfo);
+                }
+            }
+            break;
+        case backend::NT_TryCatch:
+            {
+                if (const auto a = std::dynamic_pointer_cast<backend::TryCatchNode>(ast))
+                {
+                    return evalTryCatch(a,scope);
+                }
+            }
+            break;
         case backend::NT_When:
             {
                 if (const auto a = std::dynamic_pointer_cast<backend::WhenNode>(ast))
@@ -434,7 +452,7 @@ namespace vs::frontend
             // }
         }
 
-        throw std::runtime_error(target->ToString() + " is not a dynamic object");
+        throw makeError(scope,target->ToString() + " is not a dynamic object",ast->debugInfo);
     }
 
     TSmartPtrType<Object> evalAccess2(const std::shared_ptr<backend::AccessNode2>& ast,
@@ -449,7 +467,7 @@ namespace vs::frontend
             return rTarget->Get(rWithin);
         }
 
-        throw std::runtime_error(target->ToString() + " is not a dynamic object");
+        throw makeError(scope,target->ToString() + " is not a dynamic object",ast->debugInfo);
     }
 
     TSmartPtrType<Object> evalAssign(const std::shared_ptr<backend::AssignNode>& ast,
@@ -457,53 +475,31 @@ namespace vs::frontend
     {
         if(auto left = evalExpression(ast->left,scope); left->GetType() == OT_Reference)
         {
-            const auto right = evalExpression(ast->value,scope);
+            auto right = evalExpression(ast->value,scope);
             const auto trueRight = resolveReference(right);
             left.Cast<Reference>()->Set(trueRight);
             return right;
         }
         
-        // if (ast->left->type == parser::NT_Access)
-        // {
-        //     if (const auto accessNode = std::dynamic_pointer_cast<parser::AccessNode>(ast->left))
-        //     {
-        //         if (accessNode->right->type == parser::NT_Variable)
-        //         {
-        //             if (auto accessed = evalExpression(accessNode->left, scope).Cast<DynamicObject>(); accessed.
-        //                 IsValid())
-        //             {
-        //                 const auto var = std::dynamic_pointer_cast<parser::VariableNode>(accessNode->right);
-        //                 auto val = evalExpression(ast->value, scope);
-        //                 accessed->Assign(var->value, val);
-        //                 return val;
-        //             }
-        //         }
-        //     }
-        // }
-        // else if (ast->left->type == parser::NT_Access2)
-        // {
-        //     if (const auto accessNode = std::dynamic_pointer_cast<parser::AccessNode2>(ast->left))
-        //     {
-        //         if (auto target = evalExpression(accessNode->left, scope); target->GetType() == OT_Dynamic)
-        //         {
-        //             if (auto dyn = target.Cast<DynamicObject>(); dyn.IsValid())
-        //             {
-        //                 auto val = evalExpression(ast->value, scope);
-        //                 dyn->Set(evalExpression(accessNode->within, scope), val);
-        //                 return val;
-        //             }
-        //         }
-        //     }
-        // }
-        // else if (ast->left->type == parser::NT_Variable)
-        // {
-        //     const auto var = std::dynamic_pointer_cast<parser::VariableNode>(ast->left);
-        //     auto val = evalExpression(ast->value, scope);
-        //     scope->Assign(var->value, val);
-        //     return val;
-        // }
+        throw makeError(scope,"Assign failed",ast->debugInfo);
+    }
 
-        throw std::runtime_error("Assign failed");
+    TSmartPtrType<Object> evalTryCatch(const std::shared_ptr<backend::TryCatchNode>& ast,
+        const TSmartPtrType<ScopeLike>& scope)
+    {
+        try
+        {
+            return runScope(ast->tryScope,scope);
+        }
+        catch (TSmartPtrType<Error> & e)
+        {
+            auto catchScope = makeScope(scope);
+            if(!ast->catchArgumentName.empty())
+            {
+                catchScope->Create(ast->catchArgumentName,e);
+            }
+            return runScope(ast->catchScope,catchScope);
+        }
     }
 
     TSmartPtrType<Module> evalModule(const std::shared_ptr<backend::ModuleNode>& ast,
@@ -548,8 +544,9 @@ namespace vs::frontend
         {
         case backend::NT_Module:
             {
-                const auto prog = makeProgram();
-                return evalModule(std::dynamic_pointer_cast<backend::ModuleNode>(ast),prog);
+                const auto program = makeProgram();
+                return evalModule(std::dynamic_pointer_cast<backend::ModuleNode>(ast),program);
+                
             }
         case backend::NT_Function:
             {

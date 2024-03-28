@@ -2,6 +2,7 @@
 #include <fstream>
 #include <filesystem>
 #include "vscript/vscript.hpp"
+#include "vscript/frontend/Error.hpp"
 
 using namespace vs;
 
@@ -13,7 +14,6 @@ void runRepl()
         {
             for (const auto& arg : scope->GetArgs())
             {
-                auto b = arg->ToBoolean();
                 auto s = arg->ToString();
                 std::cout << arg->ToString() << " ";
             }
@@ -38,17 +38,6 @@ void runRepl()
     std::string input;
     const auto mod = frontend::makeModule(program);
 
-    program->AddLambda("print", {}, [](frontend::TSmartPtrType<frontend::FunctionScope>& scope)
-        {
-            for (const auto& arg : scope->GetArgs())
-            {
-                std::cout << arg->ToString() << " ";
-            }
-            std::cout << std::endl;
-
-            return frontend::makeNull();
-        });
-
     while (input != "quit")
     {
         try
@@ -63,8 +52,8 @@ void runRepl()
             {
                 input += ";";
             }
-            std::list<backend::Token> tokens;
-            tokenize(tokens, input);
+            backend::Tokenized tokens;
+            tokenize(tokens, input,"<terminal>");
             const auto ast = backend::parse(tokens);
             for (auto& statement : ast->statements)
             {
@@ -78,6 +67,10 @@ void runRepl()
         catch (std::runtime_error& e)
         {
             std::cerr << e.what() << std::endl;
+        }
+        catch (frontend::TSmartPtrType<frontend::Error>& e)
+        {
+            std::cerr << e->ToString() << std::endl;
         }
     }
 }
@@ -107,10 +100,20 @@ T profile(const std::string& name, const std::function<T()>& operation)
     return r;
 }
 
-int main()
+int main(const int argc, char *argv[])
 {
-    runRepl();
-    return 0;
+    std::vector<std::string> args;
+
+    if (argc > 1) {
+        args.assign(argv + 1, argv + argc);
+    }
+
+    if(args.empty())
+    {
+        runRepl();
+        return 0;
+    }
+    
     try
     {
     
@@ -141,24 +144,18 @@ int main()
         
             return frontend::makeString(result);
         });
+
+        const auto path = absolute(std::filesystem::path(args[0]));
+        const auto module = program->ImportModule(path.string());
         
-        
-        
-        // if (auto mod = program->ImportModule(R"(D:\Github\vscript\nativeModuleTest\build\Debug\native_module.vsnative)"); mod.IsValid())
-        // {
-        //     mod->GetScope()->Find("test").Cast<runtime::Function>()->Call();
-        // }
-        
-        const auto module = program->ImportModule("D:\\Github\\vscript\\examples\\main.vs");
-        
-        // if(const auto fn = std::dynamic_pointer_cast<runtime::Function>(module->GetScope()->Find("foo")))
-        // {
-        //     fn->Call();
-        // }
     }
     catch (std::runtime_error& e)
     {
         std::cerr << e.what() << std::endl;
+    }
+    catch (frontend::TSmartPtrType<frontend::Error>& e)
+    {
+        std::cerr << e->ToString() << std::endl;
     }
     return 0;
 }

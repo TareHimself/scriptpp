@@ -1,10 +1,27 @@
 #include "vscript/backend/Tokenizer.hpp"
 
+#include <fstream>
+
 #include "vscript/utils.hpp"
 
 namespace vs::backend
 {
-    TextStream::TextStream(const std::string& text)
+    TextStream::TextStream(const std::filesystem::path& path)
+    {
+        std::ifstream file(path, std::ios::binary);
+        const std::string fileContent((std::istreambuf_iterator<char>(file)),
+                                      std::istreambuf_iterator<char>());
+        sourcePath = path.string();
+        PopulateFromString(fileContent);
+    }
+
+    TextStream::TextStream(const std::string& data, const std::string& file)
+    {
+        sourcePath = file;
+        PopulateFromString(data);
+    }
+
+    void TextStream::PopulateFromString(const std::string& text)
     {
         _currentLine = std::stringstream("");
         std::stringstream ss(text);
@@ -17,6 +34,7 @@ namespace vs::backend
 
         IsEmpty();
     }
+    
 
     int TextStream::Peak()
     {
@@ -101,17 +119,17 @@ namespace vs::backend
         return {};
     }
 
-    void Tokenizer::TokenizeAssign(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeAssign(Tokenized& tokens, RawTokens& input)
     {
-        tokens.emplace_back(input.ExpectFront(TT_Assign).RemoveFront());
+        tokens.EmplaceBack(input.ExpectFront(TT_Assign).RemoveFront());
         TokenizeExpression(tokens, input);
     }
 
-    void Tokenizer::TokenizeFor(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeFor(Tokenized& tokens, RawTokens& input)
     {
-        tokens.emplace_back(input.ExpectFront(TT_For).RemoveFront());
+        tokens.EmplaceBack(input.ExpectFront(TT_For).RemoveFront());
         
-        tokens.emplace_back(input.ExpectFront(TT_OpenParen).RemoveFront());
+        tokens.EmplaceBack(input.ExpectFront(TT_OpenParen).RemoveFront());
 
         RawTokens init;
         RawTokens condition;
@@ -121,54 +139,54 @@ namespace vs::backend
         ConsumeTill(condition, input, Token::KeyWordMap[TT_StatementEnd]);
         ConsumeTill(update, input, Token::KeyWordMap[TT_CloseParen], 1);
         auto closeParen = update.ExpectBack(TT_CloseParen).RemoveBack();
-        update.InsertBack({Token::KeyWordMap[TT_StatementEnd], 0, 0});
+        update.InsertBack({Token::KeyWordMap[TT_StatementEnd], update.Back().debugInfo});
 
         TokenizeStatement(tokens, init);
         TokenizeStatement(tokens, condition);
         TokenizeStatement(tokens, update);
 
-        tokens.emplace_back(closeParen);
+        tokens.EmplaceBack(closeParen);
 
         TokenizeScope(tokens, input);
     }
 
-    void Tokenizer::TokenizeWhile(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeWhile(Tokenized& tokens, RawTokens& input)
     {
-        tokens.emplace_back(input.ExpectFront(TT_While).RemoveFront());
+        tokens.EmplaceBack(input.ExpectFront(TT_While).RemoveFront());
         auto openParen = input.ExpectFront(TT_OpenParen).RemoveFront();
 
         RawTokens init;
         ConsumeTill(init, input, Token::KeyWordMap[TT_CloseParen], 1);
         auto closeParen = init.ExpectBack(TT_CloseParen).RemoveBack();
-        init.InsertBack({Token::KeyWordMap[TT_StatementEnd], 0, 0});
-        tokens.emplace_back(openParen);
+        init.InsertBack({Token::KeyWordMap[TT_StatementEnd], init.Back().debugInfo});
+        tokens.EmplaceBack(openParen);
         TokenizeStatement(tokens, init);
-        tokens.emplace_back(closeParen);
+        tokens.EmplaceBack(closeParen);
         TokenizeScope(tokens, input);
     }
 
-    void Tokenizer::TokenizeWhenBranch(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeWhenBranch(Tokenized& tokens, RawTokens& input)
     {
         auto before = FindNext(input, "->");
         if (!before.has_value())
         {
-            RawTokens::ThrowAtToken("Missing -> in when statement", {" -> ", input.Front().line, input.Front().col});
+            RawTokens().ThrowAt("Missing -> in when statement", {" -> ", input.Front().debugInfo});
         }
-        tokens.emplace_back(TT_WhenConditionBegin,0,0);
+        tokens.EmplaceBack(TT_WhenConditionBegin,0,0);
         TokenizeExpression(tokens, before.value());
-        tokens.emplace_back(TT_WhenConditionEnd,0,0);
-        tokens.emplace_back(TT_WhenActionBegin,0,0);
+        tokens.EmplaceBack(TT_WhenConditionEnd,0,0);
+        tokens.EmplaceBack(TT_WhenActionBegin,0,0);
 
         TokenizeStatement(tokens, input);
-        tokens.emplace_back(TT_WhenActionEnd,0,0);
+        tokens.EmplaceBack(TT_WhenActionEnd,0,0);
         TokenizeStatement(tokens, input);
     }
 
-    void Tokenizer::TokenizeWhen(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeWhen(Tokenized& tokens, RawTokens& input)
     {
-        tokens.emplace_back(input.ExpectFront(TT_When).RemoveFront());
+        tokens.EmplaceBack(input.ExpectFront(TT_When).RemoveFront());
         
-        tokens.emplace_back(input.ExpectFront(TT_OpenBrace).RemoveFront());
+        tokens.EmplaceBack(input.ExpectFront(TT_OpenBrace).RemoveFront());
 
         auto closeBrace = input.ExpectBack(TT_CloseBrace).RemoveBack();
         while (input)
@@ -178,18 +196,18 @@ namespace vs::backend
             TokenizeWhenBranch(tokens, branch);
         }
 
-        tokens.emplace_back(closeBrace);
+        tokens.EmplaceBack(closeBrace);
     }
 
-    void Tokenizer::TokenizeLet(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeLet(Tokenized& tokens, RawTokens& input)
     {
-        tokens.emplace_back(input.ExpectFront(TT_Let).RemoveFront());
-        tokens.emplace_back(TT_Identifier, input.RemoveFront());
-        tokens.emplace_back(input.ExpectFront(TT_Assign).RemoveFront());
+        tokens.EmplaceBack(input.ExpectFront(TT_Let).RemoveFront());
+        tokens.EmplaceBack(TT_Identifier, input.RemoveFront());
+        tokens.EmplaceBack(input.ExpectFront(TT_Assign).RemoveFront());
         TokenizeExpression(tokens, input);
     }
 
-    void Tokenizer::TokenizeLiteral(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeLiteral(Tokenized& tokens, RawTokens& input)
     {
         if (!input)
         {
@@ -203,27 +221,27 @@ namespace vs::backend
         {
             tok.data.pop_back();
             tok.data = tok.data.substr(1, tok.data.size());
-            tokens.emplace_back(TT_StringLiteral, RawToken{tok.data,tok.line,tok.col});
+            tokens.EmplaceBack(TT_StringLiteral, RawToken{tok.data,tok.debugInfo});
         }
         else if (isFractional(tok.data) || isInteger(tok.data))
         {
-            tokens.emplace_back(TT_NumericLiteral, tok);
+            tokens.EmplaceBack(TT_NumericLiteral, tok);
         }
         else if (tok.data == "true" || tok.data == "false")
         {
-            tokens.emplace_back(TT_BooleanLiteral, tok);
+            tokens.EmplaceBack(TT_BooleanLiteral, tok);
         }
         else if (tok.data == "else")
         {
-            tokens.emplace_back(TT_BooleanLiteral, RawToken{"true",tok.line,tok.col});
+            tokens.EmplaceBack(TT_BooleanLiteral, RawToken{"true",tok.debugInfo});
         }
         else
         {
-            tokens.emplace_back(TT_Identifier, tok);
+            tokens.EmplaceBack(TT_Identifier, tok);
         }
     }
 
-    void Tokenizer::TokenizeExpression(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeExpression(Tokenized& tokens, RawTokens& input)
     {
         while (input)
         {
@@ -242,14 +260,14 @@ namespace vs::backend
                         }
                         else
                         {
-                            tokens.emplace_back(input.ExpectFront(TT_OpenParen).RemoveFront());
+                            tokens.EmplaceBack(input.ExpectFront(TT_OpenParen).RemoveFront());
                             RawTokens inParen;
                             ConsumeTill(inParen, input, Token::KeyWordMap[TT_CloseParen], 1);
 
                             auto closeParen = inParen.ExpectBack(TT_CloseParen).RemoveBack();
 
                             TokenizeExpression(tokens, inParen);
-                            tokens.emplace_back(closeParen);
+                            tokens.EmplaceBack(closeParen);
                         }
                         break;
                     }
@@ -270,14 +288,14 @@ namespace vs::backend
                         input.RemoveFront();
 
                         TokenizeExpression(tokens, r->before);
-                        tokens.emplace_back(r->token);
+                        tokens.EmplaceBack(r->token);
                         TokenizeExpression(tokens, input);
                     }
                     break;
 
                 case TT_OpNot:
                     {
-                        tokens.emplace_back(input.RemoveFront());
+                        tokens.EmplaceBack(input.RemoveFront());
                     }
                     break;
                 case TT_Comma:
@@ -286,7 +304,7 @@ namespace vs::backend
                     {
                         TokenizeExpression(tokens,r->before);
                     }
-                    tokens.emplace_back(input.RemoveFront());
+                    tokens.EmplaceBack(input.RemoveFront());
                     break;
                 case TT_When:
                     TokenizeWhen(tokens, input);
@@ -302,13 +320,19 @@ namespace vs::backend
                     break;
                 case TT_Return:
                     {
-                        tokens.emplace_back(input.RemoveFront());
+                        tokens.EmplaceBack(input.RemoveFront());
+                    }
+                    break;
+                case TT_Throw:
+                    {
+                        tokens.EmplaceBack(input.RemoveFront());
+                        TokenizeExpression(tokens,input);
                     }
                     break;
                 case TT_Access:
                     {
                         TokenizeExpression(tokens,r->before);
-                        tokens.emplace_back(input.RemoveFront());
+                        tokens.EmplaceBack(input.RemoveFront());
                     }
                     break;
                 case TT_Assign:
@@ -326,13 +350,17 @@ namespace vs::backend
                         {
                             TokenizeExpression(tokens,r->before);
                         }
-                        tokens.emplace_back(input.RemoveFront());
+                        tokens.EmplaceBack(input.RemoveFront());
                         RawTokens within;
                         ConsumeTill(within,input,Token::KeyWordMap[TT_CloseBracket],1);
                         auto c = within.ExpectBack(TT_CloseBracket).RemoveBack();
                         TokenizeExpression(tokens,within);
-                        tokens.emplace_back(c);
+                        tokens.EmplaceBack(c);
                         break;
+                    }
+                case TT_Try:
+                    {
+                        TokenizeTryCatch(tokens,input);
                     }
                 default:
                     TokenizeLiteral(tokens, input);
@@ -346,18 +374,18 @@ namespace vs::backend
     }
 
 
-    void Tokenizer::TokenizeFunctionCall(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeFunctionCall(Tokenized& tokens, RawTokens& input)
     {
         
         input.RemoveFront();
         RawTokens args;
-        tokens.emplace_back(TT_CallBegin,input.ExpectFront(TT_OpenParen).RemoveFront());
-        tokens.back().value = "";
+        tokens.EmplaceBack(TT_CallBegin,input.ExpectFront(TT_OpenParen).RemoveFront());
+        tokens.Back().value = "";
         ConsumeTill(args, input, Token::KeyWordMap[TT_CloseParen], 1);
         auto end = args.RemoveBack();
         while (args)
         {
-            tokens.emplace_back(TT_CallArgumentBegin,0,0);
+            tokens.EmplaceBack(TT_CallArgumentBegin,0,0);
             RawTokens argExpr;
             ConsumeTill(argExpr, args, ",");
 
@@ -368,28 +396,28 @@ namespace vs::backend
 
             TokenizeExpression(tokens, argExpr);
 
-            tokens.emplace_back(TT_CallArgumentEnd,0,0);
+            tokens.EmplaceBack(TT_CallArgumentEnd,0,0);
         }
-        tokens.emplace_back(TT_CallEnd,end);
+        tokens.EmplaceBack(TT_CallEnd,end);
     }
 
-    void Tokenizer::TokenizeFunction(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeFunction(Tokenized& tokens, RawTokens& input)
     {
-        tokens.emplace_back(input.ExpectFront(TT_Function).RemoveFront());
+        tokens.EmplaceBack(input.ExpectFront(TT_Function).RemoveFront());
 
         if (input.Front().data != Token::KeyWordMap[TT_OpenParen])
         {
-            tokens.emplace_back(TT_Identifier, input.RemoveFront()); // push function id
+            tokens.EmplaceBack(TT_Identifier, input.RemoveFront()); // push function id
         }
         
-        tokens.emplace_back(input.ExpectFront(TT_OpenParen).RemoveFront());
+        tokens.EmplaceBack(input.ExpectFront(TT_OpenParen).RemoveFront());
         RawTokens args;
         ConsumeTill(args, input, Token::KeyWordMap[TT_CloseParen], 1);
         auto close = args.ExpectBack(TT_CloseParen).RemoveBack();
         
         while (args)
         {
-            tokens.emplace_back(TT_FunctionArgumentBegin,0,0);
+            tokens.EmplaceBack(TT_FunctionArgumentBegin,0,0);
             RawTokens argExpr;
             ConsumeTill(argExpr, args, ",");
             if (argExpr.Back().data == ",")
@@ -398,14 +426,14 @@ namespace vs::backend
             }
             TokenizeExpression(tokens, argExpr);
         }
-        tokens.emplace_back(close);
+        tokens.EmplaceBack(close);
         TokenizeScope(tokens, input);
     }
 
-    void Tokenizer::TokenizeClass(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeClass(Tokenized& tokens, RawTokens& input)
     {
-        tokens.emplace_back(input.ExpectFront(TT_Class).RemoveFront());
-        tokens.emplace_back(TT_Identifier,input.RemoveFront());
+        tokens.EmplaceBack(input.ExpectFront(TT_Class).RemoveFront());
+        tokens.EmplaceBack(TT_Identifier,input.RemoveFront());
         if(input.Front().data == ":")
         {
             RawTokens inheritance;
@@ -425,7 +453,7 @@ namespace vs::backend
                 {
                     continue;
                 }
-                tokens.emplace_back(TT_Identifier,tok);
+                tokens.EmplaceBack(TT_Identifier,tok);
             }
         }
         
@@ -435,7 +463,30 @@ namespace vs::backend
         TokenizeScope(tokens,body);
     }
 
-    void Tokenizer::TokenizeStatement(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeTryCatch(Tokenized& tokens, RawTokens& input)
+    {
+        tokens.EmplaceBack(input.ExpectFront(TT_Try).RemoveFront());
+        RawTokens tryScope;
+        ConsumeTill(tryScope,input,Token::KeyWordMap[TT_CloseBrace]);
+        TokenizeScope(tokens,tryScope);
+        tokens.EmplaceBack(input.ExpectFront(TT_Catch).RemoveFront());
+        RawTokens catchScope;
+        if(input.Front().data == Token::KeyWordMap[TT_OpenParen])
+        {
+            RawTokens catchArgs;
+            ConsumeTill(catchArgs,input,Token::KeyWordMap[TT_CloseParen]);
+            catchArgs.RemoveFront();
+            catchArgs.ExpectBack(TT_CloseParen).RemoveBack();
+            if(catchArgs)
+            {
+                tokens.EmplaceBack(TT_Identifier,catchArgs.Front());
+            }
+        }
+        ConsumeTill(catchScope,input,Token::KeyWordMap[TT_CloseBrace]);
+        TokenizeScope(tokens,catchScope);
+    }
+
+    void Tokenizer::TokenizeStatement(Tokenized& tokens, RawTokens& input)
     {
         if (auto r = FindNextToken(input))
         {
@@ -445,7 +496,7 @@ namespace vs::backend
                 {
                     auto e = input.ExpectBack(TT_StatementEnd).RemoveBack(); // remove end token
                     TokenizeLet(tokens, input); // tokenize let statement
-                    tokens.emplace_back(e); // add end token back
+                    tokens.EmplaceBack(e); // add end token back
                 }
                 break;
             case TT_OpenBrace:
@@ -453,7 +504,7 @@ namespace vs::backend
                     RawTokens statement;
                     ConsumeTill(statement, input, Token::KeyWordMap[TT_CloseBrace]);
                     TokenizeScope(tokens, statement);
-                    tokens.emplace_back(input.ExpectBack(TT_StatementEnd).RemoveBack());
+                    tokens.EmplaceBack(input.ExpectBack(TT_StatementEnd).RemoveBack());
                 }
                 break;
             case TT_Assign:
@@ -465,7 +516,7 @@ namespace vs::backend
                         ConsumeTill(statement, input, Token::KeyWordMap[TT_StatementEnd]);
                         auto e = statement.ExpectBack(TT_StatementEnd).RemoveBack();
                         TokenizeExpression(tokens, statement);
-                        tokens.emplace_back(e);
+                        tokens.EmplaceBack(e);
                         break;
                     }
                 }
@@ -473,6 +524,8 @@ namespace vs::backend
             case TT_Function:
             case TT_For:
             case TT_While:
+            case TT_Throw:
+            case TT_Try:
                 {
                     input.InsertFront(r->before);
 
@@ -480,7 +533,7 @@ namespace vs::backend
                     ConsumeTill(statement, input, Token::KeyWordMap[TT_StatementEnd]);
                     auto e = statement.ExpectBack(TT_StatementEnd).RemoveBack();
                     TokenizeExpression(tokens, statement);
-                    tokens.emplace_back(e);
+                    tokens.EmplaceBack(e);
                     break;
                 }
             case TT_Break:
@@ -488,7 +541,7 @@ namespace vs::backend
                 {
                     input.RemoveFront();
                     input.ExpectFront(Token::KeyWordMap[TT_StatementEnd]).RemoveBack();
-                    tokens.emplace_back(r->token);
+                    tokens.EmplaceBack(r->token);
                 }
                 break;
             case TT_Class:
@@ -497,7 +550,7 @@ namespace vs::backend
                     ConsumeTill(statement, input, Token::KeyWordMap[TT_StatementEnd]);
                     auto e = statement.ExpectBack(TT_StatementEnd).RemoveBack();
                     TokenizeClass(tokens,statement);
-                    tokens.emplace_back(e);
+                    tokens.EmplaceBack(e);
                 }
                 break;
             case TT_Access: // Not yet handled
@@ -507,32 +560,32 @@ namespace vs::backend
                     ConsumeTill(statement, input, Token::KeyWordMap[TT_StatementEnd]);
                     auto e = statement.ExpectBack(TT_StatementEnd).RemoveBack();
                     TokenizeExpression(tokens,statement);
-                    tokens.emplace_back(e);
+                    tokens.EmplaceBack(e);
                 }
             default:
                 input.InsertFront(r->before);
 
-                auto end = RawToken{Token::KeyWordMap[TT_StatementEnd],input.Back().line,input.Back().col};
+                auto end = RawToken{Token::KeyWordMap[TT_StatementEnd],input.Back().debugInfo};
                 if (input.Back().data == ";")
                 {
                     end = input.ExpectBack(TT_StatementEnd).RemoveBack();
                 }
                 TokenizeExpression(tokens, input); // tokenize expression
-                tokens.emplace_back(TT_StatementEnd,end); // add end token back
+                tokens.EmplaceBack(TT_StatementEnd,end); // add end token back
                 break;
             }
         }
     }
 
-    void Tokenizer::TokenizeScope(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeScope(Tokenized& tokens, RawTokens& input)
     {
-        tokens.emplace_back(input.ExpectFront(TT_OpenBrace).RemoveFront());
+        tokens.EmplaceBack(input.ExpectFront(TT_OpenBrace).RemoveFront());
         auto c = input.ExpectBack(TT_CloseBrace).RemoveBack();
         TokenizeAll(tokens, input);
-        tokens.emplace_back(c);
+        tokens.EmplaceBack(c);
     }
 
-    void Tokenizer::TokenizeAll(std::list<Token>& tokens, RawTokens& input)
+    void Tokenizer::TokenizeAll(Tokenized& tokens, RawTokens& input)
     {
         while (input)
         {
@@ -551,7 +604,7 @@ namespace vs::backend
                             ConsumeTill(statement, input, Token::KeyWordMap[TT_CloseParen]);
                         }
                         ConsumeTill(statement, input, Token::KeyWordMap[TT_CloseBrace]);
-                        statement.InsertBack({";", 0, 0});
+                        statement.InsertBack({";", statement.Back().debugInfo});
                         if (input && input.Front().data == ";")
                         {
                             input.RemoveFront();
@@ -559,6 +612,19 @@ namespace vs::backend
                         TokenizeStatement(tokens, statement);
                         continue;
                     }
+                case TT_Try:
+                    {
+                        RawTokens statement;
+                        ConsumeTill(statement,input,Token::KeyWordMap[TT_CloseBrace]); // consume try section;
+                        ConsumeTill(statement,input,Token::KeyWordMap[TT_CloseBrace]); // Consume catch section
+                        statement.InsertBack({{";"},statement.Back().debugInfo});
+                        if (input && input.Front().data == ";")
+                        {
+                            input.RemoveFront();
+                        }
+                        TokenizeStatement(tokens,statement);
+                    }
+                    continue;
                 case TT_OpenBrace:
                     {
                         RawTokens statement;
@@ -566,9 +632,9 @@ namespace vs::backend
                         {
                             ConsumeTill(statement, input, Token::KeyWordMap[TT_CloseParen]);
                         }
-                        auto e = RawToken{Token::KeyWordMap[TT_StatementEnd],statement.Back().line,statement.Back().col};
+                        auto e = RawToken{Token::KeyWordMap[TT_StatementEnd],statement.Back().debugInfo};
                         TokenizeScope(tokens, statement);
-                        tokens.emplace_back(e);
+                        tokens.EmplaceBack(e);
                     }
                 }
 
@@ -611,8 +677,8 @@ namespace vs::backend
         }
         while (input);
     }
-
-    std::string Tokenizer::ConsumeTill(TextStream& data, char token)
+    
+    std::string Tokenizer::ConsumeTill(TextStream& data, const std::set<char>& tokens)
     {
         char tok;
         std::string pending;
@@ -621,7 +687,7 @@ namespace vs::backend
         {
             pending += tok;
 
-            if (tok == token && !escaped)
+            if (tokens.contains(tok) && !escaped)
             {
                 return pending;
             }
@@ -675,8 +741,7 @@ namespace vs::backend
 
         while (!data.IsEmpty() && data.Get(tok))
         {
-            const auto lineNo = data.lineNo;
-            const auto colNo = data.colNo;
+            const auto debugInfo = TokenDebugInfo(data.sourcePath,data.lineNo,data.colNo);
 
             switch (tok)
             {
@@ -689,21 +754,21 @@ namespace vs::backend
                 {
                     storePending();
 
-                    auto consumed = pending.data + ConsumeTill(data, '\"');
+                    auto consumed = pending.data + ConsumeTill(data, std::set{'\"'});
                     consumed.pop_back();
                     pending.data = "";
 
-                    tokens.InsertBack({'\'' + consumed + '\'', lineNo, colNo});
+                    tokens.InsertBack({'\'' + consumed + '\'', debugInfo});
                 }
                 break;
             case '\'':
                 {
                     storePending();
-                    auto consumed = pending.data + ConsumeTill(data, '\'');
+                    auto consumed = pending.data + ConsumeTill(data, std::set{'\''});
                     consumed.pop_back();
                     pending.data = "";
 
-                    tokens.InsertBack({'\'' + consumed + '\'', lineNo, colNo});
+                    tokens.InsertBack({'\'' + consumed + '\'', debugInfo});
                 }
                 break;
             case ';':
@@ -716,13 +781,13 @@ namespace vs::backend
             case '[':
             case ']':
                 storePending();
-                tokens.InsertBack({std::string{tok}, lineNo, colNo});
+                tokens.InsertBack({std::string{tok}, debugInfo});
                 break;
             case '/':
                 {
                     if (data.Peak() == '/')
                     {
-                        auto comment = ConsumeTill(data, '\n');
+                        auto comment = ConsumeTill(data, std::set{'\n','\r'});
                         continue;
                     }
 
@@ -740,7 +805,7 @@ namespace vs::backend
                 }
                 else
                 {
-                    pending = RawToken{std::string() + tok, lineNo, colNo};
+                    pending = RawToken{std::string() + tok, debugInfo};
                 }
                 break;
             }
@@ -753,17 +818,30 @@ namespace vs::backend
         }
     }
 
-    void Tokenizer::operator()(std::list<Token>& tokens, const std::string& data)
+    void Tokenizer::operator()(Tokenized& tokens, const std::string& data, const std::string& fileName)
     {
         RawTokens rawTokens;
-        TextStream ts(data);
+        TextStream ts(data,fileName);
+        Preprocess(rawTokens, ts);
+        TokenizeAll(tokens, rawTokens);
+    }
+    
+    void Tokenizer::operator()(Tokenized& tokens, const std::filesystem::path& file)
+    {
+        RawTokens rawTokens;
+        TextStream ts(file);
         Preprocess(rawTokens, ts);
         TokenizeAll(tokens, rawTokens);
     }
 
-
-    void tokenize(std::list<Token>& tokens, const std::string& data)
+    void tokenize(Tokenized& tokens, const std::string& data, const std::string& fileName)
     {
-        return Tokenizer()(tokens, data);
+        return Tokenizer()(tokens, data,fileName);
     }
+
+    void tokenize(Tokenized& tokens, const std::filesystem::path& file)
+    {
+        return Tokenizer()(tokens, file);
+    }
+    
 }

@@ -5,18 +5,18 @@
 
 namespace vs::backend
 {
-    Node::Node(uint32_t inLine, uint32_t inCol)
+
+    Node::Node(const TokenDebugInfo& inDebugInfo)
     {
-        line = inLine;
-        col = inCol;
+        debugInfo = inDebugInfo;
     }
 
-    Node::Node(uint32_t inLine, uint32_t inCol, ENodeType inType) : Node(inLine,inCol)
+    Node::Node(const TokenDebugInfo& inDebugInfo, ENodeType inType) : Node(inDebugInfo)
     {
         type = inType;
     }
 
-    HasLeft::HasLeft(uint32_t inLine, uint32_t inCol, const std::shared_ptr<Node>& inLeft) : Node(inLine,inCol)
+    HasLeft::HasLeft(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inLeft) : Node(inDebugInfo)
     {
         left = inLeft;
     }
@@ -58,8 +58,8 @@ namespace vs::backend
         return BO_Add;
     }
 
-    BinaryOpNode::BinaryOpNode(uint32_t inLine, uint32_t inCol, const std::shared_ptr<Node>& inLeft,
-                               const std::shared_ptr<Node>& inRight, const EBinaryOp& inOp) : HasLeft(inLine,inCol,inLeft)
+    BinaryOpNode::BinaryOpNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inLeft,
+                               const std::shared_ptr<Node>& inRight, const EBinaryOp& inOp) : HasLeft(inDebugInfo,inLeft)
     {
         right = inRight;
         op = inOp;
@@ -67,8 +67,8 @@ namespace vs::backend
         isStatic = left->isStatic && right->isStatic;
     }
 
-    BinaryOpNode::BinaryOpNode(uint32_t inLine, uint32_t inCol, const std::shared_ptr<Node>& inLeft,
-                               const std::shared_ptr<Node>& inRight, const ETokenType& inOp) : HasLeft(inLine,inCol,inLeft)
+    BinaryOpNode::BinaryOpNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inLeft,
+                               const std::shared_ptr<Node>& inRight, const ETokenType& inOp) : HasLeft(inDebugInfo,inLeft)
     {
         right = inRight;
         type = ENodeType::NT_BinaryOp;
@@ -77,7 +77,7 @@ namespace vs::backend
         isStatic = left->isStatic && right->isStatic;
     }
 
-    LiteralNode::LiteralNode(uint32_t inLine, uint32_t inCol, const std::string& inValue,const ENodeType& inType) : Node(inLine,inCol)
+    LiteralNode::LiteralNode(const TokenDebugInfo& inDebugInfo, const std::string& inValue,const ENodeType& inType) : Node(inDebugInfo)
     {
         value = inValue;
         type = inType;
@@ -88,67 +88,80 @@ namespace vs::backend
         }
     }
 
-    ListLiteralNode::ListLiteralNode(uint32_t inLine, uint32_t inCol, const std::vector<std::shared_ptr<Node>>& inValues) : Node(inLine,inCol)
+    ListLiteralNode::ListLiteralNode(const TokenDebugInfo& inDebugInfo, const std::vector<std::shared_ptr<Node>>& inValues) : Node(inDebugInfo)
     {
         values = inValues;
         type = NT_ListLiteral;
     }
 
-    CreateAndAssignNode::CreateAndAssignNode(uint32_t inLine, uint32_t inCol, const std::string& inName,
-                                             const std::shared_ptr<Node>& inValue) : Node(inLine,inCol)
+    CreateAndAssignNode::CreateAndAssignNode(const TokenDebugInfo& inDebugInfo, const std::string& inName,
+                                             const std::shared_ptr<Node>& inValue) : Node(inDebugInfo)
     {
         name = inName;
         value = inValue;
         type = ENodeType::NT_CreateAndAssign;
     }
 
-    AssignNode::AssignNode(uint32_t inLine, uint32_t inCol, const std::shared_ptr<Node>& inTarget,
-                           const std::shared_ptr<Node>& inValue) : HasLeft(inLine,inCol,inTarget)
+    AssignNode::AssignNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inTarget,
+                           const std::shared_ptr<Node>& inValue) : HasLeft(inDebugInfo,inTarget)
     {
         value = inValue;
         type = ENodeType::NT_Assign;
     }
 
-    VariableNode::VariableNode(uint32_t inLine, uint32_t inCol, const std::string& inValue) : Node(inLine,inCol)
+    VariableNode::VariableNode(const TokenDebugInfo& inDebugInfo, const std::string& inValue) : Node(inDebugInfo)
     {
         value = inValue;
         type = ENodeType::NT_Variable;
     }
 
-    ScopeNode::ScopeNode(uint32_t inLine, uint32_t inCol, const std::vector<std::shared_ptr<Node>>& inStatements) : Node(inLine,inCol)
+    ScopeNode::ScopeNode(const TokenDebugInfo& inDebugInfo, const std::vector<std::shared_ptr<Node>>& inStatements) : Node(inDebugInfo)
     {
         statements = inStatements;
         type = NT_Scope;
     }
 
-    AccessNode::AccessNode(uint32_t inLine, uint32_t inCol, const std::shared_ptr<Node>& inLeft,
-                           const std::shared_ptr<Node>& inRight) : HasLeft(inLine,inCol,inLeft)
+    AccessNode::AccessNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inLeft,
+                           const std::shared_ptr<Node>& inRight) : HasLeft(inDebugInfo,inLeft)
     {
         right = inRight;
         type = NT_Access;
     }
 
-    AccessNode2::AccessNode2(uint32_t inLine, uint32_t inCol, const std::shared_ptr<Node>& inLeft,
-                             const std::shared_ptr<Node>& inWithin) : HasLeft(inLine,inCol,inLeft)
+    AccessNode2::AccessNode2(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inLeft,
+                             const std::shared_ptr<Node>& inWithin) : HasLeft(inDebugInfo,inLeft)
     {
         within = inWithin;
         type = NT_Access2;
     }
 
-    WhenNode::WhenNode(uint32_t inLine, uint32_t inCol, const std::vector<Branch>& inBranches) : Node(inLine,inCol)
+    WhenNode::WhenNode(const TokenDebugInfo& inDebugInfo, const std::vector<Branch>& inBranches) : Node(inDebugInfo)
     {
         branches = inBranches;
         type = ENodeType::NT_When;
     }
 
-    ReturnNode::ReturnNode(uint32_t inLine, uint32_t inCol, const std::shared_ptr<Node>& inExpression) : Node(inLine,inCol)
+    ReturnNode::ReturnNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inExpression) : Node(inDebugInfo)
     {
         expression = inExpression;
         type = ENodeType::NT_Return;
     }
 
-    FunctionNode::FunctionNode(uint32_t inLine, uint32_t inCol, const std::string& inName,
-                               const std::vector<std::string>& inArgs, const std::shared_ptr<ScopeNode>& inBody) : Node(inLine,inCol)
+    ThrowNode::ThrowNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inExpression) : Node(inDebugInfo,NT_Throw)
+    {
+        expression = inExpression;
+    }
+
+    TryCatchNode::TryCatchNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<ScopeNode>& inTryScope,
+        const std::shared_ptr<ScopeNode>& inCatchScope, const std::string& inCatchArgName) : Node(inDebugInfo,NT_TryCatch)
+    {
+        tryScope = inTryScope;
+        catchScope = inCatchScope;
+        catchArgumentName = inCatchArgName;
+    }
+
+    FunctionNode::FunctionNode(const TokenDebugInfo& inDebugInfo, const std::string& inName,
+                               const std::vector<std::string>& inArgs, const std::shared_ptr<ScopeNode>& inBody) : Node(inDebugInfo)
     {
         name = inName;
         args = inArgs;
@@ -156,16 +169,16 @@ namespace vs::backend
         type = ENodeType::NT_Function;
     }
 
-    CallNode::CallNode(uint32_t inLine, uint32_t inCol, const std::shared_ptr<Node>& inLeft,
-                       const std::vector<std::shared_ptr<Node>>& inArgs) : HasLeft(inLine,inCol,inLeft)
+    CallNode::CallNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inLeft,
+                       const std::vector<std::shared_ptr<Node>>& inArgs) : HasLeft(inDebugInfo,inLeft)
     {
         args = inArgs;
         type = ENodeType::NT_Call;
     }
 
-    ForNode::ForNode(uint32_t inLine, uint32_t inCol, const std::shared_ptr<Node>& inInit,
+    ForNode::ForNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inInit,
                      const std::shared_ptr<Node>& inCondition, const std::shared_ptr<Node>& inUpdate,
-                     const std::shared_ptr<ScopeNode>& inBody) : Node(inLine,inCol)
+                     const std::shared_ptr<ScopeNode>& inBody) : Node(inDebugInfo)
     {
         init = inInit;
         condition = inCondition;
@@ -174,16 +187,16 @@ namespace vs::backend
         type = NT_For;
     }
 
-    WhileNode::WhileNode(uint32_t inLine, uint32_t inCol, const std::shared_ptr<Node>& inCondition,
-                         const std::shared_ptr<ScopeNode>& inBody) : Node(inLine,inCol)
+    WhileNode::WhileNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inCondition,
+                         const std::shared_ptr<ScopeNode>& inBody) : Node(inDebugInfo)
     {
         condition = inCondition;
         body = inBody;
         type = ENodeType::NT_While;
     }
 
-    PrototypeNode::PrototypeNode(uint32_t inLine, uint32_t inCol, const std::string& inId,
-                                 const std::vector<std::string>& inParents, const std::shared_ptr<ScopeNode>& inScope) : Node(inLine,inCol)
+    PrototypeNode::PrototypeNode(const TokenDebugInfo& inDebugInfo, const std::string& inId,
+                                 const std::vector<std::string>& inParents, const std::shared_ptr<ScopeNode>& inScope) : Node(inDebugInfo)
     {
         id = inId;
         parents = inParents;
@@ -191,20 +204,20 @@ namespace vs::backend
         type = NT_Class;
     }
 
-    ModuleNode::ModuleNode(uint32_t inLine, uint32_t inCol, const std::vector<std::shared_ptr<Node>>& inStatements) : Node(inLine,inCol)
+    ModuleNode::ModuleNode(const TokenDebugInfo& inDebugInfo, const std::vector<std::shared_ptr<Node>>& inStatements) : Node(inDebugInfo)
     {
         statements = inStatements;
         type = ENodeType::NT_Module;
     }
 
-    void parseFunctionBody(std::list<Token>& tokens, std::vector<std::shared_ptr<Node>>& body)
+    void parseFunctionBody(Tokenized& tokens, std::vector<std::shared_ptr<Node>>& body)
     {
-        tokens.pop_front(); // should be a {
-        std::list<Token> statement;
+        tokens.RemoveFront(); // should be a {
+        Tokenized statement;
         size_t scope = 1;
         while (scope != 0)
         {
-            const auto tok = tokens.front();
+            const auto tok = tokens.Front();
 
             switch (tok.type)
             {
@@ -212,9 +225,9 @@ namespace vs::backend
                 body.push_back(parseFunction(tokens));
                 break;
             case TT_StatementEnd:
-                tokens.pop_front();
+                tokens.RemoveFront();
                 body.push_back(parseStatement(statement));
-                statement.clear();
+                statement.Clear();
                 
                 continue;
             case TT_OpenBrace:
@@ -224,72 +237,72 @@ namespace vs::backend
                 scope--;
                 if (scope == 0)
                 {
-                    tokens.pop_front();
+                    tokens.RemoveFront();
                     return;
                 }
                 break;
             default:
-                statement.push_back(tok);
+                statement.InsertBack(tok);
             }
-            tokens.pop_front();
+            tokens.RemoveFront();
         }
     }
 
-    std::shared_ptr<Node> parseParen(std::list<Token>& tokens)
+    std::shared_ptr<Node> parseParen(Tokenized& tokens)
     {
-        tokens.pop_front();
-        std::list<Token> inParen;
+        tokens.RemoveFront();
+        Tokenized inParen;
         getTokensTill(inParen,tokens,{TT_CloseParen},1);
         
 
         return parseExpression(inParen);
     }
 
-    std::shared_ptr<ListLiteralNode> parseList(std::list<Token>& tokens)
+    std::shared_ptr<ListLiteralNode> parseList(Tokenized& tokens)
     {
-        auto token = tokens.front();
-        tokens.pop_front();
-        std::list<Token> listTokens;
+        auto token = tokens.Front();
+        tokens.RemoveFront();
+        Tokenized listTokens;
         getTokensTill(listTokens,tokens,{TT_CloseBracket},1);
 
         std::vector<std::shared_ptr<Node>> items;
-        while(!listTokens.empty())
+        while(listTokens)
         {
-            std::list<Token> itemTokens;
+            Tokenized itemTokens;
             getTokensTill(itemTokens,listTokens,{TT_Comma});
-            if(!itemTokens.empty())
+            if(!itemTokens)
             {
                 items.push_back(parseExpression(itemTokens));
             }
         }
 
-        return std::make_shared<ListLiteralNode>(token.line,token.col,items);
+        return std::make_shared<ListLiteralNode>(token.debugInfo,items);
     }
     
 
-    std::shared_ptr<Node> parsePrimary(std::list<Token>& tokens)
+    std::shared_ptr<Node> parsePrimary(Tokenized& tokens)
     {
-        if(tokens.empty())
+        if(!tokens)
         {
-            throw std::runtime_error("Expected token");
+            tokens.ThrowExpectedInput();
         }
         
-        auto tok = tokens.front();
+        auto tok = tokens.Front();
         
         switch (tok.type)
         {
         case TT_Identifier:
-            tokens.pop_front();
-            return std::make_shared<VariableNode>(tok.line,tok.col,tok.value);
+            tokens.RemoveFront();
+            return std::make_shared<VariableNode>(tok.debugInfo,tok.value);
         case TT_NumericLiteral:
-            tokens.pop_front();
-            return std::make_shared<LiteralNode>(tok.line,tok.col,tok.value,NT_NumericLiteral);
+            tokens.RemoveFront();
+            return std::make_shared<LiteralNode>(tok.debugInfo,tok.value,NT_NumericLiteral);
         case TT_StringLiteral:
-            tokens.pop_front();
-            return std::make_shared<LiteralNode>(tok.line,tok.col,tok.value,NT_StringLiteral);
+            tokens.RemoveFront();
+            return std::make_shared<LiteralNode>(tok.debugInfo,tok.value,NT_StringLiteral);
         case TT_BooleanLiteral:
-            tokens.pop_front();
-            return std::make_shared<LiteralNode>(tok.line,tok.col,tok.value,NT_BooleanLiteral);
+            tokens.RemoveFront();
+            return std::make_shared<LiteralNode>(tok.debugInfo,tok.value,NT_BooleanLiteral);
         case TT_OpenParen:
             return parseParen(tokens);
         case TT_OpenBrace:
@@ -299,11 +312,11 @@ namespace vs::backend
         case TT_Function:
             return parseFunction(tokens);
         case TT_Break:
-                return std::make_shared<Node>(tok.line,tok.col,NT_Break);
+                return std::make_shared<Node>(tok.debugInfo,NT_Break);
         case TT_Continue:
-                return std::make_shared<Node>(tok.line,tok.col,NT_Continue);
+                return std::make_shared<Node>(tok.debugInfo,NT_Continue);
         case TT_Null:
-            return std::make_shared<LiteralNode>(tok.line,tok.col,tok.value,NT_NullLiteral);
+            return std::make_shared<LiteralNode>(tok.debugInfo,tok.value,NT_NullLiteral);
         case TT_OpenBracket:
             return parseList(tokens);
         default:
@@ -311,38 +324,38 @@ namespace vs::backend
         }
     }
 
-    std::shared_ptr<Node> parseAccessors(std::list<Token>& tokens)
+    std::shared_ptr<Node> parseAccessors(Tokenized& tokens)
     {
         auto left= parsePrimary(tokens);
         
-        while (!tokens.empty() && (tokens.front().type == TT_CallBegin || tokens.front().type == TT_Access || tokens.front().type == TT_OpenBracket))
+        while (tokens && (tokens.Front().type == TT_CallBegin || tokens.Front().type == TT_Access || tokens.Front().type == TT_OpenBracket))
         {
-            switch (tokens.front().type)
+            switch (tokens.Front().type)
             {
             case TT_CallBegin:
                 {
-                    auto token = tokens.front();
-                    tokens.pop_front();
+                    auto token = tokens.Front();
+                    tokens.RemoveFront();
                     auto right = parseCallArguments(tokens);
-                    left = std::make_shared<CallNode>(token.line,token.col,left, right);
+                    left = std::make_shared<CallNode>(token.debugInfo,left, right);
                 }
                 break;
             case TT_Access:
                 {
-                    auto token = tokens.front();
-                    tokens.pop_front();
+                    auto token = tokens.Front();
+                    tokens.RemoveFront();
                     auto right = parsePrimary(tokens);
-                    left = std::make_shared<AccessNode>(token.line,token.col,left, right);
+                    left = std::make_shared<AccessNode>(token.debugInfo,left, right);
                 }
                 break;
             case TT_OpenBracket:
                 {
-                    auto token = tokens.front();
-                    tokens.pop_front();
-                    std::list<Token> within;
+                    auto token = tokens.Front();
+                    tokens.RemoveFront();
+                    Tokenized within;
                     getTokensTill(within,tokens,{TT_CloseBracket},1);
                     auto right = parseExpression(within);
-                    left = std::make_shared<AccessNode2>(token.line,token.col,left, right);
+                    left = std::make_shared<AccessNode2>(token.debugInfo,left, right);
                 }
             }
         }
@@ -350,257 +363,294 @@ namespace vs::backend
         return left;
     }
 
-    std::shared_ptr<Node> parseMultiplicativeExpression(std::list<Token>& tokens)
+    std::shared_ptr<Node> parseMultiplicativeExpression(Tokenized& tokens)
     {
         auto left = parseAccessors(tokens);
 
-        while (!tokens.empty() && (tokens.front().type == TT_OpMultiply || tokens.front().type == TT_OpDivide || tokens.
-            front().type == TT_OpMod))
+        while (tokens && (tokens.Front().type == TT_OpMultiply || tokens.Front().type == TT_OpDivide || tokens.
+            Front().type == TT_OpMod))
         {
-            auto token = tokens.front();
-            tokens.pop_front();
+            auto token = tokens.Front();
+            tokens.RemoveFront();
             auto right = parseAccessors(tokens);
-            left = std::make_shared<BinaryOpNode>(token.line,token.col,left, right, token.type);
+            left = std::make_shared<BinaryOpNode>(token.debugInfo,left, right, token.type);
         }
 
         return left;
     }
 
-    std::shared_ptr<Node> parseAdditiveExpression(std::list<Token>& tokens)
+    std::shared_ptr<Node> parseAdditiveExpression(Tokenized& tokens)
     {
         auto left = parseMultiplicativeExpression(tokens);
 
-        while (!tokens.empty() && (tokens.front().type == TT_OpAdd || tokens.front().type == TT_OpSubtract))
+        while (tokens && (tokens.Front().type == TT_OpAdd || tokens.Front().type == TT_OpSubtract))
         {
-            auto token = tokens.front();
-            tokens.pop_front();
+            auto token = tokens.Front();
+            tokens.RemoveFront();
             auto right = parseMultiplicativeExpression(tokens);
-            left = std::make_shared<BinaryOpNode>(token.line,token.col,left, right, token.type);
+            left = std::make_shared<BinaryOpNode>(token.debugInfo,left, right, token.type);
         }
 
         return left;
     }
 
-    std::shared_ptr<Node> parseComparisonExpression(std::list<Token>& tokens)
+    std::shared_ptr<Node> parseComparisonExpression(Tokenized& tokens)
     {
         auto left = parseAdditiveExpression(tokens);
 
-        while (!tokens.empty() && (tokens.front().type == TT_OpEqual || tokens.front().type == TT_OpNotEqual ||
-            tokens.front().type == TT_OpLess || tokens.front().type == TT_OpLessEqual || tokens.front().type ==
-            TT_OpGreater || tokens.front().type == TT_OpGreaterEqual))
+        while (tokens && (tokens.Front().type == TT_OpEqual || tokens.Front().type == TT_OpNotEqual ||
+            tokens.Front().type == TT_OpLess || tokens.Front().type == TT_OpLessEqual || tokens.Front().type ==
+            TT_OpGreater || tokens.Front().type == TT_OpGreaterEqual))
         {
-            auto token = tokens.front();
-            tokens.pop_front();
-            auto right = parseExpression(tokens);
-            left = std::make_shared<BinaryOpNode>(token.line,token.col,left, right, token.type);
+            auto token = tokens.Front();
+            tokens.RemoveFront();
+            auto right = parseAdditiveExpression(tokens);
+            left = std::make_shared<BinaryOpNode>(token.debugInfo,left, right, token.type);
         }
 
         return left;
     }
 
-    std::shared_ptr<Node> parseLogicalExpression(std::list<Token>& tokens)
+    std::shared_ptr<Node> parseLogicalExpression(Tokenized& tokens)
     {
         auto left = parseComparisonExpression(tokens);
 
-        while (!tokens.empty() && (tokens.front().type == TT_OpAdd || tokens.front().type == TT_OpOr ||
-            tokens.front().type == TT_OpNot))
+        while (tokens && (tokens.Front().type == TT_OpAnd || tokens.Front().type == TT_OpOr ||
+            tokens.Front().type == TT_OpNot))
         {
-            auto token = tokens.front();
-            tokens.pop_front();
-            auto right = parseExpression(tokens);
-            left = std::make_shared<BinaryOpNode>(token.line,token.col,left, right, token.type);
+            auto token = tokens.Front();
+            tokens.RemoveFront();
+            auto right = parseComparisonExpression(tokens);
+            left = std::make_shared<BinaryOpNode>(token.debugInfo,left, right, token.type);
         }
 
         return left;
     }
 
-    std::shared_ptr<Node> parseAssignmentExpression(std::list<Token>& tokens)
+    std::shared_ptr<Node> parseAssignmentExpression(Tokenized& tokens)
     {
         auto left = parseLogicalExpression(tokens);
 
-        while (!tokens.empty() && tokens.front().type == TT_Assign)
+        while (tokens && tokens.Front().type == TT_Assign)
         {
-            auto token = tokens.front();
-            tokens.pop_front();
+            auto token = tokens.Front();
+            tokens.RemoveFront();
             auto right = parseLogicalExpression(tokens);
-            left = std::make_shared<AssignNode>(token.line,token.col,left, right);
+            left = std::make_shared<AssignNode>(token.debugInfo,left, right);
         }
 
         return left;
     }
 
-    std::shared_ptr<Node> parseExpression(std::list<Token>& tokens)
+    std::shared_ptr<Node> parseExpression(Tokenized& tokens)
     {
         return parseAssignmentExpression(tokens);
     }
 
-    std::shared_ptr<ReturnNode> parseReturn(std::list<Token>& tokens)
+    std::shared_ptr<ReturnNode> parseReturn(Tokenized& tokens)
     {
-        auto token = tokens.front();
-        tokens.pop_front();
-        return std::make_shared<ReturnNode>(token.line,token.col,parseExpression(tokens));
+        auto token = tokens.Front();
+        tokens.RemoveFront();
+        return std::make_shared<ReturnNode>(token.debugInfo,parseExpression(tokens));
     }
 
-    std::shared_ptr<ForNode> parseFor(std::list<Token>& tokens)
+    std::shared_ptr<ForNode> parseFor(Tokenized& tokens)
     {
-        auto token = tokens.front();
-        tokens.pop_front();
-        tokens.pop_front();
+        auto token = tokens.Front();
+        tokens.RemoveFront();
+        tokens.RemoveFront();
         auto initStatement = parseStatement(tokens);
         auto conditionStatement = parseStatement(tokens);
         auto updateStatement = parseStatement(tokens);
-        tokens.pop_front();
+        tokens.RemoveFront();
         
-        return std::make_shared<ForNode>(token.line,token.col,initStatement,conditionStatement,updateStatement,parseScope(tokens));
+        return std::make_shared<ForNode>(token.debugInfo,initStatement,conditionStatement,updateStatement,parseScope(tokens));
     }
 
-    std::shared_ptr<WhileNode> parseWhile(std::list<Token>& tokens)
+    std::shared_ptr<WhileNode> parseWhile(Tokenized& tokens)
     {
-        auto token = tokens.front();
-        tokens.pop_front();
-        tokens.pop_front();
+        auto token = tokens.Front();
+        tokens.RemoveFront();
+        tokens.RemoveFront();
         auto conditionStatement = parseStatement(tokens);
-        tokens.pop_front();
+        tokens.RemoveFront();
         
-        return std::make_shared<WhileNode>(token.line,token.col,conditionStatement,parseScope(tokens));
+        return std::make_shared<WhileNode>(token.debugInfo,conditionStatement,parseScope(tokens));
     }
 
-    std::shared_ptr<Node> parseStatement(std::list<Token>& tokens)
+    std::shared_ptr<TryCatchNode> parseTryCatch(Tokenized& tokens)
     {
-        switch (tokens.front().type)
+        std::string catchArg;
+        auto tryTok = tokens.ExpectFront(TT_Try).RemoveFront();
+        Tokenized tryScopeTokens;
+        getTokensTill(tryScopeTokens,tokens,{TT_CloseBrace},false);
+        auto tryScope = parseScope(tryScopeTokens);
+        tokens.ExpectFront(TT_Catch).RemoveFront();
+        if(tokens.Front().type == TT_Identifier)
+        {
+            catchArg = tokens.Front().value;
+            tokens.RemoveFront();
+        }
+
+        Tokenized catchScopeTokens;
+        getTokensTill(catchScopeTokens,tokens,{TT_CloseBrace},false);
+        auto catchScope = parseScope(catchScopeTokens);
+
+        
+        return std::make_shared<TryCatchNode>(tryTok.debugInfo,tryScope,catchScope,catchArg);
+    }
+    
+    std::shared_ptr<Node> parseStatement(Tokenized& tokens)
+    {
+        switch (tokens.Front().type)
         {
         case TT_Return:
             {
-                auto token = tokens.front();
-                tokens.pop_front();
-                std::list<Token> statement;
+                auto token = tokens.Front();
+                tokens.RemoveFront();
+                Tokenized statement;
                 getStatementTokens(statement, tokens);
-                return std::make_shared<ReturnNode>(token.line,token.col,parseExpression(statement));
+                return std::make_shared<ReturnNode>(token.debugInfo,parseExpression(statement));
+            }
+        case TT_Throw:
+            {
+                auto token = tokens.Front();
+                tokens.RemoveFront();
+                Tokenized statement;
+                getStatementTokens(statement, tokens);
+                return std::make_shared<ThrowNode>(token.debugInfo,parseExpression(statement));
             }
         case TT_Let:
             {
-                auto token = tokens.front();
-                std::list<Token> statement;
+                auto token = tokens.Front();
+                Tokenized statement;
                 getStatementTokens(statement, tokens);
-                statement.pop_front();
-                auto name = statement.front();
-                statement.pop_front();
-                statement.pop_front(); // pop the assign
+                statement.RemoveFront();
+                auto name = statement.Front();
+                statement.RemoveFront();
+                statement.RemoveFront(); // pop the assign
                 
-                return std::make_shared<CreateAndAssignNode>(token.line,token.col,name.value, parseExpression(statement));
+                return std::make_shared<CreateAndAssignNode>(token.debugInfo,name.value, parseExpression(statement));
             }
         case TT_CallBegin:
             {
-                std::list<Token> statement;
+                Tokenized statement;
                 getStatementTokens(statement, tokens);
                 return parseExpression(statement);
             }
         case TT_When:
             {
-                std::list<Token> statement;
+                Tokenized statement;
                 getStatementTokens(statement, tokens);
                 return parseWhenStatement(statement);
             }
         case TT_OpenBrace:
             {
-                std::list<Token> statement;
+                Tokenized statement;
                 getStatementTokens(statement, tokens);
                 return parsePrimary(statement); // primary handles braces
             }
         case TT_Function:
             {
-                std::list<Token> statement;
+                Tokenized statement;
                 getStatementTokens(statement, tokens);
                 return parseFunction(statement);
             }
         case TT_For:
             {
-                std::list<Token> statement;
+                Tokenized statement;
                 getStatementTokens(statement, tokens);
                 
                 return parseFor(statement);
             }
         case TT_While:
             {
-                std::list<Token> statement;
+                Tokenized statement;
                 getStatementTokens(statement, tokens);
                 
                 return parseWhile(statement);
             }
         case TT_Class:
             {
-                std::list<Token> statement;
+                Tokenized statement;
                 getStatementTokens(statement, tokens);
                 
                 return parseClass(statement);
             }
+        case TT_Try:
+            {
+                Tokenized statement;
+                getStatementTokens(statement, tokens);
+                
+                return parseTryCatch(statement);
+            }
         }
 
         {
-            std::list<Token> statement;
+            Tokenized statement;
             getStatementTokens(statement, tokens);
             return parseExpression(statement);
         }
     }
 
-    std::shared_ptr<FunctionNode> parseFunction(std::list<Token>& tokens)
+    std::shared_ptr<FunctionNode> parseFunction(Tokenized& tokens)
     {
-        auto id = tokens.front();
-        tokens.pop_front();
+        auto id = tokens.Front();
+        tokens.RemoveFront();
         
         std::string name;
         
-        if(tokens.front().type == TT_Identifier)
+        if(tokens.Front().type == TT_Identifier)
         {
-            name = tokens.front().value;
-            tokens.pop_front();
+            name = tokens.Front().value;
+            tokens.RemoveFront();
         }
 
-        tokens.pop_front(); // skip first bracket
+        tokens.RemoveFront(); // skip first bracket
 
         std::vector<std::string> args;
-        while (tokens.front().type != ETokenType::TT_CloseParen)
+        while (tokens.Front().type != ETokenType::TT_CloseParen)
         {
-            auto token = tokens.front();
+            auto token = tokens.Front();
 
             switch (token.type)
             {
             case TT_FunctionArgumentBegin:
                 {
-                    tokens.pop_front();
-                    std::list<Token> argsToken;
+                    tokens.RemoveFront();
+                    Tokenized argsToken;
                     getTokensTill(argsToken,tokens,[](const Token& tok, int scope)
                     {
                         return (tok.type == TT_FunctionArgumentBegin && scope == 0) || tok.type == TT_CloseParen && scope == -1;
                     },0,false);
                     
-                    auto arg = argsToken.front();
+                    auto arg = argsToken.Front();
                     args.push_back(arg.value);
                     continue;
                 }
             }
 
-            tokens.pop_front();
+            tokens.RemoveFront();
         }
 
-        auto token = tokens.front();
-        tokens.pop_front();
+        auto token = tokens.Front();
+        tokens.RemoveFront();
 
-        return std::make_shared<FunctionNode>(token.line,token.col,name, args,parseScope(tokens));
+        return std::make_shared<FunctionNode>(token.debugInfo,name, args,parseScope(tokens));
     }
 
-    std::vector<std::shared_ptr<Node>> parseCallArguments(std::list<Token>& tokens)
+    std::vector<std::shared_ptr<Node>> parseCallArguments(Tokenized& tokens)
     {
         
-        const auto tok = tokens.front();
+        const auto tok = tokens.Front();
         auto scope = 1;
         auto argumentScope = 0;
-        std::list<Token> argument;
+        Tokenized argument;
         std::vector<std::shared_ptr<Node>> args;
 
-        while (!tokens.empty() && scope != 0)
+        while (tokens && scope != 0)
         {
-            auto tok = tokens.front();
+            auto tok = tokens.Front();
             switch (tok.type)
             {
             case TT_CallBegin:
@@ -610,7 +660,7 @@ namespace vs::backend
                 scope--;
                 if (scope == 0)
                 {
-                    tokens.pop_front();
+                    tokens.RemoveFront();
                     continue;
                 }
                 break;
@@ -618,7 +668,7 @@ namespace vs::backend
                 argumentScope++;
                 if (argumentScope == 1)
                 {
-                    tokens.pop_front();
+                    tokens.RemoveFront();
                     continue;
                 }
                 break;
@@ -627,81 +677,82 @@ namespace vs::backend
                 if (argumentScope == 0)
                 {
                     args.push_back(parseExpression(argument));
-                    tokens.pop_front();
+                    tokens.RemoveFront();
                     continue;
                 }
 
                 break;
             }
 
-            argument.push_back(tok);
+            argument.InsertBack(tok);
 
-            tokens.pop_front();
+            tokens.RemoveFront();
         }
         return args;
     }
 
-    std::shared_ptr<WhenNode> parseWhen(std::list<Token>& tokens)
+    std::shared_ptr<WhenNode> parseWhen(Tokenized& tokens)
     {
-        auto token = tokens.front();
-        std::list<Token> targetTokens;
+        auto token = tokens.Front();
+        Tokenized targetTokens;
         getTokensTill(targetTokens,tokens,{TT_CloseBrace});
-        targetTokens.pop_front(); // Pop when token
-        targetTokens.pop_front(); // Pop opening brace
+        targetTokens.RemoveFront(); // Pop when token
+        targetTokens.RemoveFront(); // Pop opening brace
         std::vector<WhenNode::Branch> branches;
 
-        while(!targetTokens.empty())
+        while(targetTokens)
         {
-            targetTokens.pop_front(); // Pop condition begin
-            std::list<Token> conditionTokens;
+            targetTokens.RemoveFront(); // Pop condition begin
+            Tokenized conditionTokens;
             getTokensTill(conditionTokens,targetTokens,{TT_WhenConditionEnd},0);
-            targetTokens.pop_front(); // pop action begin
-            std::list<Token> expressionTokens;
+            targetTokens.RemoveFront(); // pop action begin
+            Tokenized expressionTokens;
             getTokensTill(expressionTokens,targetTokens,{TT_WhenActionEnd},0);
-            expressionTokens.pop_back();
-            branches.emplace_back(parseExpression(conditionTokens),parseExpression(expressionTokens));
+            expressionTokens.RemoveBack();
+            expressionTokens.EmplaceBack(TT_StatementEnd,expressionTokens.Back().debugInfo);
+            branches.emplace_back(parseExpression(conditionTokens),parseStatement(expressionTokens));
         }
         
-        return std::make_shared<WhenNode>(token.line,token.col,branches);
+        return std::make_shared<WhenNode>(token.debugInfo,branches);
     }
 
-    std::shared_ptr<WhenNode> parseWhenStatement(std::list<Token>& tokens)
+    std::shared_ptr<WhenNode> parseWhenStatement(Tokenized& tokens)
     {
         auto r = parseWhen(tokens);
         return r;
     }
 
-    std::shared_ptr<PrototypeNode> parseClass(std::list<Token>& tokens)
+    std::shared_ptr<PrototypeNode> parseClass(Tokenized& tokens)
     {
-        auto token = tokens.front();
-        tokens.pop_front();
-        auto className = tokens.front().value;
-        tokens.pop_front();
+        auto token = tokens.Front();
+        tokens.RemoveFront();
+        auto className = tokens.Front().value;
+        tokens.RemoveFront();
         std::vector<std::string> parents;
-        while(tokens.front().type == TT_Identifier)
+        while(tokens.Front().type == TT_Identifier)
         {
-            parents.push_back(tokens.front().value);
-            tokens.pop_front();
+            parents.push_back(tokens.Front().value);
+            tokens.RemoveFront();
         }
 
         auto scope = parseScope(tokens);
-        return  std::make_shared<PrototypeNode>(token.line,token.col,className,parents,scope);
+        return  std::make_shared<PrototypeNode>(token.debugInfo,className,parents,scope);
     }
     
 
-    void getStatementTokens(std::list<Token>& statement, std::list<Token>& tokens)
+    void getStatementTokens(Tokenized& statement, Tokenized& tokens)
     {
         return getTokensTill(statement,tokens,{TT_StatementEnd},0);
     }
 
-    void getTokensTill(std::list<Token>& result, std::list<Token>& tokens,
+    void getTokensTill(Tokenized& result, Tokenized& tokens,
         const std::function<bool(const Token&, int)>& evaluator, int initialScope, bool popEnd)
     {
         auto scope = initialScope;
         
-        while (!tokens.empty())
+        while (tokens)
         {
-            auto tok = tokens.front();
+            auto tok = tokens.Front();
             switch (tok.type)
             {
             case TT_OpenBrace:
@@ -722,23 +773,23 @@ namespace vs::backend
             {
                 if(popEnd)
                 {
-                    tokens.pop_front();
+                    tokens.RemoveFront();
                 }
                 return;
             }
 
-            result.push_back(tok);
-            tokens.pop_front();
+            result.InsertBack(tok);
+            tokens.RemoveFront();
         }
     }
 
-    void getTokensTill(std::list<Token>& result, std::list<Token>& tokens,const std::set<ETokenType>& ends,int initialScope,bool popEnd)
+    void getTokensTill(Tokenized& result, Tokenized& tokens,const std::set<ETokenType>& ends,int initialScope,bool popEnd)
     {
         auto scope = initialScope;
         
-        while (!tokens.empty())
+        while (tokens)
         {
-            auto tok = tokens.front();
+            auto tok = tokens.Front();
             switch (tok.type)
             {
             case TT_OpenBrace:
@@ -759,45 +810,37 @@ namespace vs::backend
             {
                 if(popEnd)
                 {
-                    tokens.pop_front();
+                    tokens.RemoveFront();
                 }
                 return;
             }
 
-            result.push_back(tok);
-            tokens.pop_front();
+            result.InsertBack(tok);
+            tokens.RemoveFront();
         }
     }
 
-    std::shared_ptr<ScopeNode> parseScope(std::list<Token>& tokens)
+    std::shared_ptr<ScopeNode> parseScope(Tokenized& tokens)
     {
-        auto token = tokens.front();
-        tokens.pop_front(); // remove first brace
-        std::list<Token> content;
+        auto token = tokens.Front();
+        tokens.RemoveFront(); // remove first brace
+        Tokenized content;
         getTokensTill(content,tokens,{TT_CloseBrace},1);
 
-        auto node = std::make_shared<ScopeNode>(token.line,token.col);
+        auto node = std::make_shared<ScopeNode>(token.debugInfo);
         
-        while (!content.empty())
+        while (content)
         {
-            //const Token tok = content.front();
             node->statements.push_back(parseStatement(content));
-            // switch (tok.type)
-            // {
-            // default:
-            //     node->statements.push_back(parseStatement(content));
-            //     continue;
-            // }
-            //content.pop_front();
         }
         
         return node;
     }
 
-    std::shared_ptr<ModuleNode> parse(std::list<Token> tokens)
+    std::shared_ptr<ModuleNode> parse(Tokenized tokens)
     {
-        auto node = std::make_shared<ModuleNode>(0,0,std::vector<std::shared_ptr<Node>>());
-        while (!tokens.empty())
+        auto node = std::make_shared<ModuleNode>(TokenDebugInfo{tokens.Front().debugInfo.file,0,0},std::vector<std::shared_ptr<Node>>());
+        while (tokens)
         {
             node->statements.push_back(parseStatement(tokens));
         }

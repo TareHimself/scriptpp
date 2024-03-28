@@ -214,7 +214,10 @@ struct RefContainer {
 
 
 struct RefThisBase {
-  RefContainer _managed_weak;
+  
+protected:
+  friend ManagedBlock;
+  RefContainer _managedWeak;
   virtual void OnRefSet();
 };
 
@@ -252,9 +255,9 @@ template <class T> void ManagedBlock<T>::SetData(T *newData) {
 
   if(auto asBase = castToBase<RefThisBase>(data))
   {
-    if(asBase->_managed_weak.ref == nullptr)
+    if(asBase->_managedWeak.ref == nullptr)
     {
-      asBase->_managed_weak.ref = new Ref<T>(this);
+      asBase->_managedWeak.ref = new Ref<T>(this);
       asBase->OnRefSet();
     }
   }
@@ -626,10 +629,10 @@ template <class T> Ref<T>::~Ref() {
 }
 
 template <class T> Ref<T> RefThis<T>::ToRef() const {
-  if (!_managed_weak.ref) {
+  if (!_managedWeak.ref) {
     return {};
   }
-  Ref<T> r = *static_cast<Ref<T> *>(_managed_weak.ref);
+  Ref<T> r = *static_cast<Ref<T> *>(_managedWeak.ref);
   return r;
 }
 
@@ -644,7 +647,7 @@ Managed<T> manage(T *data) {
 }
 
 template <typename T, typename... Args>
-  std::enable_if_t<std::is_constructible_v<T, Args...>, Managed<T>> manage(Args &&... args) {
+  std::enable_if_t<std::is_constructible_v<T, Args...>, Managed<T>> manage(Args... args) {
   return Managed<T>(new T(std::forward<Args>(args)...));
 }
 }

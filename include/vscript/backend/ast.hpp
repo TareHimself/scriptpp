@@ -37,6 +37,8 @@ namespace vs::backend
         NT_Class,
         NT_Access,
         NT_Access2,
+        NT_Throw,
+        NT_TryCatch
     };
 
     
@@ -44,17 +46,17 @@ namespace vs::backend
     struct Node
     {
         ENodeType type = NT_Unknown;
-        uint32_t line = 0;
-        uint32_t col = 0;
+        
+        TokenDebugInfo debugInfo;
 
         // May be used for optimization later
         bool isStatic = false;
 
         Node() = default;
 
-        Node(uint32_t inLine,uint32_t inCol);
+        Node(const TokenDebugInfo& inDebugInfo);
 
-        Node(uint32_t inLine,uint32_t inCol,ENodeType inType);
+        Node(const TokenDebugInfo& inDebugInfo,ENodeType inType);
         
         virtual ~Node() = default;
     };
@@ -62,7 +64,7 @@ namespace vs::backend
     struct HasLeft : Node
     {
         std::shared_ptr<Node> left;
-        HasLeft(uint32_t inLine,uint32_t inCol,const std::shared_ptr<Node>& inLeft);
+        HasLeft(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft);
     };
 
     
@@ -92,10 +94,10 @@ namespace vs::backend
 
         static EBinaryOp TokenTypeToBinaryOp(const ETokenType& tokType);
         
-        BinaryOpNode(uint32_t inLine,uint32_t inCol,const std::shared_ptr<Node>& inLeft, const std::shared_ptr<Node>& inRight, const EBinaryOp& inOp);
+        BinaryOpNode(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft, const std::shared_ptr<Node>& inRight, const EBinaryOp& inOp);
         
 
-        BinaryOpNode(uint32_t inLine,uint32_t inCol,const std::shared_ptr<Node>& inLeft, const std::shared_ptr<Node>& inRight, const ETokenType& inOp);
+        BinaryOpNode(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft, const std::shared_ptr<Node>& inRight, const ETokenType& inOp);
         
     };
     
@@ -103,28 +105,28 @@ namespace vs::backend
     {
         std::string value;
 
-        LiteralNode(uint32_t inLine,uint32_t inCol,const std::string& inValue,const ENodeType& inType);
+        LiteralNode(const TokenDebugInfo& inDebugInfo,const std::string& inValue,const ENodeType& inType);
     };
 
     struct ListLiteralNode : Node
     {
         std::vector<std::shared_ptr<Node>> values;
 
-        ListLiteralNode(uint32_t inLine,uint32_t inCol,const std::vector<std::shared_ptr<Node>>& inValues);
+        ListLiteralNode(const TokenDebugInfo& inDebugInfo,const std::vector<std::shared_ptr<Node>>& inValues);
     };
 
     struct CreateAndAssignNode : Node
     {
         std::string name;
         std::shared_ptr<Node> value;
-        CreateAndAssignNode(uint32_t inLine,uint32_t inCol,const std::string& inName,const std::shared_ptr<Node>& inValue);
+        CreateAndAssignNode(const TokenDebugInfo& inDebugInfo,const std::string& inName,const std::shared_ptr<Node>& inValue);
         
     };
 
     struct AssignNode : HasLeft
     {
         std::shared_ptr<Node> value;
-        AssignNode(uint32_t inLine,uint32_t inCol,const  std::shared_ptr<Node>& inTarget,const std::shared_ptr<Node>& inValue);
+        AssignNode(const TokenDebugInfo& inDebugInfo,const  std::shared_ptr<Node>& inTarget,const std::shared_ptr<Node>& inValue);
         
     };
 
@@ -132,7 +134,7 @@ namespace vs::backend
     {
         std::string value;
 
-        VariableNode(uint32_t inLine,uint32_t inCol,const std::string& inValue);
+        VariableNode(const TokenDebugInfo& inDebugInfo,const std::string& inValue);
         
     };
 
@@ -140,7 +142,7 @@ namespace vs::backend
     {
         std::vector<std::shared_ptr<Node>> statements;
 
-        ScopeNode(uint32_t inLine,uint32_t inCol,const std::vector<std::shared_ptr<Node>>& inStatements = {});
+        ScopeNode(const TokenDebugInfo& inDebugInfo,const std::vector<std::shared_ptr<Node>>& inStatements = {});
         
     };
 
@@ -148,7 +150,7 @@ namespace vs::backend
     {
         std::shared_ptr<Node> right;
 
-        AccessNode(uint32_t inLine,uint32_t inCol,const std::shared_ptr<Node>& inLeft,const std::shared_ptr<Node>& inRight);
+        AccessNode(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft,const std::shared_ptr<Node>& inRight);
         
     };
 
@@ -156,7 +158,7 @@ namespace vs::backend
     {
         std::shared_ptr<Node> within;
 
-        AccessNode2(uint32_t inLine,uint32_t inCol,const std::shared_ptr<Node>& inLeft,const std::shared_ptr<Node>& inWithin);
+        AccessNode2(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft,const std::shared_ptr<Node>& inWithin);
         
     };
     
@@ -171,7 +173,7 @@ namespace vs::backend
         
         std::vector<Branch> branches;
 
-        WhenNode(uint32_t inLine,uint32_t inCol,const std::vector<Branch>& inBranches);
+        WhenNode(const TokenDebugInfo& inDebugInfo,const std::vector<Branch>& inBranches);
         
     };
 
@@ -179,8 +181,23 @@ namespace vs::backend
     {
         std::shared_ptr<Node> expression;
 
-        ReturnNode(uint32_t inLine,uint32_t inCol,const std::shared_ptr<Node>& inExpression);
-        
+        ReturnNode(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inExpression);
+    };
+
+    struct ThrowNode : Node
+    {
+        std::shared_ptr<Node> expression;
+
+        ThrowNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inExpression);
+    };
+
+    struct TryCatchNode : Node
+    {
+        std::shared_ptr<ScopeNode> tryScope;
+        std::shared_ptr<ScopeNode> catchScope;
+        std::string catchArgumentName;
+
+        TryCatchNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<ScopeNode>& inTryScope,const std::shared_ptr<ScopeNode>& inCatchScope,const std::string& inCatchArgName);
     };
 
     struct FunctionNode : Node
@@ -189,7 +206,7 @@ namespace vs::backend
         std::vector<std::string> args;
         std::shared_ptr<ScopeNode> body;
 
-        FunctionNode(uint32_t inLine,uint32_t inCol,const std::string& inName, const std::vector<std::string>& inArgs,const std::shared_ptr<ScopeNode>& inBody);
+        FunctionNode(const TokenDebugInfo& inDebugInfo,const std::string& inName, const std::vector<std::string>& inArgs,const std::shared_ptr<ScopeNode>& inBody);
         
     };
 
@@ -197,7 +214,7 @@ namespace vs::backend
     {
         std::vector<std::shared_ptr<Node>> args;
 
-        CallNode(uint32_t inLine,uint32_t inCol,const std::shared_ptr<Node>& inLeft,const std::vector<std::shared_ptr<Node>>& inArgs);
+        CallNode(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft,const std::vector<std::shared_ptr<Node>>& inArgs);
         
     };
 
@@ -208,7 +225,7 @@ namespace vs::backend
         std::shared_ptr<Node> update;
         std::shared_ptr<ScopeNode> body;
 
-        ForNode(uint32_t inLine,uint32_t inCol,const std::shared_ptr<Node>& inInit,const std::shared_ptr<Node>& inCondition,const std::shared_ptr<Node>& inUpdate,const std::shared_ptr<ScopeNode>& inBody);
+        ForNode(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inInit,const std::shared_ptr<Node>& inCondition,const std::shared_ptr<Node>& inUpdate,const std::shared_ptr<ScopeNode>& inBody);
         
     };
 
@@ -217,7 +234,7 @@ namespace vs::backend
         std::shared_ptr<Node> condition;
         std::shared_ptr<ScopeNode> body;
 
-        WhileNode(uint32_t inLine,uint32_t inCol,const std::shared_ptr<Node>& inCondition,const std::shared_ptr<ScopeNode>& inBody);
+        WhileNode(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inCondition,const std::shared_ptr<ScopeNode>& inBody);
         
     };
 
@@ -227,7 +244,7 @@ namespace vs::backend
         std::vector<std::string> parents;
         std::shared_ptr<ScopeNode> scope;
 
-        PrototypeNode(uint32_t inLine,uint32_t inCol,const std::string& inId,const std::vector<std::string>& inParents,const std::shared_ptr<ScopeNode>& inScope);
+        PrototypeNode(const TokenDebugInfo& inDebugInfo,const std::string& inId,const std::vector<std::string>& inParents,const std::shared_ptr<ScopeNode>& inScope);
         
     };
     
@@ -236,55 +253,57 @@ namespace vs::backend
     {
         std::vector<std::shared_ptr<Node>> statements;
 
-        ModuleNode(uint32_t inLine,uint32_t inCol,const std::vector<std::shared_ptr<Node>>& inStatements);
+        ModuleNode(const TokenDebugInfo& inDebugInfo,const std::vector<std::shared_ptr<Node>>& inStatements);
         
     };
 
-    void parseFunctionBody(std::list<Token> &tokens,std::vector<std::shared_ptr<Node>>& body);
+    void parseFunctionBody(Tokenized &tokens,std::vector<std::shared_ptr<Node>>& body);
 
-    std::shared_ptr<Node> parseParen(std::list<Token> &tokens);
+    std::shared_ptr<Node> parseParen(Tokenized &tokens);
     
-    std::shared_ptr<ListLiteralNode> parseList(std::list<Token> &tokens);
+    std::shared_ptr<ListLiteralNode> parseList(Tokenized &tokens);
     
-    std::shared_ptr<Node> parsePrimary(std::list<Token> &tokens);
+    std::shared_ptr<Node> parsePrimary(Tokenized &tokens);
 
-    std::shared_ptr<Node> parseAccessors(std::list<Token> &tokens);
+    std::shared_ptr<Node> parseAccessors(Tokenized &tokens);
     
-    std::shared_ptr<Node> parseMultiplicativeExpression(std::list<Token> &tokens);
+    std::shared_ptr<Node> parseMultiplicativeExpression(Tokenized &tokens);
 
-    std::shared_ptr<Node> parseAdditiveExpression(std::list<Token> &tokens);
+    std::shared_ptr<Node> parseAdditiveExpression(Tokenized &tokens);
 
-    std::shared_ptr<Node> parseComparisonExpression(std::list<Token> &tokens);
+    std::shared_ptr<Node> parseComparisonExpression(Tokenized &tokens);
 
-    std::shared_ptr<Node> parseLogicalExpression(std::list<Token> &tokens);
+    std::shared_ptr<Node> parseLogicalExpression(Tokenized &tokens);
 
-    std::shared_ptr<Node> parseAssignmentExpression(std::list<Token> &tokens);
+    std::shared_ptr<Node> parseAssignmentExpression(Tokenized &tokens);
     
-    std::shared_ptr<Node> parseExpression(std::list<Token> &tokens);
+    std::shared_ptr<Node> parseExpression(Tokenized &tokens);
 
-    std::shared_ptr<ReturnNode> parseReturn(std::list<Token> &tokens);
+    std::shared_ptr<ReturnNode> parseReturn(Tokenized &tokens);
 
-    std::shared_ptr<ForNode> parseFor(std::list<Token> &tokens);
+    std::shared_ptr<ForNode> parseFor(Tokenized &tokens);
 
-    std::shared_ptr<WhileNode> parseWhile(std::list<Token> &tokens);
+    std::shared_ptr<WhileNode> parseWhile(Tokenized &tokens);
+
+    std::shared_ptr<TryCatchNode> parseTryCatch(Tokenized& tokens);
     
-    std::shared_ptr<Node> parseStatement(std::list<Token> &tokens);
+    std::shared_ptr<Node> parseStatement(Tokenized &tokens);
     
-    std::shared_ptr<FunctionNode> parseFunction(std::list<Token> &tokens);
+    std::shared_ptr<FunctionNode> parseFunction(Tokenized &tokens);
     
 
-    std::vector<std::shared_ptr<Node>> parseCallArguments(std::list<Token> &tokens);
+    std::vector<std::shared_ptr<Node>> parseCallArguments(Tokenized &tokens);
     
-    std::shared_ptr<WhenNode> parseWhen(std::list<Token> &tokens);
+    std::shared_ptr<WhenNode> parseWhen(Tokenized &tokens);
 
-    std::shared_ptr<WhenNode> parseWhenStatement(std::list<Token> &tokens);
+    std::shared_ptr<WhenNode> parseWhenStatement(Tokenized &tokens);
     
-    std::shared_ptr<PrototypeNode> parseClass(std::list<Token>& tokens);
+    std::shared_ptr<PrototypeNode> parseClass(Tokenized& tokens);
 
-    void getStatementTokens(std::list<Token>& statement, std::list<Token>& tokens);
+    void getStatementTokens(Tokenized& statement, Tokenized& tokens);
     // Gets tokens till end (scope aware)
-    void getTokensTill(std::list<Token>& result,std::list<Token>& tokens,const std::function<bool(const Token&,int)>& evaluator,int initialScope = 0,bool popEnd = true);
-    void getTokensTill(std::list<Token>& result,std::list<Token>& tokens,const std::set<ETokenType>& ends,int initialScope = 0,bool popEnd = true);
-    std::shared_ptr<ScopeNode> parseScope(std::list<Token>& tokens);
-    std::shared_ptr<ModuleNode> parse(std::list<Token> tokens);
+    void getTokensTill(Tokenized& result,Tokenized& tokens,const std::function<bool(const Token&,int)>& evaluator,int initialScope = 0,bool popEnd = true);
+    void getTokensTill(Tokenized& result,Tokenized& tokens,const std::set<ETokenType>& ends,int initialScope = 0,bool popEnd = true);
+    std::shared_ptr<ScopeNode> parseScope(Tokenized& tokens);
+    std::shared_ptr<ModuleNode> parse(Tokenized tokens);
 }

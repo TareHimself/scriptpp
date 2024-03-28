@@ -2,7 +2,7 @@
 
 namespace vs::frontend
 {
-    std::string Null::ToString()
+    std::string Null::ToString() const
     {
         return "null";
     }

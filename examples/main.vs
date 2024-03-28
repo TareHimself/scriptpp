@@ -1,6 +1,5 @@
-print(null == null,true == false,false && true && false && true && false);
 fn main(){
-    let x = "Let my people go";
+    let x = "Let my people go"; // YO
     
 
     print(x.size(),x.split().map(fn (str){

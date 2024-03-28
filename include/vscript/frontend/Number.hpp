@@ -94,7 +94,7 @@ if(const auto n = other.Cast<Number>(); n.IsValid()) \
         TNumber(const T& val);
 
         bool ToBoolean() const override;
-        std::string ToString() override;
+        std::string ToString() const override;
         TSmartPtrType<Object> Add(const TSmartPtrType<Object>& other) override;
         TSmartPtrType<Object> Subtract(const TSmartPtrType<Object>& other) override;
         TSmartPtrType<Object> Mod(const TSmartPtrType<Object>& other) override;
@@ -132,7 +132,7 @@ if(const auto n = other.Cast<Number>(); n.IsValid()) \
     }
 
     template <typename T, typename T0>
-    std::string TNumber<T, T0>::ToString()
+    std::string TNumber<T, T0>::ToString() const
     {
         return std::to_string(_value);
     }

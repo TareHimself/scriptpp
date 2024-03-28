@@ -6,7 +6,7 @@ namespace vs::frontend
     class Null : public Object
     {
     public:
-        std::string ToString() override;
+        std::string ToString() const override;
         bool ToBoolean() const override;
         EObjectType GetType() const override;
     };
