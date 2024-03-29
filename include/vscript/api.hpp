@@ -8,7 +8,7 @@ namespace vs::api
 
 #define VS_API_MODULE(name,func) \
     auto _create_fn = ##func; \
-    extern "C" __declspec(dllexport) void _vs_import(vs::runtime::TSmartPtrType<vs::runtime::Module>& mod,vs::runtime::TSmartPtrType<vs::runtime::Program>& scope) \
+    extern "C" __declspec(dllexport) void _vs_import(vs::frontend::TSmartPtrType<vs::frontend::Module>& mod,vs::frontend::TSmartPtrType<vs::frontend::Program>& scope) \
     { \
         mod = _create_fn(scope); \
     }
