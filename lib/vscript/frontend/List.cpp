@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 
+#include "vscript/utils.hpp"
 #include "vscript/frontend/Null.hpp"
 #include "vscript/frontend/Number.hpp"
 #include "vscript/frontend/Number.hpp"
@@ -10,24 +11,24 @@
 
 namespace vs::frontend
 {
-    ListItemReference::ListItemReference(const size_t& index, const TSmartPtrType<ScopeLike>& scope,
-        const TSmartPtrType<Object>& val) : Reference(scope,val)
+    ListItemReference::ListItemReference(const size_t& index, const std::shared_ptr<ScopeLike>& scope,
+        const std::shared_ptr<Object>& val) : Reference(scope,val)
     {
         _index = index;
     }
 
-    void ListItemReference::Set(const TSmartPtrType<Object>& val)
+    void ListItemReference::Set(const std::shared_ptr<Object>& val)
     {
         Reference::Set(val);
-        if(auto asList = _scope.Cast<List>(); asList.IsValid())
+        if(const auto asList = cast<List>(_scope))
         {
             asList->Set(_index,val);
         }
     }
 
-    List::List(const std::vector<TSmartPtrType<Object>>& vec) : DynamicObject(makeScope())
+    void List::Init()
     {
-        _vec = vec;
+        DynamicObject::Init();
 
         AddNativeMemberFunction("pop",this,{},&List::Pop);
         AddNativeMemberFunction("push",this,{},&List::Push);
@@ -35,11 +36,16 @@ namespace vs::frontend
         AddNativeMemberFunction("forEach",this,{"callback"},&List::ForEach);
         AddNativeMemberFunction("filter",this,{"callback"},&List::Filter);
         AddNativeMemberFunction("find",this,{"callback"},&List::FindItem);
-        AddNativeMemberFunction("findIndex",this,{"callback"},&List::FindIndex);
-        AddNativeMemberFunction("sort",this,{"callback"},&List::Sort);
         AddNativeMemberFunction("size",this,{},&List::Size);
         AddNativeMemberFunction("join",this,{"delimiter"},&List::Join);
+        AddNativeMemberFunction("findIndex",this,{"callback"},&List::FindIndex);
+        AddNativeMemberFunction("sort",this,{"callback"},&List::Sort);
         AddNativeMemberFunction("reverse",this,{},&List::Reverse);
+    }
+
+    List::List(const std::vector<std::shared_ptr<Object>>& vec) : DynamicObject(makeScope())
+    {
+        _vec = vec;
     }
 
     std::string List::ToString() const
@@ -63,37 +69,37 @@ namespace vs::frontend
         return !_vec.empty();
     }
 
-    TSmartPtrType<Object> List::Get(const TSmartPtrType<Object>& key)
+    std::shared_ptr<Object> List::Get(const std::shared_ptr<Object>& key)
     {
         if(key->GetType() == OT_Number)
         {
-            const auto i = key.Cast<Number>()->GetValueAs<int>();
+            const auto i = cast<Number>(key)->GetValueAs<int>();
             if(i >= _vec.size())
             {
                 throw std::runtime_error("Index out of range " + std::to_string(i));
             }
             
-            return manage<ListItemReference>(i,this->ToRef().Reserve().Cast<DynamicObject>(),_vec[i]);
+            return makeObject<ListItemReference>(i,cast<DynamicObject>(this->GetRef()),_vec[i]);
         }
         return DynamicObject::Get(key);
     }
 
-    void List::Set(const TSmartPtrType<Object>& key, const TSmartPtrType<Object>& val)
+    void List::Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val)
     {
         if(key->GetType() == OT_Number)
         {
-            Set(key.Cast<Number>()->GetValueAs<int>(),val);
+            Set(cast<Number>(key)->GetValueAs<int>(),val);
             return;
         }
         DynamicObject::Set(key, val);
     }
 
-    void List::Set(const std::string& key, const TSmartPtrType<Object>& val)
+    void List::Set(const std::string& key, const std::shared_ptr<Object>& val)
     {
         DynamicObject::Set(key, val);
     }
 
-    void List::Set(const size_t& index, const TSmartPtrType<Object>& val)
+    void List::Set(const size_t& index, const std::shared_ptr<Object>& val)
     {
         if(index >= _vec.size())
         {
@@ -103,17 +109,17 @@ namespace vs::frontend
         _vec[index] = val;
     }
 
-    TSmartPtrType<Object> List::Push(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> List::Push(const std::shared_ptr<FunctionScope>& fnScope)
     {
         for(auto &arg : fnScope->GetArgs())
         {
             _vec.push_back(resolveReference(arg));
         }
         
-        return this->ToRef().Reserve();
+        return this->GetRef();
     }
 
-    TSmartPtrType<Object> List::Pop(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> List::Pop(const std::shared_ptr<FunctionScope>& fnScope)
     {
         if(_vec.empty())
         {
@@ -127,7 +133,7 @@ namespace vs::frontend
         return last;
     }
 
-    TSmartPtrType<Object> List::Map(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> List::Map(const std::shared_ptr<FunctionScope>& fnScope)
     {
         const auto args = fnScope->GetArgs();
         if (args.empty())
@@ -135,14 +141,13 @@ namespace vs::frontend
             throw std::runtime_error("No Callback passed to findIndex");
         }
 
-        if (auto fn = resolveReference(args[0]).Cast<Function>(); fn.IsValid())
+        if (const auto fn = cast<Function>(resolveReference(args[0])))
         {
-            const auto self = this->ToRef().Reserve().Cast<DynamicObject>();
-            const auto myRef = this->ToRef().Reserve();
-            std::vector<TSmartPtrType<Object>> mapped;
+            const auto self = cast<DynamicObject>(this->GetRef());
+            std::vector<std::shared_ptr<Object>> mapped;
             for (auto i = 0; i < _vec.size(); i++)
             {
-                mapped.push_back(fn->Call(self,_vec.at(i), makeNumber(i),myRef));
+                mapped.push_back(fn->Call(self,_vec.at(i), makeNumber(i),self));
             }
 
             return makeList(mapped);
@@ -151,7 +156,7 @@ namespace vs::frontend
         return makeNull();
     }
 
-    TSmartPtrType<Object> List::ForEach(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> List::ForEach(const std::shared_ptr<FunctionScope>& fnScope)
     {
         const auto args = fnScope->GetArgs();
         if (args.empty())
@@ -159,20 +164,19 @@ namespace vs::frontend
             throw std::runtime_error("No Callback passed to findIndex");
         }
 
-        if (auto fn = resolveReference(args[0]).Cast<Function>(); fn.IsValid())
+        if (const auto fn = cast<Function>(resolveReference(args[0])))
         {
-            const auto self = this->ToRef().Reserve().Cast<DynamicObject>();
-            const auto myRef = this->ToRef().Reserve();
+            const auto self = cast<DynamicObject>(this->GetRef());
             for (auto i = 0; i < _vec.size(); i++)
             {
-                fn->Call(self,_vec.at(i), makeNumber(i),myRef);
+                fn->Call(self,_vec.at(i), makeNumber(i),self);
             }
         }
 
         return makeNull();
     }
 
-    TSmartPtrType<Object> List::Filter(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> List::Filter(const std::shared_ptr<FunctionScope>& fnScope)
     {
         const auto args = fnScope->GetArgs();
         if (args.empty())
@@ -180,10 +184,10 @@ namespace vs::frontend
             throw std::runtime_error("No Callback passed to ");
         }
 
-        if (auto fn = resolveReference(args[0]).Cast<Function>(); fn.IsValid())
+        if (auto fn = cast<Function>(resolveReference(args[0])))
         {
-            const auto self = this->ToRef().Reserve().Cast<DynamicObject>();
-            std::vector<TSmartPtrType<Object>> filtered;
+            const auto self = cast<DynamicObject>(this->GetRef());
+            std::vector<std::shared_ptr<Object>> filtered;
             for (auto i = 0; i < _vec.size(); i++)
             {
                 if (fn->Call(self,_vec.at(i), makeNumber(i),self)->ToBoolean())
@@ -198,7 +202,7 @@ namespace vs::frontend
         return makeNull();
     }
 
-    TSmartPtrType<Object> List::FindItem(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> List::FindItem(const std::shared_ptr<FunctionScope>& fnScope)
     {
         const auto args = fnScope->GetArgs();
         if (args.empty())
@@ -206,9 +210,9 @@ namespace vs::frontend
             throw std::runtime_error("No Callback passed to find");
         }
 
-        if (auto fn = resolveReference(args[0]).Cast<Function>(); fn.IsValid())
+        if (auto fn = cast<Function>(resolveReference(args[0])))
         {
-            const auto self = this->ToRef().Reserve().Cast<DynamicObject>();
+            const auto self = cast<DynamicObject>(this->GetRef());
             for (auto i = 0; i < _vec.size(); i++)
             {
                 if (fn->Call(self,_vec.at(i), makeNumber(i),self)->ToBoolean())
@@ -221,7 +225,7 @@ namespace vs::frontend
         return makeNull();
     }
 
-    TSmartPtrType<Object> List::FindIndex(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> List::FindIndex(const std::shared_ptr<FunctionScope>& fnScope)
     {
         const auto args = fnScope->GetArgs();
         if (args.empty())
@@ -229,9 +233,9 @@ namespace vs::frontend
             throw std::runtime_error("No Callback passed to findIndex");
         }
 
-        if (auto fn = resolveReference(args[0]).Cast<Function>(); fn.IsValid())
+        if (auto fn = cast<Function>(resolveReference(args[0])))
         {
-            const auto self = this->ToRef().Reserve().Cast<DynamicObject>();
+            const auto self = cast<DynamicObject>(this->GetRef());
             for (auto i = 0; i < _vec.size(); i++)
             {
                 if (fn->Call(self,_vec.at(i), makeNumber(i),self)->ToBoolean())
@@ -244,20 +248,22 @@ namespace vs::frontend
         return makeNull();
     }
 
-    TSmartPtrType<Object> List::Sort(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> List::Sort(const std::shared_ptr<FunctionScope>& fnScope)
     {
 
         const auto args = fnScope->GetArgs();
 
         std::function<int(const void*,const void*)> sortFn;
-        if (const auto fn = args.empty() ? TSmartPtrType<Function>(nullptr) : resolveReference(args[0]).Cast<Function>(); fn.IsValid())
+        if (const auto fn = args.empty() ? std::shared_ptr<Function>(nullptr) : cast<Function>(resolveReference(args[0])))
         {
-            const auto self = this->ToRef().Reserve().Cast<DynamicObject>();
-            std::ranges::sort(_vec,[fn,self] (const TSmartPtrType<Object>& a,const TSmartPtrType<Object>& b)
+            const auto self = cast<DynamicObject>(this->GetRef());
+            std::ranges::sort(_vec,[fn,self] (const std::shared_ptr<Object>& a,const std::shared_ptr<Object>& b)
             {
                 if(auto r = fn->Call(self,a,b); r->GetType() == OT_Number)
                 {
-                    return r.Cast<Number>()->GetValueAs<int>();
+                    const int i = cast<Number,Object>(r)->GetValueAs<int>();
+                    return i;
+                    return cast<Number>(r)->GetValueAs<int>();
                 }
                 
                 return 0;
@@ -267,8 +273,8 @@ namespace vs::frontend
         {
             std::qsort(_vec.data(),_vec.size(),sizeof(decltype(_vec)::value_type),[](const void* a,const void* b)
             {
-                const auto aObj = *static_cast<const TSmartPtrType<Object> *>(a);
-                const auto bObj = *static_cast<const TSmartPtrType<Object> *>(b);
+                const auto aObj = *static_cast<const std::shared_ptr<Object> *>(a);
+                const auto bObj = *static_cast<const std::shared_ptr<Object> *>(b);
 
                 if(aObj->Less(bObj))
                 {
@@ -284,17 +290,17 @@ namespace vs::frontend
             });
         }
         
-        return this->ToRef().Reserve();
+        return this->GetRef();
     }
 
-    TSmartPtrType<ListPrototype> List::Prototype = manage<ListPrototype>();
+    std::shared_ptr<ListPrototype> List::Prototype = makeObject<ListPrototype>();
 
-    TSmartPtrType<Object> List::Size(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> List::Size(const std::shared_ptr<FunctionScope>& fnScope)
     {
         return makeNumber(_vec.size());
     }
 
-    TSmartPtrType<Object> List::Join(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> List::Join(const std::shared_ptr<FunctionScope>& fnScope)
     {
         std::string result;
 
@@ -318,21 +324,21 @@ namespace vs::frontend
         return makeString(result);
     }
 
-    TSmartPtrType<Object> List::Reverse(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> List::Reverse(const std::shared_ptr<FunctionScope>& fnScope)
     {
-        std::vector<TSmartPtrType<Object>> vec = _vec;
+        std::vector<std::shared_ptr<Object>> vec = _vec;
         std::ranges::reverse(vec);
         return makeList(vec);
     }
 
-    std::vector<TSmartPtrType<Object>>& List::GetNative()
+    std::vector<std::shared_ptr<Object>>& List::GetNative()
     {
         return _vec;
     }
 
     ListPrototype::ListPrototype() : Prototype(makeScope(), makeNativeFunction(
                                                    {}, ReservedDynamicFunctions::CALL, {},
-                                                   [](const TSmartPtrType<FunctionScope>& fnScope)
+                                                   [](const std::shared_ptr<FunctionScope>& fnScope)
                                                    {
                                                        return makeList(fnScope->GetArgs());
                                                    }))
@@ -344,8 +350,8 @@ namespace vs::frontend
         return "<Prototype : List>";
     }
 
-    TSmartPtrType<List> makeList(const std::vector<TSmartPtrType<Object>>& items)
+    std::shared_ptr<List> makeList(const std::vector<std::shared_ptr<Object>>& items)
     {
-        return manage<List>(items);
+        return  makeObject<List>(items);
     }
 }

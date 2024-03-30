@@ -11,25 +11,25 @@ namespace vs::frontend
 
     class Program : public DynamicObject
     {
-        std::unordered_map<std::string,TSmartPtrType<Module>> _modules;
+        std::unordered_map<std::string,std::shared_ptr<Module>> _modules;
         std::filesystem::path _cwd = std::filesystem::current_path();
-
-    protected:
-        void OnRefSet() override;
     public:
         Program();
 
-        
+        void Init() override;
+        virtual std::shared_ptr<Module> ImportModule(const std::string& id);
 
-        virtual TSmartPtrType<Module> ImportModule(const std::string& id);
+        virtual std::shared_ptr<Module> ModuleFromFile(const std::filesystem::path& path);
 
-        virtual TSmartPtrType<Module> ModuleFromFile(const std::filesystem::path& path);
+        virtual std::shared_ptr<Module> ImportModule(std::shared_ptr<FunctionScope>& scope, const std::string& id);
 
-        virtual TSmartPtrType<Module> ImportModule(TSmartPtrType<FunctionScope>& scope, const std::string& id);
+        virtual std::shared_ptr<Object> Import(const std::shared_ptr<FunctionScope>& scope);
 
-        TSmartPtrType<Object> Find(const std::string& id, bool searchParent) override;
+        virtual std::shared_ptr<Object> GetCwd(const std::shared_ptr<FunctionScope>& scope);
+
+        std::shared_ptr<Object> Find(const std::string& id, bool searchParent) override;
     };
     
 
-    TSmartPtrType<Program> makeProgram();
+    std::shared_ptr<Program> makeProgram();
 }

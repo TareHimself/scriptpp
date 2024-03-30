@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 
+#include "vscript/utils.hpp"
 #include "vscript/frontend/Boolean.hpp"
 #include "vscript/frontend/Error.hpp"
 #include "vscript/frontend/List.hpp"
@@ -13,8 +14,8 @@
 namespace vs::frontend
 {
 
-    TSmartPtrType<Object> evalBinaryOperation(const std::shared_ptr<backend::BinaryOpNode>& ast,
-                                              const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Object> evalBinaryOperation(const std::shared_ptr<backend::BinaryOpNode>& ast,
+                                              const std::shared_ptr<ScopeLike>& scope)
     {
         auto left = resolveReference(evalExpression(ast->left,scope));
         auto right = resolveReference(evalExpression(ast->right,scope));
@@ -53,19 +54,19 @@ namespace vs::frontend
         return makeNull();
     }
 
-    TSmartPtrType<Object> runScope(const std::shared_ptr<backend::ScopeNode>& ast, const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Object> runScope(const std::shared_ptr<backend::ScopeNode>& ast, const std::shared_ptr<ScopeLike>& scope)
     {
-        TSmartPtrType<Object> lastResult = makeNull();
+        std::shared_ptr<Object> lastResult = makeNull();
 
         for (const auto& statement : ast->statements)
         {
-            if (auto evalResult = evalStatement(statement, scope); evalResult.IsValid())
+            if (auto evalResult = evalStatement(statement, scope))
             {
                 if (evalResult->GetType() == OT_ReturnValue)
                 {
                     if (scope->GetScopeType() == ST_Function)
                     {
-                        return evalResult.Cast<ReturnValue>()->GetValue();
+                        return cast<ReturnValue>(evalResult)->GetValue();
                     }
 
                     return evalResult;
@@ -78,7 +79,7 @@ namespace vs::frontend
         return lastResult;
     }
 
-    TSmartPtrType<Object> evalWhen(const std::shared_ptr<backend::WhenNode>& ast, const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Object> evalWhen(const std::shared_ptr<backend::WhenNode>& ast, const std::shared_ptr<ScopeLike>& scope)
     {
         for (auto& branch : ast->branches)
         {
@@ -92,8 +93,8 @@ namespace vs::frontend
         return makeNull();
     }
 
-    TSmartPtrType<Object> evalExpression(const std::shared_ptr<backend::Node>& ast,
-                                         const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Object> evalExpression(const std::shared_ptr<backend::Node>& ast,
+                                         const std::shared_ptr<ScopeLike>& scope)
     {
         switch (ast->type)
         {
@@ -133,7 +134,7 @@ namespace vs::frontend
             {
                 if (const auto r = std::dynamic_pointer_cast<backend::ListLiteralNode>(ast))
                 {
-                    std::vector<TSmartPtrType<Object>> items;
+                    std::vector<std::shared_ptr<Object>> items;
                     for(auto &it : r->values)
                     {
                         auto evalResult = evalExpression(it,scope);
@@ -194,49 +195,49 @@ namespace vs::frontend
         }
     }
 
-    TSmartPtrType<Function> evalFunction(const std::shared_ptr<backend::FunctionNode>& ast,
-                                         const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Function> evalFunction(const std::shared_ptr<backend::FunctionNode>& ast,
+                                         const std::shared_ptr<ScopeLike>& scope)
     {
         return makeRuntimeFunction(scope, ast);
     }
 
-    TSmartPtrType<Object> callFunction(const std::shared_ptr<backend::CallNode>& ast, const TSmartPtrType<Function>& fn,
-                                       const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Object> callFunction(const std::shared_ptr<backend::CallNode>& ast, const std::shared_ptr<Function>& fn,
+                                       const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<CallScope>& callScope)
     {
-        std::vector<TSmartPtrType<Object>> args;
+        std::vector<std::shared_ptr<Object>> args;
         for (auto& arg : ast->args)
         {
             args.push_back(evalExpression(arg, scope));
         }
 
-        return fn->Call(makeCallScopeLayer(ast->debugInfo,fn,scope),args);
+        return fn->Call(callScope,args);
     }
     
 
-    TSmartPtrType<Object> evalCall(const std::shared_ptr<backend::CallNode>& ast, const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Object> evalCall(const std::shared_ptr<backend::CallNode>& ast, const std::shared_ptr<ScopeLike>& scope)
     {
         
-        if (const auto obj = evalExpression(ast->left, scope); obj.IsValid())
+        if (const auto obj = evalExpression(ast->left, scope))
         {
-            auto target = resolveReference(obj);
+            const auto target = resolveReference(obj);
             
             if (target->GetType() == OT_Function)
             {
-                if (const auto asCall = target.Cast<Function>(); asCall.IsValid())
+                if (const auto asCall = cast<Function>(target))
                 {
-                    return callFunction(ast, asCall, scope);
+                    return callFunction(ast, asCall, scope,makeCallScope(ast->debugInfo,asCall,scope));
                 }
             }
 
             if (target->GetType() == OT_Dynamic)
             {
-                if (const auto asDynamic = target.Cast<DynamicObject>(); asDynamic.IsValid())
+                if (const auto asDynamic = cast<DynamicObject>(target))
                 {
                     if (asDynamic->Has(ReservedDynamicFunctions::CALL))
                     {
-                        if (const auto asCall = resolveReference(asDynamic->Get(ReservedDynamicFunctions::CALL)).Cast<Function>(); asCall.IsValid())
+                        if (const auto asCall = cast<Function>(resolveReference(asDynamic->Get(ReservedDynamicFunctions::CALL))))
                         {
-                            return callFunction(ast, asCall, scope);
+                            return callFunction(ast, asCall, scope,makeCallScope(ast->debugInfo,asCall,asDynamic));
                         }
                     }
                 }
@@ -248,13 +249,13 @@ namespace vs::frontend
         throw makeError(scope,"Unknown object during call",ast->debugInfo);
     }
 
-    TSmartPtrType<Object> evalFor(const std::shared_ptr<backend::ForNode>& ast, const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Object> evalFor(const std::shared_ptr<backend::ForNode>& ast, const std::shared_ptr<ScopeLike>& scope)
     {
-        TSmartPtrType<Object> result = makeNull();
+        std::shared_ptr<Object> result = makeNull();
         evalStatement(ast->init, scope);
         while (resolveReference(evalStatement(ast->condition, scope))->ToBoolean())
         {
-            if (auto temp = resolveReference(runScope(ast->body, scope)); temp.IsValid())
+            if (auto temp = resolveReference(runScope(ast->body, scope)))
             {
                 if (temp->GetType() == OT_ReturnValue)
                 {
@@ -265,7 +266,7 @@ namespace vs::frontend
                 }
                 else if (temp->GetType() == OT_FlowControl)
                 {
-                    if (const auto flow = temp.Cast<FlowControl>(); temp.IsValid())
+                    if (const auto flow = cast<FlowControl>(temp))
                     {
                         if (flow->GetValue() == FlowControl::Break)
                         {
@@ -288,13 +289,13 @@ namespace vs::frontend
         return result;
     }
 
-    TSmartPtrType<Object> evalWhile(const std::shared_ptr<backend::WhileNode>& ast,
-                                    const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Object> evalWhile(const std::shared_ptr<backend::WhileNode>& ast,
+                                    const std::shared_ptr<ScopeLike>& scope)
     {
-        TSmartPtrType<Object> result = makeNull();
+        std::shared_ptr<Object> result = makeNull();
         while (resolveReference(evalStatement(ast->condition, scope))->ToBoolean())
         {
-            if (auto temp = runScope(ast->body, scope); temp.IsValid())
+            if (auto temp = runScope(ast->body, scope))
             {
                 if (temp->GetType() == OT_ReturnValue)
                 {
@@ -305,7 +306,7 @@ namespace vs::frontend
                 }
                 else if (temp->GetType() == OT_FlowControl)
                 {
-                    if (const auto flow = temp.Cast<FlowControl>(); temp.IsValid())
+                    if (const auto flow = cast<FlowControl>(temp))
                     {
                         if (flow->GetValue() == FlowControl::Break)
                         {
@@ -325,7 +326,7 @@ namespace vs::frontend
         return result;
     }
 
-    TSmartPtrType<Object> evalStatement(const std::shared_ptr<backend::Node>& ast, const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Object> evalStatement(const std::shared_ptr<backend::Node>& ast, const std::shared_ptr<ScopeLike>& scope)
     {
         switch (ast->type)
         {
@@ -439,11 +440,11 @@ namespace vs::frontend
         return makeNull();
     }
 
-    TSmartPtrType<Object> evalAccess(const std::shared_ptr<backend::AccessNode>& ast,
-                                     const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Object> evalAccess(const std::shared_ptr<backend::AccessNode>& ast,
+                                     const std::shared_ptr<ScopeLike>& scope)
     {
         auto target = evalExpression(ast->left, scope);
-        if (const auto rTarget = resolveReference(target).Cast<DynamicObject>(); rTarget.IsValid())
+        if (const auto rTarget = cast<DynamicObject>(resolveReference(target)))
         {
             return evalExpression(ast->right, rTarget);
             // if (const auto asDynamic = rTarget.Cast<DynamicObject>(); asDynamic.IsValid())
@@ -455,11 +456,11 @@ namespace vs::frontend
         throw makeError(scope,target->ToString() + " is not a dynamic object",ast->debugInfo);
     }
 
-    TSmartPtrType<Object> evalAccess2(const std::shared_ptr<backend::AccessNode2>& ast,
-                                      const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Object> evalAccess2(const std::shared_ptr<backend::AccessNode2>& ast,
+                                      const std::shared_ptr<ScopeLike>& scope)
     {
         auto target = evalExpression(ast->left, scope);
-        if (const auto rTarget = resolveReference(target).Cast<DynamicObject>(); rTarget.IsValid())
+        if (const auto rTarget = cast<DynamicObject>(resolveReference(target)))
         {
             const auto within = evalExpression(ast->within, scope);
             const auto rWithin = resolveReference(within);
@@ -470,28 +471,28 @@ namespace vs::frontend
         throw makeError(scope,target->ToString() + " is not a dynamic object",ast->debugInfo);
     }
 
-    TSmartPtrType<Object> evalAssign(const std::shared_ptr<backend::AssignNode>& ast,
-                                     const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Object> evalAssign(const std::shared_ptr<backend::AssignNode>& ast,
+                                     const std::shared_ptr<ScopeLike>& scope)
     {
         if(auto left = evalExpression(ast->left,scope); left->GetType() == OT_Reference)
         {
             auto right = evalExpression(ast->value,scope);
             const auto trueRight = resolveReference(right);
-            left.Cast<Reference>()->Set(trueRight);
+            cast<Reference>(left)->Set(trueRight);
             return right;
         }
         
         throw makeError(scope,"Assign failed",ast->debugInfo);
     }
 
-    TSmartPtrType<Object> evalTryCatch(const std::shared_ptr<backend::TryCatchNode>& ast,
-        const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Object> evalTryCatch(const std::shared_ptr<backend::TryCatchNode>& ast,
+        const std::shared_ptr<ScopeLike>& scope)
     {
         try
         {
             return runScope(ast->tryScope,scope);
         }
-        catch (TSmartPtrType<Error> & e)
+        catch (std::shared_ptr<Error> & e)
         {
             auto catchScope = makeScope(scope);
             if(!ast->catchArgumentName.empty())
@@ -502,8 +503,8 @@ namespace vs::frontend
         }
     }
 
-    TSmartPtrType<Module> evalModule(const std::shared_ptr<backend::ModuleNode>& ast,
-                                     const TSmartPtrType<Program>& program)
+    std::shared_ptr<Module> evalModule(const std::shared_ptr<backend::ModuleNode>& ast,
+                                     const std::shared_ptr<Program>& program)
     {
         auto mod = makeModule(program);
         
@@ -515,30 +516,30 @@ namespace vs::frontend
         return mod;
     }
     
-    TSmartPtrType<Prototype> evalClass(const std::shared_ptr<backend::PrototypeNode>& ast,
-                                       const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<Prototype> evalClass(const std::shared_ptr<backend::PrototypeNode>& ast,
+                                       const std::shared_ptr<ScopeLike>& scope)
     {
         auto prototype = makePrototype(scope, ast);
         scope->Create(ast->id, prototype);
         return prototype;
     }
 
-    TSmartPtrType<DynamicObject> createDynamicFromPrototype(const std::shared_ptr<backend::PrototypeNode>& ast,
-                                                            const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<DynamicObject> createDynamicFromPrototype(const std::shared_ptr<backend::PrototypeNode>& ast,
+                                                            const std::shared_ptr<ScopeLike>& scope)
     {
         const auto dynamicObjScope = makeScope(scope);
-        auto dynamicObj = makeDynamic(dynamicObjScope.CastStatic<ScopeLike>());
+        auto dynamicObj = makeDynamic(dynamicObjScope);
 
         for (auto& statement : ast->scope->statements)
         {
-            evalStatement(statement, dynamicObjScope.CastStatic<ScopeLike>());
+            evalStatement(statement, dynamicObjScope);
         }
 
 
         return dynamicObj;
     }
 
-    TSmartPtrType<Object> eval(const std::shared_ptr<backend::Node>& ast)
+    std::shared_ptr<Object> eval(const std::shared_ptr<backend::Node>& ast)
     {
         switch (ast->type)
         {
@@ -555,12 +556,12 @@ namespace vs::frontend
         case backend::NT_Statement:
             {
                 const auto scope = makeScope();
-                return evalStatement(ast, scope.CastStatic<ScopeLike>());
+                return evalStatement(ast, scope);
             }
         default:
             {
                 const auto scope = makeScope();
-                return evalExpression(ast, scope.CastStatic<ScopeLike>());
+                return evalExpression(ast, scope);
             }
         }
     }

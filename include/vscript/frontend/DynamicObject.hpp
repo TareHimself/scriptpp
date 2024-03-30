@@ -13,80 +13,45 @@ namespace vs::frontend
         inline static std::string CALL = "__call__";
         inline static std::string CONSTRUCTOR = "__ctor__";
     };
-
-    class OneLayerScopeProxy : public ScopeLike
-    {
-        TSmartPtrType<ScopeLike> _outer;
-    public:
-        explicit OneLayerScopeProxy(const TSmartPtrType<ScopeLike>& scope);
-
-        std::list<EScopeType> GetScopeStack() const override;
-        bool HasScopeType(EScopeType type) const override;
-        EScopeType GetScopeType() const override;
-        bool Has(const std::string& id, bool searchParent) const override;
-        void Create(const std::string& id, const TSmartPtrType<Object>& var) override;
-        void Assign(const std::string& id, const TSmartPtrType<Object>& var) override;
-        TSmartPtrType<Object> Find(const std::string& id, bool searchParent) override;
-        TSmartPtrType<ScopeLike> GetOuter() const override;
-    };
-
-    class DynamicObjectCallScope : public ScopeLike
-    {
-        Ref<DynamicObject> _outer;
-    public:
-        explicit DynamicObjectCallScope(const Ref<DynamicObject>& scope);
-
-        std::list<EScopeType> GetScopeStack() const override;
-        bool HasScopeType(EScopeType type) const override;
-        EScopeType GetScopeType() const override;
-        bool Has(const std::string& id, bool searchParent) const override;
-        void Create(const std::string& id, const TSmartPtrType<Object>& var) override;
-        void Assign(const std::string& id, const TSmartPtrType<Object>& var) override;
-        TSmartPtrType<Object> Find(const std::string& id, bool searchParent) override;
-        TSmartPtrType<ScopeLike> GetOuter() const override;
-    };
     
     class DynamicObject : public Object, public ScopeLike
     {
     protected:
-        TSmartPtrType<ScopeLike> _outer;
-        TSmartPtrType<DynamicObjectCallScope> _callScope;
-        std::unordered_map<std::string,TSmartPtrType<Object>> _properties;
-
-        void OnRefSet() override;
+        std::shared_ptr<ScopeLike> _outer;
+        std::unordered_map<std::string,std::shared_ptr<Object>> _properties;
+        std::shared_ptr<ScopeLike> _selfFunctionScope;
     public:
-        explicit DynamicObject(const TSmartPtrType<ScopeLike>& scope);
+
+        void Init() override;
+        explicit DynamicObject(const std::shared_ptr<ScopeLike>& scope);
         
-        virtual void Set(const std::string& key, const TSmartPtrType<Object>& val);
+        virtual void Set(const std::string& key, const std::shared_ptr<Object>& val);
 
-        virtual void Set(const TSmartPtrType<Object>& key, const TSmartPtrType<Object>& val);
+        virtual void Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val);
 
-        virtual TSmartPtrType<Object> Get(const std::string& key);
+        virtual std::shared_ptr<Object> Get(const std::string& key);
 
-        virtual TSmartPtrType<Object> Get(const TSmartPtrType<Object>& key);
+        virtual std::shared_ptr<Object> Get(const std::shared_ptr<Object>& key);
 
         bool Has(const std::string& id, bool searchParent = true) const override;
 
-        void Assign(const std::string& id, const TSmartPtrType<Object>& var) override;
-        void Create(const std::string& id, const TSmartPtrType<Object>& var) override;
-        TSmartPtrType<Object> Find(const std::string& id, bool searchParent = true) override;
+        void Assign(const std::string& id, const std::shared_ptr<Object>& var) override;
+        void Create(const std::string& id, const std::shared_ptr<Object>& var) override;
+        std::shared_ptr<Object> Find(const std::string& id, bool searchParent = true) override;
 
         std::list<EScopeType> GetScopeStack() const override;
         bool HasScopeType(EScopeType type) const override;
         EScopeType GetScopeType() const override;
-
-
-        virtual TSmartPtrType<DynamicObjectCallScope> CreateCallScope();
         EObjectType GetType() const override;
 
         std::string ToString() const override;
         bool ToBoolean() const override;
 
         template<typename T>
-        using TNativeDynamicMemberFunction = TSmartPtrType<Object>(T::*)(TSmartPtrType<FunctionScope>&);
+        using TNativeDynamicMemberFunction = std::shared_ptr<Object>(T::*)(std::shared_ptr<FunctionScope>&);
 
         template<typename T>
-        using TNativeDynamicMemberFunctionConst = TSmartPtrType<Object>(T::*)(const TSmartPtrType<FunctionScope>&);
+        using TNativeDynamicMemberFunctionConst = std::shared_ptr<Object>(T::*)(const std::shared_ptr<FunctionScope>&);
         
         template<typename T>
         void AddNativeMemberFunction(const std::string& name,T * instance,const std::vector<std::string>& args,TNativeDynamicMemberFunction<T> func);
@@ -95,9 +60,9 @@ namespace vs::frontend
         void AddNativeMemberFunction(const std::string& name,T * instance,const std::vector<std::string>& args,TNativeDynamicMemberFunctionConst<T> func);
 
         
-        void AddLambda(const std::string& name,const std::vector<std::string>& args,const std::function<TSmartPtrType<Object>(TSmartPtrType<FunctionScope>&)>& func);
+        void AddLambda(const std::string& name,const std::vector<std::string>& args,const std::function<std::shared_ptr<Object>(std::shared_ptr<FunctionScope>&)>& func);
 
-        TSmartPtrType<ScopeLike> GetOuter() const override;
+        std::shared_ptr<ScopeLike> GetOuter() const override;
         
     };
 
@@ -105,27 +70,27 @@ namespace vs::frontend
     void DynamicObject::AddNativeMemberFunction(const std::string& name, T* instance,const std::vector<std::string>& args,
         TNativeDynamicMemberFunction<T> func)
     {
-        DynamicObject::Set(name, makeNativeFunction(_callScope, name, args,std::bind(func,instance,std::placeholders::_1),false));
+        DynamicObject::Set(name, makeNativeFunction(_selfFunctionScope, name, args,std::bind(func,instance,std::placeholders::_1),false));
     }
 
     template <typename T>
     void DynamicObject::AddNativeMemberFunction(const std::string& name, T* instance, const std::vector<std::string>& args,
         TNativeDynamicMemberFunctionConst<T> func)
     {
-        DynamicObject::Set(name, makeNativeFunction(_callScope, name, args,std::bind(func,instance,std::placeholders::_1),false));
+        DynamicObject::Set(name, makeNativeFunction(_selfFunctionScope, name, args,std::bind(func,instance,std::placeholders::_1),false));
     }
 
     class DynamicObjectReference : public Reference
     {
         std::string _id;
-        TSmartPtrType<DynamicObject> _obj;
+        std::shared_ptr<DynamicObject> _obj;
     public:
-        DynamicObjectReference(const std::string& id,const TSmartPtrType<DynamicObject>& obj,const TSmartPtrType<ScopeLike>& scope,const TSmartPtrType<Object>& val);
-        void Set(const TSmartPtrType<Object>& val) override;
+        DynamicObjectReference(const std::string& id,const std::shared_ptr<DynamicObject>& obj,const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<Object>& val);
+        void Set(const std::shared_ptr<Object>& val) override;
     };
 
 
-    TSmartPtrType<DynamicObject> makeDynamic(const TSmartPtrType<ScopeLike>& scope);
+    std::shared_ptr<DynamicObject> makeDynamic(const std::shared_ptr<ScopeLike>& scope);
     
-    TSmartPtrType<OneLayerScopeProxy> makeOneLayerScopeProxy(const TSmartPtrType<ScopeLike>& scope);
+    
 }

@@ -12,10 +12,10 @@ namespace vs::frontend
         _scopeStack = {GetScopeType()};
     };
 
-    Scope::Scope(const TSmartPtrType<ScopeLike>& outer)
+    Scope::Scope(const std::shared_ptr<ScopeLike>& outer)
     {
         _outer = outer;
-        if(_outer.IsValid())
+        if(_outer)
         {
             _scopeStack = outer->GetScopeStack();
         }
@@ -31,12 +31,12 @@ namespace vs::frontend
         return "scope";
     }
 
-    void Scope::Assign(const std::string& id, const TSmartPtrType<Object>& var)
+    void Scope::Assign(const std::string& id, const std::shared_ptr<Object>& var)
     {
         _data[id] = var;
     }
 
-    void Scope::Create(const std::string& id, const TSmartPtrType<Object>& var)
+    void Scope::Create(const std::string& id, const std::shared_ptr<Object>& var)
     {
         _data[id] = var;
     }
@@ -48,7 +48,7 @@ namespace vs::frontend
             return true;
         }
 
-        if(searchParent && _outer.IsValid())
+        if(searchParent && _outer)
         {
             return _outer->Has(id);
         }
@@ -56,14 +56,14 @@ namespace vs::frontend
         return false;
     }
 
-    TSmartPtrType<Object> Scope::Find(const std::string& id, bool searchParent)
+    std::shared_ptr<Object> Scope::Find(const std::string& id, bool searchParent)
     {
         if(_data.contains(id))
         {
-            return  makeReferenceWithId(id,this->ToRef().Reserve().Cast<Scope>(),_data[id]);
+            return  makeReferenceWithId(id,cast<Scope>(this->GetRef()),_data[id]);
         }
 
-        if(searchParent && _outer.IsValid())
+        if(searchParent && _outer)
         {
             return _outer->Find(id);
         }
@@ -71,19 +71,19 @@ namespace vs::frontend
         return makeNull();
     }
 
-    TSmartPtrType<ScopeLike> Scope::GetOuter() const
+    std::shared_ptr<ScopeLike> Scope::GetOuter() const
     {
         return _outer;
     }
 
-    RefScopeProxy::RefScopeProxy(const Ref<ScopeLike>& scope)
+    RefScopeProxy::RefScopeProxy(const std::weak_ptr<ScopeLike>& scope)
     {
         _scope = scope;
     }
 
     std::list<EScopeType> RefScopeProxy::GetScopeStack() const
     {
-        if(auto s = _scope.Reserve(); s.IsValid())
+        if(const auto s = _scope.lock())
         {
             return s->GetScopeStack();
         }
@@ -93,7 +93,7 @@ namespace vs::frontend
 
     bool RefScopeProxy::HasScopeType(EScopeType type) const
     {
-        if(auto s = _scope.Reserve(); s.IsValid())
+        if(const auto s = _scope.lock())
         {
             return s->HasScopeType(type);
         }
@@ -103,7 +103,7 @@ namespace vs::frontend
 
     EScopeType RefScopeProxy::GetScopeType() const
     {
-        if(auto s = _scope.Reserve(); s.IsValid())
+        if(const auto s = _scope.lock())
         {
             return s->GetScopeType();
         }
@@ -111,17 +111,17 @@ namespace vs::frontend
         return ST_None;
     }
 
-    void RefScopeProxy::Assign(const std::string& id, const TSmartPtrType<Object>& var)
+    void RefScopeProxy::Assign(const std::string& id, const std::shared_ptr<Object>& var)
     {
-        if(auto s = _scope.Reserve(); s.IsValid())
+        if(const auto s = _scope.lock())
         {
             return s->Assign(id,var);
         }
     }
 
-    void RefScopeProxy::Create(const std::string& id, const TSmartPtrType<Object>& var)
+    void RefScopeProxy::Create(const std::string& id, const std::shared_ptr<Object>& var)
     {
-        if(auto s = _scope.Reserve(); s.IsValid())
+        if(const auto s = _scope.lock())
         {
             return s->Create(id,var);
         }
@@ -129,7 +129,7 @@ namespace vs::frontend
 
     bool RefScopeProxy::Has(const std::string& id, bool searchParent) const
     {
-        if(auto s = _scope.Reserve(); s.IsValid())
+        if(const auto s = _scope.lock())
         {
             return s->Has(id,searchParent);
         }
@@ -137,9 +137,9 @@ namespace vs::frontend
         return false;
     }
 
-    TSmartPtrType<Object> RefScopeProxy::Find(const std::string& id, bool searchParent)
+    std::shared_ptr<Object> RefScopeProxy::Find(const std::string& id, bool searchParent)
     {
-        if(auto s = _scope.Reserve(); s.IsValid())
+        if(const auto s = _scope.lock())
     {
         return s->Find(id,searchParent);
     }
@@ -147,9 +147,9 @@ namespace vs::frontend
         return makeNull();
     }
 
-    TSmartPtrType<ScopeLike> RefScopeProxy::GetOuter() const
+    std::shared_ptr<ScopeLike> RefScopeProxy::GetOuter() const
     {
-        if(auto s = _scope.Reserve(); s.IsValid())
+        if(const auto s = _scope.lock())
         {
             return s->GetOuter();
         }
@@ -157,76 +157,76 @@ namespace vs::frontend
         return {};
     }
 
-    CallScopeLayer::CallScopeLayer(const backend::TokenDebugInfo& calledAt, const TSmartPtrType<Function>& called,
-        const TSmartPtrType<ScopeLike>& scope)
+    CallScope::CallScope(const backend::TokenDebugInfo& calledAt, const std::shared_ptr<Function>& called,
+        const std::shared_ptr<ScopeLike>& scope)
     {
         _calledAt = calledAt;
         _called = called;
         _scope = scope;
     }
 
-    std::list<EScopeType> CallScopeLayer::GetScopeStack() const
+    std::list<EScopeType> CallScope::GetScopeStack() const
     {
         return _scope->GetScopeStack();
     }
 
-    bool CallScopeLayer::HasScopeType(EScopeType type) const
+    bool CallScope::HasScopeType(EScopeType type) const
     {
         return _scope->HasScopeType(type);
     }
 
-    EScopeType CallScopeLayer::GetScopeType() const
+    EScopeType CallScope::GetScopeType() const
     {
         return _scope->GetScopeType();
     }
 
-    void CallScopeLayer::Assign(const std::string& id, const TSmartPtrType<Object>& var)
+    void CallScope::Assign(const std::string& id, const std::shared_ptr<Object>& var)
     {
         _scope->Assign(id,var);
     }
 
-    void CallScopeLayer::Create(const std::string& id, const TSmartPtrType<Object>& var)
+    void CallScope::Create(const std::string& id, const std::shared_ptr<Object>& var)
     {
         _scope->Create(id,var);
     }
 
-    bool CallScopeLayer::Has(const std::string& id, bool searchParent) const
+    bool CallScope::Has(const std::string& id, bool searchParent) const
     {
         return _scope->Has(id,searchParent);
     }
 
-    TSmartPtrType<Object> CallScopeLayer::Find(const std::string& id, bool searchParent)
+    std::shared_ptr<Object> CallScope::Find(const std::string& id, bool searchParent)
     {
         return _scope->Find(id,searchParent);
     }
 
-    TSmartPtrType<ScopeLike> CallScopeLayer::GetOuter() const
+    std::shared_ptr<ScopeLike> CallScope::GetOuter() const
     {
         return _scope->GetOuter();
     }
 
-    std::string CallScopeLayer::ToString() const
+    std::string CallScope::ToString() const
     {
         return join({_called->ToString(),_calledAt.ToString()}," @ ");
     }
 
-    TSmartPtrType<ScopeLike> CallScopeLayer::GetScope() const
+    std::shared_ptr<ScopeLike> CallScope::GetScope() const
     {
         return _scope;
     }
 
-    Reference::Reference(const TSmartPtrType<ScopeLike>& scope, const TSmartPtrType<Object>& val)
+    Reference::Reference(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& val)
     {
         _scope = scope;
         _data = val;
     }
 
-    TSmartPtrType<Object> Reference::Get() const
+    std::shared_ptr<Object> Reference::Get() const
     {
         return _data;
     }
 
-    void Reference::Set(const TSmartPtrType<Object>& val)
+    void Reference::Set(const std::shared_ptr<Object>& val)
     {
        _data = val;
     }
@@ -266,79 +266,129 @@ namespace vs::frontend
         return _data->ToBoolean();
     }
 
-    ReferenceWithId::ReferenceWithId(const std::string& id, const TSmartPtrType<ScopeLike>& scope,
-        const TSmartPtrType<Object>& val) : Reference(scope,val)
+    ReferenceWithId::ReferenceWithId(const std::string& id, const std::shared_ptr<ScopeLike>& scope,
+        const std::shared_ptr<Object>& val) : Reference(scope,val)
     {
         _id = id;
     }
 
-    void ReferenceWithId::Set(const TSmartPtrType<Object>& val)
+    void ReferenceWithId::Set(const std::shared_ptr<Object>& val)
     {
         Reference::Set(val);
         _scope->Assign(_id,_data);
     }
 
-    ReferenceWithSetter::ReferenceWithSetter(const TSmartPtrType<ScopeLike>& scope, const TSmartPtrType<Object>& val,
+    ReferenceWithSetter::ReferenceWithSetter(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& val,
         const SetterFn& fn) : Reference(scope,val)
     {
         _fn = fn;
     }
 
-    void ReferenceWithSetter::Set(const TSmartPtrType<Object>& val)
+    void ReferenceWithSetter::Set(const std::shared_ptr<Object>& val)
     {
         Reference::Set(val);
         _fn(_scope,val);
     }
 
-    TSmartPtrType<Reference> makeReference(const TSmartPtrType<ScopeLike>& scope, const TSmartPtrType<Object>& val)
+    std::shared_ptr<Reference> makeReference(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& val)
     {
-        return manage<Reference>(scope,val);
+        return makeObject<Reference>(scope,val);
     }
 
-    TSmartPtrType<ReferenceWithId> makeReferenceWithId(const std::string& id, const TSmartPtrType<ScopeLike>& scope,
-        const TSmartPtrType<Object>& val)
+    std::shared_ptr<ReferenceWithId> makeReferenceWithId(const std::string& id, const std::shared_ptr<ScopeLike>& scope,
+        const std::shared_ptr<Object>& val)
     {
-        return manage<ReferenceWithId>(id,scope,val);
+        return makeObject<ReferenceWithId>(id,scope,val);
     }
 
-    TSmartPtrType<ReferenceWithSetter> makeReferenceWithSetter(const TSmartPtrType<ScopeLike>& scope,
-        const TSmartPtrType<Object>& val, const ReferenceWithSetter::SetterFn& fn)
+    std::shared_ptr<ReferenceWithSetter> makeReferenceWithSetter(const std::shared_ptr<ScopeLike>& scope,
+        const std::shared_ptr<Object>& val, const ReferenceWithSetter::SetterFn& fn)
     {
-        return manage<ReferenceWithSetter>(scope,val,fn);
+        return makeObject<ReferenceWithSetter>(scope,val,fn);
     }
 
-    TSmartPtrType<Scope> makeScope(const TSmartPtrType<ScopeLike>& outer)
+    std::shared_ptr<Scope> makeScope(const std::shared_ptr<ScopeLike>& outer)
     {
-        return manage<Scope>(outer);
+        return makeObject<Scope>(outer);
     }
     
-    TSmartPtrType<Scope> makeScope()
+    std::shared_ptr<Scope> makeScope()
     {
-        return manage<Scope>();
+        return makeObject<Scope>();
     }
 
-    TSmartPtrType<RefScopeProxy> makeRefScopeProxy(const Ref<ScopeLike>& scope)
+    std::shared_ptr<RefScopeProxy> makeRefScopeProxy(const std::weak_ptr<ScopeLike>& scope)
     {
-        return manage<RefScopeProxy>(scope);
+        return std::make_shared<RefScopeProxy>(scope);
     }
 
-    TSmartPtrType<CallScopeLayer> makeCallScopeLayer(const backend::TokenDebugInfo& calledAt,const TSmartPtrType<Function>& called,const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<CallScope> makeCallScope(const backend::TokenDebugInfo& calledAt,const std::shared_ptr<Function>& called,const std::shared_ptr<ScopeLike>& scope)
     {
-        return manage<CallScopeLayer>(calledAt,called,scope);
+        return std::make_shared<CallScope>(calledAt,called,scope);
     }
 
-    TSmartPtrType<Object> resolveReference(const TSmartPtrType<Object>& obj)
+    std::shared_ptr<Object> resolveReference(const std::shared_ptr<Object>& obj)
     {
-        if(!obj.IsValid())
+        if(!obj)
         {
             return obj;
         }
         
         if(obj->GetType() == OT_Reference)
         {
-            return obj.Cast<Reference>()->Get();
+            return cast<Reference>(obj)->Get();
         }
 
         return obj;
+    }
+
+    OneLayerScopeProxy::OneLayerScopeProxy(const std::shared_ptr<ScopeLike>& scope)
+    {
+        _outer = scope;
+    }
+
+    std::list<EScopeType> OneLayerScopeProxy::GetScopeStack() const
+    {
+        return _outer->GetScopeStack();
+    }
+
+    bool OneLayerScopeProxy::HasScopeType(EScopeType type) const
+    {
+        return _outer->HasScopeType(type);
+    }
+
+    EScopeType OneLayerScopeProxy::GetScopeType() const
+    {
+        return _outer->GetScopeType();
+    }
+
+    bool OneLayerScopeProxy::Has(const std::string& id, bool searchParent) const
+    {
+        return _outer->Has(id,false);
+    }
+
+    void OneLayerScopeProxy::Create(const std::string& id, const std::shared_ptr<Object>& var)
+    {
+        return _outer->Create(id,var);
+    }
+
+    void OneLayerScopeProxy::Assign(const std::string& id, const std::shared_ptr<Object>& var)
+    {
+        return _outer->Assign(id,var);
+    }
+
+    std::shared_ptr<Object> OneLayerScopeProxy::Find(const std::string& id, bool searchParent)
+    {
+        return _outer->Find(id,false);
+    }
+
+    std::shared_ptr<ScopeLike> OneLayerScopeProxy::GetOuter() const
+    {
+        return _outer->GetOuter();
+    }
+
+    std::shared_ptr<OneLayerScopeProxy> makeOneLayerScopeProxy(const std::shared_ptr<ScopeLike>& scope)
+    {
+        return std::make_shared<OneLayerScopeProxy>(scope);
     }
 }

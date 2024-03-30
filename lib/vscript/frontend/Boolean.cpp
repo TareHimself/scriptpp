@@ -22,15 +22,15 @@ namespace vs::frontend
         return _value ? "true" : "false";
     }
 
-    TSmartPtrType<Boolean> makeBoolean(const std::string& val)
+    std::shared_ptr<Boolean> makeBoolean(const std::string& val)
     {
-        return manage<Boolean>(val == "true");
+        return makeObject<Boolean>(val == "true");
     }
 
-    TSmartPtrType<Boolean> makeBoolean(const bool& val)
+    std::shared_ptr<Boolean> makeBoolean(const bool& val)
     {
-        static auto trueObj = manage<Boolean>(true);
-        static auto falseObj = manage<Boolean>(false);
+        static auto trueObj = makeObject<Boolean>(true);
+        static auto falseObj = makeObject<Boolean>(false);
         return val ? trueObj : falseObj;
     }
 }

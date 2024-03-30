@@ -7,10 +7,10 @@ int main(){
     
 }
 
-TSmartPtrType<Module> CreateModule(const TSmartPtrType<Program>& scope)
+std::shared_ptr<Module> CreateModule(const std::shared_ptr<Program>& program)
 {
-    auto mod = makeModule(scope);
-    mod->AddLambda("test",{},[](const TSmartPtrType<FunctionScope>& fs)
+    auto mod = makeModule(program);
+    mod->AddLambda("test",{},[](const std::shared_ptr<FunctionScope>& fs)
     {
         std::cout << "Hello from a native module function" << std::endl;
         return makeNull();

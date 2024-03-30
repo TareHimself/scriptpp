@@ -12,9 +12,9 @@ namespace vs::frontend
         
         
     public:
-        Prototype(const TSmartPtrType<ScopeLike>& scope);
+        Prototype(const std::shared_ptr<ScopeLike>& scope);
 
-        Prototype(const TSmartPtrType<ScopeLike>& scope,const TSmartPtrType<NativeFunction>& func);
+        Prototype(const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<NativeFunction>& func);
         
         std::string ToString() const override;
         bool ToBoolean() const override;
@@ -26,15 +26,15 @@ namespace vs::frontend
         std::shared_ptr<backend::PrototypeNode> _prototype;
 
     public:
-        RuntimePrototype(const TSmartPtrType<ScopeLike>& scope,const std::shared_ptr<backend::PrototypeNode>& prototype);
+        RuntimePrototype(const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<backend::PrototypeNode>& prototype);
 
         std::string ToString() const override;
 
-        TSmartPtrType<Object> Create(TSmartPtrType<FunctionScope>& fnScope);
+        std::shared_ptr<Object> Create(std::shared_ptr<FunctionScope>& fnScope);
     };
     
 
-    TSmartPtrType<RuntimePrototype> makePrototype(const TSmartPtrType<ScopeLike>& scope,const std::shared_ptr<backend::PrototypeNode>& prototype);
+    std::shared_ptr<RuntimePrototype> makePrototype(const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<backend::PrototypeNode>& prototype);
 
-    TSmartPtrType<Prototype> makePrototype(const TSmartPtrType<ScopeLike>& scope,const TSmartPtrType<NativeFunction>& func);
+    std::shared_ptr<Prototype> makePrototype(const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<NativeFunction>& func);
 }

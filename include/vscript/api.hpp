@@ -4,15 +4,15 @@
 
 namespace vs::api
 {
-    typedef void (__stdcall* _vs_import)(vs::frontend::TSmartPtrType<frontend::Module>& mod,vs::frontend::TSmartPtrType<frontend::Program>& scope);
+    typedef void (__stdcall* _vs_import)(std::shared_ptr<frontend::Module>& mod,std::shared_ptr<frontend::Program>& scope);
 
 #define VS_API_MODULE(name,func) \
     auto _create_fn = ##func; \
-    extern "C" __declspec(dllexport) void _vs_import(vs::frontend::TSmartPtrType<vs::frontend::Module>& mod,vs::frontend::TSmartPtrType<vs::frontend::Program>& scope) \
+    extern "C" __declspec(dllexport) void _vs_import(std::shared_ptr<vs::frontend::Module>& mod,std::shared_ptr<vs::frontend::Program>& program) \
     { \
-        mod = _create_fn(scope); \
+        mod = _create_fn(program); \
     }
 
 
-    frontend::TSmartPtrType<frontend::Module> importNative(const std::filesystem::path& path,frontend::TSmartPtrType<frontend::Program>& program);
+    std::shared_ptr<frontend::Module> importNative(const std::filesystem::path& path,std::shared_ptr<frontend::Program>& program);
 }

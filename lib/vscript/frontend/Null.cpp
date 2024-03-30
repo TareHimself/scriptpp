@@ -18,9 +18,9 @@ namespace vs::frontend
     }
     
 
-    TSmartPtrType<Null> makeNull()
+    std::shared_ptr<Null> makeNull()
     {
-        static auto universalNull = manage<Null>();
+        static auto universalNull = makeObject<Null>();
         return universalNull;
     }
 }

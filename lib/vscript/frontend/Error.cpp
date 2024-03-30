@@ -1,22 +1,24 @@
 ﻿#include "vscript/frontend/Error.hpp"
 
+#include "vscript/utils.hpp"
+
 namespace vs::frontend
 {
-    Error::Error(const TSmartPtrType<ScopeLike>& scope, const std::string& data,const std::optional<backend::TokenDebugInfo>& debugInfo) : DynamicObject({})
+    Error::Error(const std::shared_ptr<ScopeLike>& scope, const std::string& data,const std::optional<backend::TokenDebugInfo>& debugInfo) : DynamicObject({})
     {
         _callstack = makeList({});
         _data = makeString(data);
         Error::GenerateCallStack(scope,debugInfo);
     }
 
-    Error::Error(const TSmartPtrType<ScopeLike>& scope, const TSmartPtrType<Object>& data,const std::optional<backend::TokenDebugInfo>& debugInfo) : DynamicObject({})
+    Error::Error(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& data,const std::optional<backend::TokenDebugInfo>& debugInfo) : DynamicObject({})
     {
         _callstack = makeList({});
         _data = data;
         Error::GenerateCallStack(scope,debugInfo);
     }
 
-    void Error::GenerateCallStack(const TSmartPtrType<ScopeLike>& scope,const std::optional<backend::TokenDebugInfo>& debugInfo)
+    void Error::GenerateCallStack(const std::shared_ptr<ScopeLike>& scope,const std::optional<backend::TokenDebugInfo>& debugInfo)
     {
         auto &callstackVec = _callstack->GetNative();
         
@@ -27,14 +29,14 @@ namespace vs::frontend
         
         auto next = scope;
         
-        while(next.IsValid())
+        while(next)
         {
-            if(auto asCallScope = next.Cast<CallScopeLayer>(); asCallScope.IsValid())
+            if(const auto asCallScope = cast<CallScope>(next))
             {
                 callstackVec.emplace_back(makeString(asCallScope->ToString()));
                 if(asCallScope->GetScopeType() == ST_Function)
                 {
-                    if(auto asFnScope = asCallScope->GetScope().Cast<FunctionScope>(); asFnScope.IsValid())
+                    if(const auto asFnScope = cast<FunctionScope>(asCallScope->GetScope()))
                     {
                         next = asFnScope->GetCallerScope();
                         continue;
@@ -44,7 +46,7 @@ namespace vs::frontend
             
             if(next->GetScopeType() == ST_Function)
             {
-                if(auto asFnScope = next.Cast<FunctionScope>(); asFnScope.IsValid())
+                if(const auto asFnScope = cast<FunctionScope>(next))
                 {
                     next = asFnScope->GetCallerScope();
                     continue;
@@ -65,7 +67,7 @@ namespace vs::frontend
         std::string err;
         err += "Error: " + _data->ToString();
 
-        for(auto &callstackVec = _callstack->GetNative(); auto &call : callstackVec)
+        for(const auto &callstackVec = _callstack->GetNative(); auto &call : callstackVec)
         {
             err += "\n\t" + call->ToString();
         }
@@ -73,13 +75,13 @@ namespace vs::frontend
         return err;
     }
 
-    TSmartPtrType<Error> makeError(const TSmartPtrType<ScopeLike>& scope, const std::string& data,const std::optional<backend::TokenDebugInfo>& debugInfo)
+    std::shared_ptr<Error> makeError(const std::shared_ptr<ScopeLike>& scope, const std::string& data,const std::optional<backend::TokenDebugInfo>& debugInfo)
     {
-        return manage<Error>(scope,data,debugInfo);
+        return makeObject<Error>(scope,data,debugInfo);
     }
 
-    TSmartPtrType<Error> makeError(const TSmartPtrType<ScopeLike>& scope, const TSmartPtrType<Object>& data,const std::optional<backend::TokenDebugInfo>& debugInfo)
+    std::shared_ptr<Error> makeError(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& data,const std::optional<backend::TokenDebugInfo>& debugInfo)
     {
-        return manage<Error>(scope,data,debugInfo);
+        return makeObject<Error>(scope,data,debugInfo);
     }
 }

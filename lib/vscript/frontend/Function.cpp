@@ -11,9 +11,9 @@
 namespace vs::frontend
 {
 
-    FunctionScope::FunctionScope(const Ref<Function>& fn, const TSmartPtrType<ScopeLike>& calledFrom,
-        const TSmartPtrType<ScopeLike>& scope, const std::vector<std::string>& argNames,
-        const std::vector<TSmartPtrType<Object>>& args) : Scope(scope)
+    FunctionScope::FunctionScope(const std::weak_ptr<Function>& fn, const std::shared_ptr<ScopeLike>& calledFrom,
+        const std::shared_ptr<ScopeLike>& scope, const std::vector<std::string>& argNames,
+        const std::vector<std::shared_ptr<Object>>& args) : Scope(scope)
     {
         _fn = fn;
         _callerScope = calledFrom;
@@ -31,7 +31,7 @@ namespace vs::frontend
 
     std::string FunctionScope::ARGUMENTS_KEY = "__args__";
 
-    TSmartPtrType<Object> FunctionScope::Find(const std::string& id, bool searchParent)
+    std::shared_ptr<Object> FunctionScope::Find(const std::string& id, bool searchParent)
     {
         if(id == ARGUMENTS_KEY)
         {
@@ -40,7 +40,7 @@ namespace vs::frontend
                 Create(ARGUMENTS_KEY,makeList(_args));
             }
 
-            return makeReferenceWithId(id,this->ToRef().Reserve().Cast<FunctionScope>(),Scope::Find(ARGUMENTS_KEY,false));
+            return makeReferenceWithId(id,cast<FunctionScope>(this->GetRef()),Scope::Find(ARGUMENTS_KEY,false));
         }
         
         if(_argIndexes.contains(id))
@@ -54,29 +54,29 @@ namespace vs::frontend
         return Scope::Find(id);
     }
 
-    Ref<Function> FunctionScope::GetFunction() const
+    std::weak_ptr<Function> FunctionScope::GetFunction() const
     {
         return _fn;
     }
 
-    std::vector<TSmartPtrType<Object>> FunctionScope::GetArgs() const
+    std::vector<std::shared_ptr<Object>> FunctionScope::GetArgs() const
     {
         return _args;
     }
 
-    TSmartPtrType<ScopeLike> FunctionScope::GetCallerScope() const
+    std::shared_ptr<ScopeLike> FunctionScope::GetCallerScope() const
     {
         return _callerScope;
     }
 
-    TSmartPtrType<FunctionScope> makeFunctionScope(const Ref<Function>& fn,const TSmartPtrType<ScopeLike>& callerScope,const TSmartPtrType<ScopeLike>& parent,
-                                                   const std::vector<std::string>& argNames, const std::vector<TSmartPtrType<Object>>& args)
+    std::shared_ptr<FunctionScope> makeFunctionScope(const std::weak_ptr<Function>& fn,const std::shared_ptr<ScopeLike>& callerScope,const std::shared_ptr<ScopeLike>& parent,
+                                                   const std::vector<std::string>& argNames, const std::vector<std::shared_ptr<Object>>& args)
     {
-        return manage<FunctionScope>(fn,callerScope,parent,argNames,args);
+        return makeObject<FunctionScope>(fn,callerScope,parent,argNames,args);
     }
     
 
-    Function::Function(const TSmartPtrType<ScopeLike>& scope, const std::string& name, const std::vector<std::string>& args)
+    Function::Function(const std::shared_ptr<ScopeLike>& scope, const std::string& name, const std::vector<std::string>& args)
     {
         _scope = scope;
         _name = name;
@@ -98,37 +98,37 @@ namespace vs::frontend
         return "fn " + _name +  + "(" + join(_args,",") + ")";
     }
 
-    TSmartPtrType<Object> Function::Call(const TSmartPtrType<ScopeLike>& callerScope,const std::vector<TSmartPtrType<Object>>& args )
+    std::shared_ptr<Object> Function::Call(const std::shared_ptr<ScopeLike>& callerScope,const std::vector<std::shared_ptr<Object>>& args )
     {
-        std::vector<TSmartPtrType<Object>> callArgs = args;
+        std::vector<std::shared_ptr<Object>> callArgs = args;
         
         while(callArgs.size() < _args.size())
         {
             callArgs.emplace_back(makeNull());
         }
         
-        auto fnScope =  makeFunctionScope(this->ToRef().Cast<Function>(),callerScope,_scope,_args,callArgs);
+        auto fnScope =  makeFunctionScope(cast<Function>(this->GetRef()),callerScope,_scope,_args,callArgs);
         return HandleCall(fnScope);
     }
     
-    RuntimeFunction::RuntimeFunction(const TSmartPtrType<ScopeLike>& scope,
+    RuntimeFunction::RuntimeFunction(const std::shared_ptr<ScopeLike>& scope,
         const std::shared_ptr<backend::FunctionNode>& function) : Function(scope,function->name,function->args)
     {
         _function = function;
     }
 
-    TSmartPtrType<Object> RuntimeFunction::HandleCall(TSmartPtrType<FunctionScope>& scope)
+    std::shared_ptr<Object> RuntimeFunction::HandleCall(std::shared_ptr<FunctionScope>& scope)
     {
         return runScope(_function->body,scope);
     }
 
-    NativeFunction::NativeFunction(const TSmartPtrType<ScopeLike>& scope, const std::string& name,
+    NativeFunction::NativeFunction(const std::shared_ptr<ScopeLike>& scope, const std::string& name,
                                    const std::vector<std::string>& args, const NativeFunctionType& func) : Function(scope,name,args)
     {
         _func = func;
     }
 
-    TSmartPtrType<Object> NativeFunction::HandleCall(TSmartPtrType<FunctionScope>& scope)
+    std::shared_ptr<Object> NativeFunction::HandleCall(std::shared_ptr<FunctionScope>& scope)
     {
         try
         {
@@ -140,22 +140,22 @@ namespace vs::frontend
         }
     }
 
-    TSmartPtrType<RuntimeFunction> makeRuntimeFunction(const TSmartPtrType<ScopeLike>& scope,
+    std::shared_ptr<RuntimeFunction> makeRuntimeFunction(const std::shared_ptr<ScopeLike>& scope,
                                                        const std::shared_ptr<backend::FunctionNode>& function, bool addToScope)
     {
-        auto fn = manage<RuntimeFunction>(scope,function);
-        if(scope.IsValid() && addToScope)
+        auto fn = makeObject<RuntimeFunction>(scope,function);
+        if(scope && addToScope)
         {
             scope->Assign(function->name,fn);
         }
         return fn;
     }
     
-    TSmartPtrType<NativeFunction> makeNativeFunction(const TSmartPtrType<ScopeLike>& scope,const std::string& name, const std::vector<std::string>& args,
+    std::shared_ptr<NativeFunction> makeNativeFunction(const std::shared_ptr<ScopeLike>& scope,const std::string& name, const std::vector<std::string>& args,
         const NativeFunctionType& nativeFunction,bool addToScope)
     {
-        auto fn = manage<NativeFunction>(scope,name,args,nativeFunction);
-        if(scope.IsValid() && addToScope)
+        auto fn = makeObject<NativeFunction>(scope,name,args,nativeFunction);
+        if(scope && addToScope)
         {
             scope->Assign(name,fn);
         }

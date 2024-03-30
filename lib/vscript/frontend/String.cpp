@@ -7,6 +7,14 @@
 
 namespace vs::frontend
 {
+    void String::Init()
+    {
+        DynamicObject::Init();
+        AddNativeMemberFunction("split",this,{"delimiter"},&String::Split);
+        AddNativeMemberFunction("size",this,{},&String::Size);
+        AddNativeMemberFunction("size",this,{},&String::Size);
+    }
+
     String::String(const std::string& str) : DynamicObject({})
     {
         _str = str;
@@ -27,15 +35,7 @@ namespace vs::frontend
         return _str.empty();
     }
 
-    void String::OnRefSet()
-    {
-        DynamicObject::OnRefSet();
-        AddNativeMemberFunction("split",this,{"delimiter"},&String::Split);
-        AddNativeMemberFunction("size",this,{},&String::Size);
-        AddNativeMemberFunction("size",this,{},&String::Size);
-    }
-
-    TSmartPtrType<Object> String::Split(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> String::Split(const std::shared_ptr<FunctionScope>& fnScope)
     {
         std::vector<std::string> result;
         auto delimiter = resolveReference(fnScope->Find("delimiter"));
@@ -53,7 +53,7 @@ namespace vs::frontend
             split(result, _str,"");
         }
         
-        std::vector<TSmartPtrType<Object>> items;
+        std::vector<std::shared_ptr<Object>> items;
         for(auto &p : result)
         {
             items.emplace_back(makeString(p));
@@ -62,27 +62,27 @@ namespace vs::frontend
         return makeList(items);
     }
 
-    TSmartPtrType<Object> String::Size(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> String::Size(const std::shared_ptr<FunctionScope>& fnScope)
     {
         return makeNumber(_str.size());
     }
 
-    TSmartPtrType<Object> String::Trim(const TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> String::Trim(const std::shared_ptr<FunctionScope>& fnScope)
     {
         return makeNumber(trim(_str));
     }
 
-    TSmartPtrType<Object> String::Get(const TSmartPtrType<Object>& key)
+    std::shared_ptr<Object> String::Get(const std::shared_ptr<Object>& key)
     {
         if(key->GetType() == OT_Number)
         {
-            const auto i = key.Cast<Number>()->GetValueAs<int>();
+            const auto i = cast<Number>(key)->GetValueAs<int>();
             if(i >= _str.size())
             {
                 throw std::runtime_error("Index out of range " + std::to_string(i));
             }
             
-            return makeReferenceWithSetter(this->ToRef().Reserve().Cast<DynamicObject>(),makeString(_str.substr(i,1)),[this,i](const TSmartPtrType<ScopeLike>& s,const TSmartPtrType<Object>& v)
+            return makeReferenceWithSetter(cast<DynamicObject>(this->GetRef()),makeString(_str.substr(i,1)),[this,i](const std::shared_ptr<ScopeLike>& s,const std::shared_ptr<Object>& v)
             {
                 this->_str[i] = v->ToString().at(0);
             });
@@ -91,14 +91,14 @@ namespace vs::frontend
         return DynamicObject::Get(key);
     }
 
-    void String::Set(const TSmartPtrType<Object>& key, const TSmartPtrType<Object>& val)
+    void String::Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val)
     {
         if(key->GetType() == OT_Number)
         {
-            const auto idx =key.Cast<Number>()->GetValueAs<int>();
+            const auto idx =cast<Number>(key)->GetValueAs<int>();
             if(idx > 0 && idx < _str.size())
             {
-                _str[key.Cast<Number>()->GetValueAs<int>()] = val->ToString().at(0);
+                _str[idx]= val->ToString().at(0);
                 return;
             }
             
@@ -106,12 +106,12 @@ namespace vs::frontend
         DynamicObject::Set(key, val);
     }
 
-    TSmartPtrType<Object> String::Add(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> String::Add(const std::shared_ptr<Object>& other)
     {
         return makeString(_str + other->ToString());
     }
 
-    TSmartPtrType<Object> String::Multiply(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> String::Multiply(const std::shared_ptr<Object>& other)
     {
         TNUMBER_SANITY_MACRO({
             auto d = static_cast<int>(o->GetValue());
@@ -127,8 +127,8 @@ namespace vs::frontend
         return Object::Multiply(other);
     }
 
-    TSmartPtrType<String> makeString(const std::string& str)
+    std::shared_ptr<String> makeString(const std::string& str)
     {
-        return manage<String>(str);
+        return makeObject<String>(str);
     }
 }

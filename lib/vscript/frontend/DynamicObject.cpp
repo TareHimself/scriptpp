@@ -1,144 +1,29 @@
 ﻿#include "vscript/frontend/DynamicObject.hpp"
 
+#include "vscript/utils.hpp"
 #include "vscript/frontend/Null.hpp"
 
 namespace vs::frontend
 {
-    OneLayerScopeProxy::OneLayerScopeProxy(const TSmartPtrType<ScopeLike>& scope)
+    
+    
+    void DynamicObject::Init()
+    {
+        Object::Init();
+        _selfFunctionScope = makeRefScopeProxy(cast<DynamicObject>(this->GetRef()));
+    }
+
+    DynamicObject::DynamicObject(const std::shared_ptr<ScopeLike>& scope)
     {
         _outer = scope;
     }
 
-    std::list<EScopeType> OneLayerScopeProxy::GetScopeStack() const
-    {
-        return _outer->GetScopeStack();
-    }
-
-    bool OneLayerScopeProxy::HasScopeType(EScopeType type) const
-    {
-        return _outer->HasScopeType(type);
-    }
-
-    EScopeType OneLayerScopeProxy::GetScopeType() const
-    {
-        return _outer->GetScopeType();
-    }
-
-    bool OneLayerScopeProxy::Has(const std::string& id, bool searchParent) const
-    {
-        return _outer->Has(id,false);
-    }
-
-    void OneLayerScopeProxy::Create(const std::string& id, const TSmartPtrType<Object>& var)
-    {
-        return _outer->Create(id,var);
-    }
-
-    void OneLayerScopeProxy::Assign(const std::string& id, const TSmartPtrType<Object>& var)
-    {
-        return _outer->Assign(id,var);
-    }
-
-    TSmartPtrType<Object> OneLayerScopeProxy::Find(const std::string& id, bool searchParent)
-    {
-        return _outer->Find(id,false);
-    }
-
-    TSmartPtrType<ScopeLike> OneLayerScopeProxy::GetOuter() const
-    {
-        return _outer->GetOuter();
-    }
-
-    DynamicObjectCallScope::DynamicObjectCallScope(const Ref<DynamicObject>& scope)
-    {
-        _outer = scope;
-    }
-
-    std::list<EScopeType> DynamicObjectCallScope::GetScopeStack() const
-    {
-        if(auto obj = _outer.Reserve(); obj.IsValid())
-        {
-            return obj->GetScopeStack();
-        }
-        return {};
-    }
-
-    bool DynamicObjectCallScope::HasScopeType(EScopeType type) const
-    {
-        if(auto obj = _outer.Reserve(); obj.IsValid())
-        {
-            return obj->HasScopeType(type);
-        }
-
-        return false;
-    }
-
-    EScopeType DynamicObjectCallScope::GetScopeType() const
-    {
-        if(auto obj = _outer.Reserve(); obj.IsValid())
-        {
-            return obj->GetScopeType();
-        }
-        return ST_None;
-    }
-
-    bool DynamicObjectCallScope::Has(const std::string& id, bool searchParent) const
-    {
-        if(auto obj = _outer.Reserve(); obj.IsValid())
-        {
-            return obj->Has(id,searchParent);
-        }
-
-        return false;
-    }
-
-    void DynamicObjectCallScope::Create(const std::string& id, const TSmartPtrType<Object>& var)
-    {
-        if(auto obj = _outer.Reserve(); obj.IsValid())
-        {
-            return obj->Create(id,var);
-        }
-    }
-
-    void DynamicObjectCallScope::Assign(const std::string& id, const TSmartPtrType<Object>& var)
-    {
-        if(auto obj = _outer.Reserve(); obj.IsValid())
-        {
-            return obj->Assign(id,var);
-        }
-    }
-
-    TSmartPtrType<Object> DynamicObjectCallScope::Find(const std::string& id, bool searchParent)
-    {
-        if(auto obj = _outer.Reserve(); obj.IsValid())
-        {
-            return obj->Find(id,searchParent);
-        }
-
-        return makeNull();
-    }
-
-    TSmartPtrType<ScopeLike> DynamicObjectCallScope::GetOuter() const
-    {
-        if(auto obj = _outer.Reserve(); obj.IsValid())
-        {
-            return obj->GetOuter();
-        }
-
-        return {};
-    }
-
-    DynamicObject::DynamicObject(const TSmartPtrType<ScopeLike>& scope)
-    {
-        _outer = scope;
-    }
-
-    TSmartPtrType<Object> DynamicObject::Get(const std::string& key)
+    std::shared_ptr<Object> DynamicObject::Get(const std::string& key)
     {
         return Find(key,false);
     }
 
-    TSmartPtrType<Object> DynamicObject::Get(const TSmartPtrType<Object>& key)
+    std::shared_ptr<Object> DynamicObject::Get(const std::shared_ptr<Object>& key)
     {
         if(key->GetType() == OT_String)
         {
@@ -148,7 +33,7 @@ namespace vs::frontend
         return makeNull();
     }
 
-    void DynamicObject::Set(const std::string& key,const TSmartPtrType<Object>& val)
+    void DynamicObject::Set(const std::string& key,const std::shared_ptr<Object>& val)
     {
         if(Has(key))
         {
@@ -160,7 +45,7 @@ namespace vs::frontend
         }
     }
 
-    void DynamicObject::Set(const TSmartPtrType<Object>& key, const TSmartPtrType<Object>& val)
+    void DynamicObject::Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val)
     {
         if(key->GetType() == OT_String)
         {
@@ -175,24 +60,24 @@ namespace vs::frontend
         return _properties.contains(id);
     }
 
-    void DynamicObject::Assign(const std::string& id, const TSmartPtrType<Object>& var)
+    void DynamicObject::Assign(const std::string& id, const std::shared_ptr<Object>& var)
     {
         _properties[id] = var;
     }
 
-    void DynamicObject::Create(const std::string& id, const TSmartPtrType<Object>& var)
+    void DynamicObject::Create(const std::string& id, const std::shared_ptr<Object>& var)
     {
         _properties.insert({id,var});
     }
 
-    TSmartPtrType<Object> DynamicObject::Find(const std::string& id, bool searchParent)
+    std::shared_ptr<Object> DynamicObject::Find(const std::string& id, bool searchParent)
     {
         if(_properties.contains(id))
         {
-            return makeReferenceWithId(id,this->ToRef().Reserve().Cast<DynamicObject>(),_properties[id]);
+            return makeReferenceWithId(id,cast<DynamicObject>(this->GetRef()),_properties[id]);
         }
 
-        if(searchParent && _outer.IsValid())
+        if(searchParent && _outer)
         {
             return _outer->Find(id);
         }
@@ -202,7 +87,7 @@ namespace vs::frontend
 
     std::list<EScopeType> DynamicObject::GetScopeStack() const
     {
-        if(_outer.IsValid())
+        if(_outer)
         {
             return _outer->GetScopeStack();
         }
@@ -211,7 +96,7 @@ namespace vs::frontend
 
     bool DynamicObject::HasScopeType(EScopeType type) const
     {
-        if(_outer.IsValid())
+        if(_outer)
         {
             return _outer->HasScopeType(type);
         }
@@ -221,11 +106,6 @@ namespace vs::frontend
     EScopeType DynamicObject::GetScopeType() const
     {
         return ST_None;
-    }
-
-    TSmartPtrType<DynamicObjectCallScope> DynamicObject::CreateCallScope()
-    {
-        return manage<DynamicObjectCallScope>(this->ToRef().Cast<DynamicObject>());
     }
 
     EObjectType DynamicObject::GetType() const
@@ -244,43 +124,33 @@ namespace vs::frontend
     }
 
     void DynamicObject::AddLambda(const std::string& name, const std::vector<std::string>& args,
-        const std::function<TSmartPtrType<Object>(TSmartPtrType<FunctionScope>&)>& func)
+        const std::function<std::shared_ptr<Object>(std::shared_ptr<FunctionScope>&)>& func)
     {
-        DynamicObject::Set(name, makeNativeFunction(_callScope, name, args,func, false));
+        DynamicObject::Set(name, makeNativeFunction(_selfFunctionScope, name, args,func, false));
     }
 
-    TSmartPtrType<ScopeLike> DynamicObject::GetOuter() const
+    std::shared_ptr<ScopeLike> DynamicObject::GetOuter() const
     {
         return _outer;
     }
+    
 
-    void DynamicObject::OnRefSet()
-    {
-        Object::OnRefSet();
-        _callScope = CreateCallScope();
-    }
-
-    DynamicObjectReference::DynamicObjectReference(const std::string& id, const TSmartPtrType<DynamicObject>& obj,
-                                                   const TSmartPtrType<ScopeLike>& scope, const TSmartPtrType<Object>& val) : Reference(scope,val)
+    DynamicObjectReference::DynamicObjectReference(const std::string& id, const std::shared_ptr<DynamicObject>& obj,
+                                                   const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& val) : Reference(scope,val)
     {
         _id = id;
         _obj = obj;
     }
 
-    void DynamicObjectReference::Set(const TSmartPtrType<Object>& val)
+    void DynamicObjectReference::Set(const std::shared_ptr<Object>& val)
     {
         Reference::Set(val);
         _obj->Set(_id,val);
     }
 
-    TSmartPtrType<DynamicObject> makeDynamic(const TSmartPtrType<ScopeLike>& scope)
+    std::shared_ptr<DynamicObject> makeDynamic(const std::shared_ptr<ScopeLike>& scope)
     {
-        return manage<DynamicObject>(scope);
-    }
-    
-    TSmartPtrType<OneLayerScopeProxy> makeOneLayerScopeProxy(const TSmartPtrType<ScopeLike>& scope)
-    {
-        return manage<OneLayerScopeProxy>(scope);
+        return makeObject<DynamicObject>(scope);
     }
     
 }

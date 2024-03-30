@@ -1,16 +1,17 @@
 ﻿#include "vscript/frontend/Prototype.hpp"
 
+#include "vscript/utils.hpp"
 #include "vscript/frontend/eval.hpp"
 
 namespace vs::frontend
 {
 
-    Prototype::Prototype(const TSmartPtrType<ScopeLike>& scope) : DynamicObject(scope)
+    Prototype::Prototype(const std::shared_ptr<ScopeLike>& scope) : DynamicObject(scope)
     {
         
     }
 
-    Prototype::Prototype(const TSmartPtrType<ScopeLike>& scope, const TSmartPtrType<NativeFunction>& func) : DynamicObject(scope)
+    Prototype::Prototype(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<NativeFunction>& func) : DynamicObject(scope)
     {
         DynamicObject::Set(ReservedDynamicFunctions::CALL,func);
     }
@@ -25,7 +26,7 @@ namespace vs::frontend
         return true;
     }
 
-    RuntimePrototype::RuntimePrototype(const TSmartPtrType<ScopeLike>& scope,
+    RuntimePrototype::RuntimePrototype(const std::shared_ptr<ScopeLike>& scope,
                                        const std::shared_ptr<backend::PrototypeNode>& prototype) : Prototype(scope)
     {
         _prototype = prototype;
@@ -53,13 +54,13 @@ namespace vs::frontend
         return "<Prototype : " + _prototype->id + ">";
     }
 
-    TSmartPtrType<Object> RuntimePrototype::Create(TSmartPtrType<FunctionScope>& fnScope)
+    std::shared_ptr<Object> RuntimePrototype::Create(std::shared_ptr<FunctionScope>& fnScope)
     {
-        auto dynamicObj = createDynamicFromPrototype(_prototype,this->ToRef().Reserve().Cast<RuntimePrototype>());
+        auto dynamicObj = createDynamicFromPrototype(_prototype,cast<RuntimePrototype>(this->GetRef()));
         
         if(dynamicObj->Has(ReservedDynamicFunctions::CONSTRUCTOR,false))
         {
-            if(auto ctor = dynamicObj->Find(ReservedDynamicFunctions::CONSTRUCTOR,false).Cast<Function>(); ctor.IsValid() && ctor->GetType() == OT_Function)
+            if(auto ctor = cast<Function>(dynamicObj->Find(ReservedDynamicFunctions::CONSTRUCTOR,false)); ctor && ctor->GetType() == OT_Function)
             {
                 ctor->HandleCall(fnScope);
             }
@@ -68,16 +69,16 @@ namespace vs::frontend
         return dynamicObj;
     }
 
-    TSmartPtrType<RuntimePrototype> makePrototype(const TSmartPtrType<ScopeLike>& scope,
+    std::shared_ptr<RuntimePrototype> makePrototype(const std::shared_ptr<ScopeLike>& scope,
                                                   const std::shared_ptr<backend::PrototypeNode>& prototype)
     {
         
-        return manage<RuntimePrototype>(makeScope(scope),prototype);
+        return makeObject<RuntimePrototype>(makeScope(scope),prototype);
     }
 
-    TSmartPtrType<Prototype> makePrototype(const TSmartPtrType<ScopeLike>& scope,
-        const TSmartPtrType<NativeFunction>& func)
+    std::shared_ptr<Prototype> makePrototype(const std::shared_ptr<ScopeLike>& scope,
+        const std::shared_ptr<NativeFunction>& func)
     {
-        return manage<Prototype>(makeScope(scope),func);
+        return makeObject<Prototype>(makeScope(scope),func);
     }
 }

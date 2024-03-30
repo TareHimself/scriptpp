@@ -12,57 +12,61 @@ namespace vs::frontend
         return true;
     }
 
-    bool Object::Equal(const TSmartPtrType<Object>& other) const
+    void Object::Init()
+    {
+    }
+
+    bool Object::Equal(const std::shared_ptr<Object>& other) const
     {
         return GetType() == other->GetType();
     }
 
-    bool Object::NotEqual(const TSmartPtrType<Object>& other) const
+    bool Object::NotEqual(const std::shared_ptr<Object>& other) const
     {
         return !Equal(other);
     }
 
-    bool Object::Less(const TSmartPtrType<Object>& other) const
+    bool Object::Less(const std::shared_ptr<Object>& other) const
     {
-        return this < other.Get();
+        return this < other.get();
     }
 
-    bool Object::LessEqual(const TSmartPtrType<Object>& other) const
+    bool Object::LessEqual(const std::shared_ptr<Object>& other) const
     {
         return Less(other) || Equal(other);
     }
 
-    bool Object::Greater(const TSmartPtrType<Object>& other) const
+    bool Object::Greater(const std::shared_ptr<Object>& other) const
     {
-        return this > other.Get();
+        return this > other.get();
     }
 
-    bool Object::GreaterEqual(const TSmartPtrType<Object>& other) const
+    bool Object::GreaterEqual(const std::shared_ptr<Object>& other) const
     {
         return Greater(other) || Equal(other);
     }
 
-    TSmartPtrType<Object> Object::Add(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> Object::Add(const std::shared_ptr<Object>& other)
     {
         return makeNull();
     }
 
-    TSmartPtrType<Object> Object::Subtract(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> Object::Subtract(const std::shared_ptr<Object>& other)
     {
         return makeNull();
     }
 
-    TSmartPtrType<Object> Object::Mod(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> Object::Mod(const std::shared_ptr<Object>& other)
     {
         return makeNull();
     }
 
-    TSmartPtrType<Object> Object::Divide(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> Object::Divide(const std::shared_ptr<Object>& other)
     {
         return makeNull();
     }
 
-    TSmartPtrType<Object> Object::Multiply(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> Object::Multiply(const std::shared_ptr<Object>& other)
     {
         return makeNull();
     }
@@ -72,13 +76,13 @@ namespace vs::frontend
         return reinterpret_cast<unsigned long long>((void**)this);
     }
 
-    TSmartPtrType<Object> Object::GetRef() const
+    std::shared_ptr<Object> Object::GetRef() const
     {
-        return ToRef().Reserve();
+        return std::const_pointer_cast<Object>(shared_from_this());
     }
     
 
-    ReturnValue::ReturnValue(const TSmartPtrType<Object>& val)
+    ReturnValue::ReturnValue(const std::shared_ptr<Object>& val)
     {
         _value = val;
     }
@@ -93,7 +97,7 @@ namespace vs::frontend
         return "Return Value >> " + _value->ToString();
     }
 
-    TSmartPtrType<Object> ReturnValue::GetValue() const
+    std::shared_ptr<Object> ReturnValue::GetValue() const
     {
         return _value;
     }
@@ -126,13 +130,13 @@ namespace vs::frontend
         return _op;
     }
 
-    TSmartPtrType<ReturnValue> makeReturnValue(const TSmartPtrType<Object>& val)
+    std::shared_ptr<ReturnValue> makeReturnValue(const std::shared_ptr<Object>& val)
     {
-        return manage<ReturnValue>(val);
+        return makeObject<ReturnValue>(val);
     }
 
-    TSmartPtrType<FlowControl> makeFlowControl(const FlowControl::EFlowControlOp& val)
+    std::shared_ptr<FlowControl> makeFlowControl(const FlowControl::EFlowControlOp& val)
     {
-        return manage<FlowControl>(val);
+        return makeObject<FlowControl>(val);
     }
 }

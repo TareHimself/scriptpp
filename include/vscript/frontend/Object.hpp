@@ -1,13 +1,12 @@
 #pragma once
 #include <memory>
 #include <string>
-#include "vscript/Managed.hpp"
+
+#include "vscript/utils.hpp"
+
 
 namespace vs::frontend
 {
-    template<typename T>
-    using TSmartPtrType = Managed<T>;
-    
     enum EObjectType
     {
         OT_Null,
@@ -25,7 +24,7 @@ namespace vs::frontend
         OT_Reference
     };
     
-    class Object : public RefThis<Object> {
+    class Object : public std::enable_shared_from_this<Object> {
     public:
         virtual ~Object() = default;
 
@@ -35,37 +34,39 @@ namespace vs::frontend
 
         virtual bool ToBoolean() const;
 
-        virtual bool Equal(const TSmartPtrType<Object>& other) const;
-        virtual bool NotEqual(const TSmartPtrType<Object>& other) const;
-        virtual bool Less(const TSmartPtrType<Object>& other) const;
-        virtual bool LessEqual(const TSmartPtrType<Object>& other) const;
-        virtual bool Greater(const TSmartPtrType<Object>& other) const;
-        virtual bool GreaterEqual(const TSmartPtrType<Object>& other) const;
+        virtual void Init();
 
-        virtual TSmartPtrType<Object> Add(const TSmartPtrType<Object>& other);
-        virtual TSmartPtrType<Object> Subtract(const TSmartPtrType<Object>& other);
-        virtual TSmartPtrType<Object> Mod(const TSmartPtrType<Object>& other);
-        virtual TSmartPtrType<Object> Divide(const TSmartPtrType<Object>& other);
-        virtual TSmartPtrType<Object> Multiply(const TSmartPtrType<Object>& other);
+        virtual bool Equal(const std::shared_ptr<Object>& other) const;
+        virtual bool NotEqual(const std::shared_ptr<Object>& other) const;
+        virtual bool Less(const std::shared_ptr<Object>& other) const;
+        virtual bool LessEqual(const std::shared_ptr<Object>& other) const;
+        virtual bool Greater(const std::shared_ptr<Object>& other) const;
+        virtual bool GreaterEqual(const std::shared_ptr<Object>& other) const;
+
+        virtual std::shared_ptr<Object> Add(const std::shared_ptr<Object>& other);
+        virtual std::shared_ptr<Object> Subtract(const std::shared_ptr<Object>& other);
+        virtual std::shared_ptr<Object> Mod(const std::shared_ptr<Object>& other);
+        virtual std::shared_ptr<Object> Divide(const std::shared_ptr<Object>& other);
+        virtual std::shared_ptr<Object> Multiply(const std::shared_ptr<Object>& other);
 
         virtual unsigned long long GetAddress() const;
 
-        TSmartPtrType<Object> GetRef() const;
+        std::shared_ptr<Object> GetRef() const;
     };
     
 
 
     class ReturnValue : public  Object
     {
-        TSmartPtrType<Object> _value;
+        std::shared_ptr<Object> _value;
     public:
-        ReturnValue(const TSmartPtrType<Object>& val);
+        ReturnValue(const std::shared_ptr<Object>& val);
 
         EObjectType GetType() const override;
 
         std::string ToString() const override;
 
-        TSmartPtrType<Object> GetValue() const;
+        std::shared_ptr<Object> GetValue() const;
     };
 
     class FlowControl : public Object
@@ -90,8 +91,18 @@ namespace vs::frontend
         EFlowControlOp GetValue() const;
     };
 
+    template<typename T,typename ...TArgs>
+    std::enable_if_t<std::is_constructible_v<T, TArgs...>,std::shared_ptr<T>> makeObject(TArgs&&... args)
+    {
+        static_assert(std::is_base_of_v<Object,T>,"T must inherit from Object");
+        auto d = std::make_shared<T>(std::forward<TArgs>(args)...);
+        castStatic<Object>(d)->Init();
+        return d;
+    }
 
-    TSmartPtrType<ReturnValue> makeReturnValue(const TSmartPtrType<Object>& val);
+    std::shared_ptr<ReturnValue> makeReturnValue(const std::shared_ptr<Object>& val);
 
-    TSmartPtrType<FlowControl> makeFlowControl(const FlowControl::EFlowControlOp& val);
+    std::shared_ptr<FlowControl> makeFlowControl(const FlowControl::EFlowControlOp& val);
+
+    
 }

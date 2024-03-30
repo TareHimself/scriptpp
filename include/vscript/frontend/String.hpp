@@ -8,20 +8,20 @@ namespace vs::frontend
     {
         std::string _str;
     public:
+        void Init() override;
         String(const std::string&str);
         EObjectType GetType() const override;
         std::string ToString() const override;
         bool ToBoolean() const override;
-        void OnRefSet() override;
-        TSmartPtrType<Object> Add(const TSmartPtrType<Object>& other) override;
-        TSmartPtrType<Object> Multiply(const TSmartPtrType<Object>& other) override;
-        TSmartPtrType<Object> Split(const TSmartPtrType<FunctionScope>& fnScope);
-        TSmartPtrType<Object> Size(const TSmartPtrType<FunctionScope>& fnScope);
-        TSmartPtrType<Object> Trim(const TSmartPtrType<FunctionScope>& fnScope);
-        TSmartPtrType<Object> Get(const TSmartPtrType<Object>& key) override;
-        void Set(const TSmartPtrType<Object>& key, const TSmartPtrType<Object>& val) override;
+        std::shared_ptr<Object> Add(const std::shared_ptr<Object>& other) override;
+        std::shared_ptr<Object> Multiply(const std::shared_ptr<Object>& other) override;
+        std::shared_ptr<Object> Split(const std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> Size(const std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> Trim(const std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> Get(const std::shared_ptr<Object>& key) override;
+        void Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val) override;
         
     };
 
-    TSmartPtrType<String> makeString(const std::string& str);
+    std::shared_ptr<String> makeString(const std::string& str);
 }

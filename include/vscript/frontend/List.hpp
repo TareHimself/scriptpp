@@ -14,37 +14,38 @@ namespace vs::frontend
         size_t _index = 0;
 
     public:
-        ListItemReference(const size_t& index,const TSmartPtrType<ScopeLike>& scope,const TSmartPtrType<Object>& val);
+        ListItemReference(const size_t& index,const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<Object>& val);
 
-        void Set(const TSmartPtrType<Object>& val) override;
+        void Set(const std::shared_ptr<Object>& val) override;
     };
     class List : public DynamicObject
     {
-        std::vector<TSmartPtrType<Object>> _vec;
+        std::vector<std::shared_ptr<Object>> _vec;
     public:
-        List(const std::vector<TSmartPtrType<Object>>& vec);
+        void Init() override;
+        List(const std::vector<std::shared_ptr<Object>>& vec);
         std::string ToString() const override;
         bool ToBoolean() const override;
 
-        TSmartPtrType<Object> Get(const TSmartPtrType<Object>& key) override;
-        void Set(const TSmartPtrType<Object>& key, const TSmartPtrType<Object>& val) override;
-        void Set(const std::string& key, const TSmartPtrType<Object>& val) override;
-        virtual void Set(const size_t& index,const TSmartPtrType<Object>& val);
+        std::shared_ptr<Object> Get(const std::shared_ptr<Object>& key) override;
+        void Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val) override;
+        void Set(const std::string& key, const std::shared_ptr<Object>& val) override;
+        virtual void Set(const size_t& index,const std::shared_ptr<Object>& val);
 
-        TSmartPtrType<Object> Push(const TSmartPtrType<FunctionScope>& fnScope);
-        TSmartPtrType<Object> Pop(const TSmartPtrType<FunctionScope>& fnScope);
-        TSmartPtrType<Object> Map(const TSmartPtrType<FunctionScope>& fnScope);
-        TSmartPtrType<Object> ForEach(const TSmartPtrType<FunctionScope>& fnScope);
-        TSmartPtrType<Object> Filter(const TSmartPtrType<FunctionScope>& fnScope);
-        TSmartPtrType<Object> FindItem(const TSmartPtrType<FunctionScope>& fnScope);
-        TSmartPtrType<Object> FindIndex(const TSmartPtrType<FunctionScope>& fnScope);
-        TSmartPtrType<Object> Sort(const TSmartPtrType<FunctionScope>& fnScope);
-        TSmartPtrType<Object> Size(const TSmartPtrType<FunctionScope>& fnScope);
-        TSmartPtrType<Object> Join(const TSmartPtrType<FunctionScope>& fnScope);
-        TSmartPtrType<Object> Reverse(const TSmartPtrType<FunctionScope>& fnScope);
+        std::shared_ptr<Object> Push(const std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> Pop(const std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> Map(const std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> ForEach(const std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> Filter(const std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> FindItem(const std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> FindIndex(const std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> Sort(const std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> Size(const std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> Join(const std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> Reverse(const std::shared_ptr<FunctionScope>& fnScope);
 
-        virtual std::vector<TSmartPtrType<Object>>& GetNative();
-        static TSmartPtrType<ListPrototype> Prototype;
+        virtual std::vector<std::shared_ptr<Object>>& GetNative();
+        static std::shared_ptr<ListPrototype> Prototype;
     };
 
     class ListPrototype : public Prototype
@@ -56,5 +57,5 @@ namespace vs::frontend
     };
 
 
-    TSmartPtrType<List> makeList(const std::vector<TSmartPtrType<Object>>& items);
+    std::shared_ptr<List> makeList(const std::vector<std::shared_ptr<Object>>& items);
 }

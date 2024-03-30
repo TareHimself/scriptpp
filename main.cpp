@@ -10,7 +10,7 @@ void runRepl()
 {
         auto program = frontend::makeProgram();
 
-        program->AddLambda("print", {}, [](frontend::TSmartPtrType<frontend::FunctionScope>& scope)
+        program->AddLambda("print", {}, [](std::shared_ptr<frontend::FunctionScope>& scope)
         {
             for (const auto& arg : scope->GetArgs())
             {
@@ -22,7 +22,7 @@ void runRepl()
             return frontend::makeNull();
         });
         
-        program->AddLambda("input", {"prompt"}, [](frontend::TSmartPtrType<frontend::FunctionScope>& scope)
+        program->AddLambda("input", {"prompt"}, [](std::shared_ptr<frontend::FunctionScope>& scope)
         {
             if (auto prompt = scope->Find("prompt", false); prompt != frontend::makeNull())
             {
@@ -57,8 +57,7 @@ void runRepl()
             const auto ast = backend::parse(tokens);
             for (auto& statement : ast->statements)
             {
-                if (const auto result = frontend::evalStatement(statement, mod);
-                    result.IsValid())
+                if (const auto result = frontend::evalStatement(statement, mod))
                 {
                     std::cout << result->ToString() << std::endl;
                 }
@@ -68,7 +67,7 @@ void runRepl()
         {
             std::cerr << e.what() << std::endl;
         }
-        catch (frontend::TSmartPtrType<frontend::Error>& e)
+        catch (std::shared_ptr<frontend::Error>& e)
         {
             std::cerr << e->ToString() << std::endl;
         }
@@ -119,7 +118,7 @@ int main(const int argc, char *argv[])
     
         auto program = frontend::makeProgram();
 
-        program->AddLambda("print", {}, [](frontend::TSmartPtrType<frontend::FunctionScope>& scope)
+        program->AddLambda("print", {}, [](std::shared_ptr<frontend::FunctionScope>& scope)
         {
             for (const auto& arg : scope->GetArgs())
             {
@@ -132,9 +131,9 @@ int main(const int argc, char *argv[])
             return frontend::makeNull();
         });
         
-        program->AddLambda("input", {"prompt"}, [](frontend::TSmartPtrType<frontend::FunctionScope>& scope)
+        program->AddLambda("input", {"prompt"}, [](std::shared_ptr<frontend::FunctionScope>& scope)
         {
-            if (auto prompt = scope->Find("prompt", false); prompt != frontend::makeNull())
+            if (const auto prompt = scope->Find("prompt", false); prompt != frontend::makeNull())
             {
                 std::cout << prompt->ToString() << std::endl;
             }
@@ -153,7 +152,7 @@ int main(const int argc, char *argv[])
     {
         std::cerr << e.what() << std::endl;
     }
-    catch (frontend::TSmartPtrType<frontend::Error>& e)
+    catch (std::shared_ptr<frontend::Error>& e)
     {
         std::cerr << e->ToString() << std::endl;
     }

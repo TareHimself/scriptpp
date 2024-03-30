@@ -12,31 +12,31 @@ namespace vs::frontend
         return EObjectType::OT_Number;
     }
 
-    TSmartPtrType<Object> Number::Add(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> Number::Add(const std::shared_ptr<Object>& other)
     {
-        if(const auto str = other.Cast<String>(); str.IsValid())
+        if(const auto str = cast<String>(other))
         {
             return makeString(ToString() + str->ToString());
         }
         return Object::Add(other);
     }
 
-    TSmartPtrType<Object> Number::Subtract(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> Number::Subtract(const std::shared_ptr<Object>& other)
     {
         return Object::Subtract(other);
     }
 
-    TSmartPtrType<Object> Number::Divide(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> Number::Divide(const std::shared_ptr<Object>& other)
     {
         return Object::Divide(other);
     }
 
-    TSmartPtrType<Object> Number::Multiply(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> Number::Multiply(const std::shared_ptr<Object>& other)
     {
         return Object::Multiply(other);
     }
 
-    TSmartPtrType<Number> makeNumber(const std::string& num)
+    std::shared_ptr<Number> makeNumber(const std::string& num)
     {
         const auto numSize = num.starts_with("-") ? num.size() - 1 : num.size();
         

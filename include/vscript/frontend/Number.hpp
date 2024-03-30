@@ -1,39 +1,42 @@
 #pragma once
 #include "Object.hpp"
 #include <cmath>
+#include <stdexcept>
+
+#include "vscript/utils.hpp"
 namespace vs::frontend
 {
     
 #ifndef TNUMBER_SANITY_MACRO
 #define TNUMBER_SANITY_MACRO(operation) \
-if(const auto n = other.Cast<Number>(); n.IsValid()) \
+if(const auto n = cast<Number>(other)) \
 { \
     switch (n->GetNumberType()) \
     { \
     case NT_Int: \
         { \
-            if(const auto o = n.CastStatic<TNumber<int>>(); o.IsValid()) \
+            if(const auto o = castStatic<TNumber<int>>(n)) \
             { \
                 operation \
             } \
         } \
     case NT_Int64: \
         { \
-            if(const auto o = n.CastStatic<TNumber<uint64_t>>(); o.IsValid()) \
+            if(const auto o = castStatic<TNumber<uint64_t>>(n)) \
             { \
                 operation \
             } \
         } \
     case NT_Float: \
         { \
-            if(const auto o = n.CastStatic<TNumber<float>>(); o.IsValid()) \
+            if(const auto o = castStatic<TNumber<float>>(n)) \
             { \
                 operation \
             } \
         } \
     case NT_Double: \
         { \
-            if(const auto o = n.CastStatic<TNumber<double>>(); o.IsValid()) \
+            if(const auto o = castStatic<TNumber<double>>(n)) \
             { \
                 operation \
             } \
@@ -45,7 +48,7 @@ if(const auto n = other.Cast<Number>(); n.IsValid()) \
     class TNumber;
     
     template<typename  T,typename  = std::enable_if_t<std::is_integral_v<T> | std::is_floating_point_v<T>>>
-    TSmartPtrType<TNumber<T>> makeNumber(const T& num);
+    std::shared_ptr<TNumber<T>> makeNumber(const T& num);
     
     enum ENumberType
     {
@@ -75,10 +78,10 @@ if(const auto n = other.Cast<Number>(); n.IsValid()) \
     public:
         EObjectType GetType() const override;
 
-        TSmartPtrType<Object> Add(const TSmartPtrType<Object>& other) override;
-        TSmartPtrType<Object> Subtract(const TSmartPtrType<Object>& other) override;
-        TSmartPtrType<Object> Divide(const TSmartPtrType<Object>& other) override;
-        TSmartPtrType<Object> Multiply(const TSmartPtrType<Object>& other) override;
+        std::shared_ptr<Object> Add(const std::shared_ptr<Object>& other) override;
+        std::shared_ptr<Object> Subtract(const std::shared_ptr<Object>& other) override;
+        std::shared_ptr<Object> Divide(const std::shared_ptr<Object>& other) override;
+        std::shared_ptr<Object> Multiply(const std::shared_ptr<Object>& other) override;
 
         virtual ENumberType GetNumberType() const = 0;
 
@@ -95,15 +98,15 @@ if(const auto n = other.Cast<Number>(); n.IsValid()) \
 
         bool ToBoolean() const override;
         std::string ToString() const override;
-        TSmartPtrType<Object> Add(const TSmartPtrType<Object>& other) override;
-        TSmartPtrType<Object> Subtract(const TSmartPtrType<Object>& other) override;
-        TSmartPtrType<Object> Mod(const TSmartPtrType<Object>& other) override;
-        TSmartPtrType<Object> Divide(const TSmartPtrType<Object>& other) override;
-        TSmartPtrType<Object> Multiply(const TSmartPtrType<Object>& other) override;
+        std::shared_ptr<Object> Add(const std::shared_ptr<Object>& other) override;
+        std::shared_ptr<Object> Subtract(const std::shared_ptr<Object>& other) override;
+        std::shared_ptr<Object> Mod(const std::shared_ptr<Object>& other) override;
+        std::shared_ptr<Object> Divide(const std::shared_ptr<Object>& other) override;
+        std::shared_ptr<Object> Multiply(const std::shared_ptr<Object>& other) override;
 
-        bool Equal(const TSmartPtrType<Object>& other) const override;
-        bool Less(const TSmartPtrType<Object>& other) const override;
-        bool Greater(const TSmartPtrType<Object>& other) const override;
+        bool Equal(const std::shared_ptr<Object>& other) const override;
+        bool Less(const std::shared_ptr<Object>& other) const override;
+        bool Greater(const std::shared_ptr<Object>& other) const override;
 
         
         ENumberType GetNumberType() const override;
@@ -114,7 +117,7 @@ if(const auto n = other.Cast<Number>(); n.IsValid()) \
     template <typename T>
     T Number::GetValueAs()
     {
-        const auto other = this->ToRef().Reserve();
+        const auto other = this->GetRef();
         TNUMBER_SANITY_MACRO(return static_cast<T>(o->GetValue());)
         throw std::runtime_error("Unknown number type");
     }
@@ -138,56 +141,56 @@ if(const auto n = other.Cast<Number>(); n.IsValid()) \
     }
 
     template <typename T, typename T0>
-    TSmartPtrType<Object> TNumber<T, T0>::Add(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> TNumber<T, T0>::Add(const std::shared_ptr<Object>& other)
     {
         TNUMBER_SANITY_MACRO(return makeNumber(GetValue() + o->GetValue());)
         return Number::Add(other);
     }
 
     template <typename T, typename T0>
-    TSmartPtrType<Object> TNumber<T, T0>::Subtract(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> TNumber<T, T0>::Subtract(const std::shared_ptr<Object>& other)
     {
         TNUMBER_SANITY_MACRO(return makeNumber(GetValue() - o->GetValue());)
         return Number::Subtract(other);
     }
 
     template <typename T, typename T0>
-    TSmartPtrType<Object> TNumber<T, T0>::Mod(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> TNumber<T, T0>::Mod(const std::shared_ptr<Object>& other)
     {
         TNUMBER_SANITY_MACRO(return makeNumber(mod(GetValue(),static_cast<T>(o->GetValue())));)
         return Number::Mod(other);
     }
 
     template <typename T, typename T0>
-    TSmartPtrType<Object> TNumber<T, T0>::Divide(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> TNumber<T, T0>::Divide(const std::shared_ptr<Object>& other)
     {
         TNUMBER_SANITY_MACRO(return makeNumber(GetValue() / o->GetValue());)
         return Number::Divide(other);
     }
 
     template <typename T, typename T0>
-    TSmartPtrType<Object> TNumber<T, T0>::Multiply(const TSmartPtrType<Object>& other)
+    std::shared_ptr<Object> TNumber<T, T0>::Multiply(const std::shared_ptr<Object>& other)
     {
         TNUMBER_SANITY_MACRO(return makeNumber(GetValue() * o->GetValue());)
         return Number::Multiply(other);
     }
 
     template <typename T, typename T0>
-    bool TNumber<T, T0>::Equal(const TSmartPtrType<Object>& other) const
+    bool TNumber<T, T0>::Equal(const std::shared_ptr<Object>& other) const
     {
         TNUMBER_SANITY_MACRO(return GetValue() == o->GetValue();)
         return Number::Equal(other);
     }
 
     template <typename T, typename T0>
-    bool TNumber<T, T0>::Less(const TSmartPtrType<Object>& other) const
+    bool TNumber<T, T0>::Less(const std::shared_ptr<Object>& other) const
     {
         TNUMBER_SANITY_MACRO(return GetValue() < o->GetValue();)
         return Number::Less(other);
     }
 
     template <typename T, typename T0>
-    bool TNumber<T, T0>::Greater(const TSmartPtrType<Object>& other) const
+    bool TNumber<T, T0>::Greater(const std::shared_ptr<Object>& other) const
     {
         TNUMBER_SANITY_MACRO(return GetValue() > o->GetValue();)
         return Number::Greater(other);
@@ -227,11 +230,11 @@ if(const auto n = other.Cast<Number>(); n.IsValid()) \
 
 
 
-    TSmartPtrType<Number> makeNumber(const std::string& num);
+    std::shared_ptr<Number> makeNumber(const std::string& num);
 
     template<typename  T,typename>
-    TSmartPtrType<TNumber<T>> makeNumber(const T& num)
+    std::shared_ptr<TNumber<T>> makeNumber(const T& num)
     {
-        return manage<TNumber<T>>(num);
+        return std::make_shared<TNumber<T>>(num);
     }
 }

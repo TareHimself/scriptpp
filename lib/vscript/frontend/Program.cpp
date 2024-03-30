@@ -3,6 +3,7 @@
 #include <fstream>
 
 #include "vscript/api.hpp"
+#include "vscript/utils.hpp"
 #include "vscript/backend/Tokenizer.hpp"
 #include "vscript/frontend/Error.hpp"
 #include "vscript/frontend/eval.hpp"
@@ -12,31 +13,25 @@ namespace vs::frontend
 {
     Program::Program() : DynamicObject({})
     {
-        
     }
 
-    void Program::OnRefSet()
+    void Program::Init()
     {
-        DynamicObject::OnRefSet();
-        AddLambda("import",{"moduleId"},[this](const TSmartPtrType<FunctionScope>& scope)
-         {
-            if(const auto mod = ImportModule(scope->Find("moduleId")->ToString()); mod.IsValid())
-            {
-                return mod.CastStatic<Object>();
-            }
-
-            return makeNull().CastStatic<Object>();
-         });
-        
-        AddLambda("cwd",{},[this](const TSmartPtrType<FunctionScope>& fs)
+        DynamicObject::Init();
+        AddLambda("import",{"moduleId"},[this](const std::shared_ptr<FunctionScope>& scope)
         {
-            return makeString(std::string(_cwd.string()));
+            return Import(scope);
+        });
+        
+        AddLambda("cwd",{},[this](const std::shared_ptr<FunctionScope>& scope)
+        {
+            return GetCwd(scope);
         });
 
-        DynamicObject::Set("List",List::Prototype);
+        Set("List",List::Prototype);
     }
 
-    TSmartPtrType<Module> Program::ImportModule(const std::string& id)
+    std::shared_ptr<Module> Program::ImportModule(const std::string& id)
     {
         if(_modules.contains(id))
         {
@@ -59,9 +54,9 @@ namespace vs::frontend
 
         if(absPath.extension() == ".vsnative")
         {
-            auto scope = this->ToRef().Reserve().Cast<Program>();
+            auto scope = cast<Program>(this->GetRef());
             auto native = api::importNative(absPath,scope);
-            if(native.IsValid())
+            if(native)
             {
                 _modules[targetPath] = native;
             }
@@ -70,7 +65,7 @@ namespace vs::frontend
         
         auto mod = ModuleFromFile(absPath);
 
-        if(mod.IsValid())
+        if(mod)
         {
             _modules[targetPath] = mod;
         }
@@ -78,7 +73,7 @@ namespace vs::frontend
         return mod;
     }
 
-    TSmartPtrType<Module> Program::ModuleFromFile(const std::filesystem::path& path)
+    std::shared_ptr<Module> Program::ModuleFromFile(const std::filesystem::path& path)
     {
         
         
@@ -92,27 +87,42 @@ namespace vs::frontend
 
         const auto ast = parse(tokens);
 
-        return evalModule(ast,this->ToRef().Reserve().Cast<Program>());
+        return evalModule(ast,cast<Program>(this->GetRef()));
     }
 
-    TSmartPtrType<Module> Program::ImportModule(TSmartPtrType<FunctionScope>& scope, const std::string& id)
+    std::shared_ptr<Module> Program::ImportModule(std::shared_ptr<FunctionScope>& scope, const std::string& id)
     {
 
         return ImportModule(id);
     }
 
-    TSmartPtrType<Object> Program::Find(const std::string& id, bool searchParent)
+    std::shared_ptr<Object> Program::Import(const std::shared_ptr<FunctionScope>& scope)
+    {
+        if(const auto mod = this->ImportModule(scope->Find("moduleId")->ToString()))
+        {
+            return mod;
+        }
+
+        return makeNull();
+    }
+
+    std::shared_ptr<Object> Program::GetCwd(const std::shared_ptr<FunctionScope>& scope)
+    {
+        return makeString(std::string(_cwd.string()));
+    }
+
+    std::shared_ptr<Object> Program::Find(const std::string& id, bool searchParent)
     {
         if(id == "program")
         {
-            return this->ToRef().Reserve();
+            return this->GetRef();
         }
         
         return DynamicObject::Find(id, searchParent);
     }
 
-    TSmartPtrType<Program> makeProgram()
+    std::shared_ptr<Program> makeProgram()
     {
-        return manage<Program>();
+        return makeObject<Program>();
     }
 }

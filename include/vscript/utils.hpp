@@ -2,6 +2,8 @@
 #include <vector>
 #include <string>
 
+#include "frontend/Object.hpp"
+
 namespace vs
 {
     inline void split(std::vector<std::string>& result,const std::string& str,const std::string& delimiter = " ")
@@ -128,6 +130,16 @@ namespace vs
         }
 
         return result;
+    }
+
+    template <typename To,typename From>
+std::shared_ptr<To> cast(const std::shared_ptr<From>& ptr) {
+        return std::dynamic_pointer_cast<To,From>(ptr);
+    }
+
+    template <typename To,typename From>
+    std::shared_ptr<To> castStatic(const std::shared_ptr<From>& ptr) {
+        return std::static_pointer_cast<To,From>(ptr);
     }
     
 }

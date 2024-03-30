@@ -12,5 +12,5 @@ namespace vs::frontend
     };
 
 
-    TSmartPtrType<Null> makeNull();
+    std::shared_ptr<Null> makeNull();
 }
