@@ -370,49 +370,19 @@ namespace vs::frontend
         return obj;
     }
 
-    OneLayerScopeProxy::OneLayerScopeProxy(const std::shared_ptr<ScopeLike>& scope)
+    OneLayerScopeProxy::OneLayerScopeProxy(const std::shared_ptr<ScopeLike>& scope) : ScopeLikeProxyShared(scope)
     {
-        _outer = scope;
+        
     }
-
-    std::list<EScopeType> OneLayerScopeProxy::GetScopeStack() const
-    {
-        return _outer->GetScopeStack();
-    }
-
-    bool OneLayerScopeProxy::HasScopeType(EScopeType type) const
-    {
-        return _outer->HasScopeType(type);
-    }
-
-    EScopeType OneLayerScopeProxy::GetScopeType() const
-    {
-        return _outer->GetScopeType();
-    }
-
+    
     bool OneLayerScopeProxy::Has(const std::string& id, bool searchParent) const
     {
-        return _outer->Has(id,false);
-    }
-
-    void OneLayerScopeProxy::Create(const std::string& id, const std::shared_ptr<Object>& var)
-    {
-        return _outer->Create(id,var);
-    }
-
-    void OneLayerScopeProxy::Assign(const std::string& id, const std::shared_ptr<Object>& var)
-    {
-        return _outer->Assign(id,var);
+        return ScopeLikeProxyShared::Has(id,false);
     }
 
     std::shared_ptr<Object> OneLayerScopeProxy::Find(const std::string& id, bool searchParent)
     {
-        return _outer->Find(id,false);
-    }
-
-    std::shared_ptr<ScopeLike> OneLayerScopeProxy::GetOuter() const
-    {
-        return _outer->GetOuter();
+        return ScopeLikeProxyShared::Find(id,false);
     }
 
     std::shared_ptr<OneLayerScopeProxy> makeOneLayerScopeProxy(const std::shared_ptr<ScopeLike>& scope)

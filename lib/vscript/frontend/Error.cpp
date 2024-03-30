@@ -34,6 +34,7 @@ namespace vs::frontend
             if(next->GetScopeType() == ST_Proxy)
             {
                 next = cast<ScopeLikeProxy>(next)->GetActual();
+                continue;
             }
             
             if(const auto asCallScope = cast<CallScope>(next))

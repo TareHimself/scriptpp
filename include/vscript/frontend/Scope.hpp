@@ -158,20 +158,13 @@ namespace vs::frontend
         SetterFn _fn;
     };
 
-    class OneLayerScopeProxy : public ScopeLike
+    class OneLayerScopeProxy : public ScopeLikeProxyShared
     {
         std::shared_ptr<ScopeLike> _outer;
     public:
         explicit OneLayerScopeProxy(const std::shared_ptr<ScopeLike>& scope);
-
-        std::list<EScopeType> GetScopeStack() const override;
-        bool HasScopeType(EScopeType type) const override;
-        EScopeType GetScopeType() const override;
         bool Has(const std::string& id, bool searchParent) const override;
-        void Create(const std::string& id, const std::shared_ptr<Object>& var) override;
-        void Assign(const std::string& id, const std::shared_ptr<Object>& var) override;
         std::shared_ptr<Object> Find(const std::string& id, bool searchParent) override;
-        std::shared_ptr<ScopeLike> GetOuter() const override;
     };
 
     std::shared_ptr<Reference> makeReference(const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<Object>& val);

@@ -102,7 +102,12 @@ namespace vs::frontend
             {
                 if (const auto r = std::dynamic_pointer_cast<backend::VariableNode>(ast))
                 {
-                    return scope->Find(r->value);
+                    auto found = scope->Find(r->value);
+                    if(found->GetType() != OT_Reference) // every call to find should return a reference unless it was not found
+                    {
+                        throw makeError(scope,"\"" + r->value + "\" does not exist.",ast->debugInfo);
+                    }
+                    return found;
                 }
                 throw makeError(scope,"Expected variable",ast->debugInfo);
             }

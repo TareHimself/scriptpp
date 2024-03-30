@@ -82,7 +82,7 @@ namespace vs::frontend
             return _outer->Find(id);
         }
         
-        return makeNull();
+        return makeReferenceWithId(id,cast<DynamicObject>(this->GetRef()),makeNull());
     }
 
     std::list<EScopeType> DynamicObject::GetScopeStack() const
