@@ -31,12 +31,17 @@ namespace vs::frontend
         
         while(next)
         {
+            if(next->GetScopeType() == ST_Proxy)
+            {
+                next = cast<ScopeLikeProxy>(next)->GetActual();
+            }
+            
             if(const auto asCallScope = cast<CallScope>(next))
             {
                 callstackVec.emplace_back(makeString(asCallScope->ToString()));
                 if(asCallScope->GetScopeType() == ST_Function)
                 {
-                    if(const auto asFnScope = cast<FunctionScope>(asCallScope->GetScope()))
+                    if(const auto asFnScope = cast<FunctionScope>(asCallScope->GetActual()))
                     {
                         next = asFnScope->GetCallerScope();
                         continue;

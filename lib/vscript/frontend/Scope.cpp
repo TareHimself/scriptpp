@@ -76,12 +76,91 @@ namespace vs::frontend
         return _outer;
     }
 
-    RefScopeProxy::RefScopeProxy(const std::weak_ptr<ScopeLike>& scope)
+    EScopeType ScopeLikeProxy::GetScopeType() const
+    {
+        return ST_Proxy;
+    }
+
+    ScopeLikeProxyShared::ScopeLikeProxyShared(const std::shared_ptr<ScopeLike>& scope)
     {
         _scope = scope;
     }
 
-    std::list<EScopeType> RefScopeProxy::GetScopeStack() const
+    std::list<EScopeType> ScopeLikeProxyShared::GetScopeStack() const
+    {
+        if(_scope)
+        {
+            return _scope->GetScopeStack();
+        }
+        return {};
+    }
+
+    bool ScopeLikeProxyShared::HasScopeType(EScopeType type) const
+    {
+        if(_scope)
+        {
+            return _scope->HasScopeType(type);
+        }
+        return false;
+    }
+
+    void ScopeLikeProxyShared::Assign(const std::string& id, const std::shared_ptr<Object>& var)
+    {
+        if(_scope)
+        {
+            return _scope->Assign(id,var);
+        }
+    }
+
+    void ScopeLikeProxyShared::Create(const std::string& id, const std::shared_ptr<Object>& var)
+    {
+        if(_scope)
+        {
+            return _scope->Assign(id,var);
+        }
+    }
+
+    bool ScopeLikeProxyShared::Has(const std::string& id, bool searchParent) const
+    {
+        if(_scope)
+        {
+            return _scope->Has(id,searchParent);
+        }
+
+        return false;
+    }
+
+    std::shared_ptr<Object> ScopeLikeProxyShared::Find(const std::string& id, bool searchParent)
+    {
+        if(_scope)
+        {
+            return _scope->Find(id,searchParent);
+        }
+
+        return makeNull();
+    }
+
+    std::shared_ptr<ScopeLike> ScopeLikeProxyShared::GetOuter() const
+    {
+        if(_scope)
+        {
+            return _scope->GetOuter();
+        }
+
+        return {};
+    }
+
+    std::shared_ptr<ScopeLike> ScopeLikeProxyShared::GetActual()
+    {
+        return _scope;
+    }
+
+    ScopeLikeProxyWeak::ScopeLikeProxyWeak(const std::weak_ptr<ScopeLike>& scope)
+    {
+        _scope = scope;
+    }
+
+    std::list<EScopeType> ScopeLikeProxyWeak::GetScopeStack() const
     {
         if(const auto s = _scope.lock())
         {
@@ -91,7 +170,7 @@ namespace vs::frontend
         return {};
     }
 
-    bool RefScopeProxy::HasScopeType(EScopeType type) const
+    bool ScopeLikeProxyWeak::HasScopeType(EScopeType type) const
     {
         if(const auto s = _scope.lock())
         {
@@ -101,17 +180,7 @@ namespace vs::frontend
         return false;
     }
 
-    EScopeType RefScopeProxy::GetScopeType() const
-    {
-        if(const auto s = _scope.lock())
-        {
-            return s->GetScopeType();
-        }
-
-        return ST_None;
-    }
-
-    void RefScopeProxy::Assign(const std::string& id, const std::shared_ptr<Object>& var)
+    void ScopeLikeProxyWeak::Assign(const std::string& id, const std::shared_ptr<Object>& var)
     {
         if(const auto s = _scope.lock())
         {
@@ -119,7 +188,7 @@ namespace vs::frontend
         }
     }
 
-    void RefScopeProxy::Create(const std::string& id, const std::shared_ptr<Object>& var)
+    void ScopeLikeProxyWeak::Create(const std::string& id, const std::shared_ptr<Object>& var)
     {
         if(const auto s = _scope.lock())
         {
@@ -127,7 +196,7 @@ namespace vs::frontend
         }
     }
 
-    bool RefScopeProxy::Has(const std::string& id, bool searchParent) const
+    bool ScopeLikeProxyWeak::Has(const std::string& id, bool searchParent) const
     {
         if(const auto s = _scope.lock())
         {
@@ -137,7 +206,7 @@ namespace vs::frontend
         return false;
     }
 
-    std::shared_ptr<Object> RefScopeProxy::Find(const std::string& id, bool searchParent)
+    std::shared_ptr<Object> ScopeLikeProxyWeak::Find(const std::string& id, bool searchParent)
     {
         if(const auto s = _scope.lock())
     {
@@ -147,7 +216,7 @@ namespace vs::frontend
         return makeNull();
     }
 
-    std::shared_ptr<ScopeLike> RefScopeProxy::GetOuter() const
+    std::shared_ptr<ScopeLike> ScopeLikeProxyWeak::GetOuter() const
     {
         if(const auto s = _scope.lock())
         {
@@ -157,62 +226,21 @@ namespace vs::frontend
         return {};
     }
 
+    std::shared_ptr<ScopeLike> ScopeLikeProxyWeak::GetActual()
+    {
+        return _scope.lock();
+    }
+
     CallScope::CallScope(const backend::TokenDebugInfo& calledAt, const std::shared_ptr<Function>& called,
-        const std::shared_ptr<ScopeLike>& scope)
+                         const std::shared_ptr<ScopeLike>& scope) : ScopeLikeProxyShared(scope)
     {
         _calledAt = calledAt;
         _called = called;
-        _scope = scope;
-    }
-
-    std::list<EScopeType> CallScope::GetScopeStack() const
-    {
-        return _scope->GetScopeStack();
-    }
-
-    bool CallScope::HasScopeType(EScopeType type) const
-    {
-        return _scope->HasScopeType(type);
-    }
-
-    EScopeType CallScope::GetScopeType() const
-    {
-        return _scope->GetScopeType();
-    }
-
-    void CallScope::Assign(const std::string& id, const std::shared_ptr<Object>& var)
-    {
-        _scope->Assign(id,var);
-    }
-
-    void CallScope::Create(const std::string& id, const std::shared_ptr<Object>& var)
-    {
-        _scope->Create(id,var);
-    }
-
-    bool CallScope::Has(const std::string& id, bool searchParent) const
-    {
-        return _scope->Has(id,searchParent);
-    }
-
-    std::shared_ptr<Object> CallScope::Find(const std::string& id, bool searchParent)
-    {
-        return _scope->Find(id,searchParent);
-    }
-
-    std::shared_ptr<ScopeLike> CallScope::GetOuter() const
-    {
-        return _scope->GetOuter();
     }
 
     std::string CallScope::ToString() const
     {
         return join({_called->ToString(),_calledAt.ToString()}," @ ");
-    }
-
-    std::shared_ptr<ScopeLike> CallScope::GetScope() const
-    {
-        return _scope;
     }
 
     Reference::Reference(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& val)
@@ -317,9 +345,9 @@ namespace vs::frontend
         return makeObject<Scope>();
     }
 
-    std::shared_ptr<RefScopeProxy> makeRefScopeProxy(const std::weak_ptr<ScopeLike>& scope)
+    std::shared_ptr<ScopeLikeProxyWeak> makeRefScopeProxy(const std::weak_ptr<ScopeLike>& scope)
     {
-        return std::make_shared<RefScopeProxy>(scope);
+        return std::make_shared<ScopeLikeProxyWeak>(scope);
     }
 
     std::shared_ptr<CallScope> makeCallScope(const backend::TokenDebugInfo& calledAt,const std::shared_ptr<Function>& called,const std::shared_ptr<ScopeLike>& scope)

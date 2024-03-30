@@ -20,6 +20,7 @@ namespace vs::frontend
     enum EScopeType
     {
         ST_None,
+        ST_Proxy,
         ST_Module,
         ST_Function,
         ST_Iteration,
@@ -72,43 +73,55 @@ namespace vs::frontend
         std::shared_ptr<ScopeLike> GetOuter() const override;
     };
 
-    class RefScopeProxy : public ScopeLike
+    class ScopeLikeProxy : public ScopeLike
+    {
+    public:
+        EScopeType GetScopeType() const override;
+        virtual std::shared_ptr<ScopeLike> GetActual() = 0;
+        
+    };
+
+    class ScopeLikeProxyShared : public ScopeLikeProxy
+    {
+    protected:
+        std::shared_ptr<ScopeLike> _scope;
+    public:
+        ScopeLikeProxyShared(const std::shared_ptr<ScopeLike>& scope);
+        std::list<EScopeType> GetScopeStack() const override;
+        bool HasScopeType(EScopeType type) const override;
+        void Assign(const std::string& id, const std::shared_ptr<Object>& var) override;
+        void Create(const std::string& id, const std::shared_ptr<Object>& var) override;
+        bool Has(const std::string& id, bool searchParent) const override;
+        std::shared_ptr<Object> Find(const std::string& id, bool searchParent) override;
+        std::shared_ptr<ScopeLike> GetOuter() const override;
+        std::shared_ptr<ScopeLike> GetActual() override;
+    };
+
+    class ScopeLikeProxyWeak : public ScopeLikeProxy
     {
     protected:
         std::weak_ptr<ScopeLike> _scope;
     public:
-        RefScopeProxy(const std::weak_ptr<ScopeLike>& scope);
+        ScopeLikeProxyWeak(const std::weak_ptr<ScopeLike>& scope);
         std::list<EScopeType> GetScopeStack() const override;
         bool HasScopeType(EScopeType type) const override;
-        EScopeType GetScopeType() const override;
         void Assign(const std::string& id, const std::shared_ptr<Object>& var) override;
         void Create(const std::string& id, const std::shared_ptr<Object>& var) override;
         bool Has(const std::string& id, bool searchParent) const override;
         std::shared_ptr<Object> Find(const std::string& id, bool searchParent) override;
         std::shared_ptr<ScopeLike> GetOuter() const override;
+        std::shared_ptr<ScopeLike> GetActual() override;
     };
 
     // Used to track function calls
-    class CallScope : public ScopeLike
+    class CallScope : public ScopeLikeProxyShared
     {
     protected:
         backend::TokenDebugInfo _calledAt;
         std::shared_ptr<Function> _called;
-        std::shared_ptr<ScopeLike> _scope;
     public:
         CallScope(const backend::TokenDebugInfo& calledAt,const std::shared_ptr<Function>& called,const std::shared_ptr<ScopeLike>& scope);
-        std::list<EScopeType> GetScopeStack() const override;
-        bool HasScopeType(EScopeType type) const override;
-        EScopeType GetScopeType() const override;
-        void Assign(const std::string& id, const std::shared_ptr<Object>& var) override;
-        void Create(const std::string& id, const std::shared_ptr<Object>& var) override;
-        bool Has(const std::string& id, bool searchParent) const override;
-        std::shared_ptr<Object> Find(const std::string& id, bool searchParent) override;
-        std::shared_ptr<ScopeLike> GetOuter() const override;
-
         std::string ToString() const;
-
-        std::shared_ptr<ScopeLike> GetScope() const;
     };
 
     class Reference : public Object
@@ -171,7 +184,7 @@ namespace vs::frontend
 
     std::shared_ptr<Scope> makeScope();
 
-    std::shared_ptr<RefScopeProxy> makeRefScopeProxy(const std::weak_ptr<ScopeLike>& scope);
+    std::shared_ptr<ScopeLikeProxyWeak> makeRefScopeProxy(const std::weak_ptr<ScopeLike>& scope);
 
     std::shared_ptr<CallScope> makeCallScope(const backend::TokenDebugInfo& calledAt,const std::shared_ptr<Function>& called,const std::shared_ptr<ScopeLike>& scope);
 
