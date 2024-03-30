@@ -51,6 +51,11 @@ namespace vs::frontend
 
         template<typename ...TArgs, typename = std::enable_if_t<((std::is_convertible_v<TArgs, std::shared_ptr<Object>>) && ...)>>
         std::shared_ptr<Object> Call(const std::shared_ptr<ScopeLike>& callerScope,TArgs... args);
+
+        // virtual std::shared_ptr<Object> CallFromNative(const std::shared_ptr<ScopeLike>& callerScope,const std::vector<std::shared_ptr<Object>>& args = {});
+        //
+        // template<typename ...TArgs, typename = std::enable_if_t<((std::is_convertible_v<TArgs, std::shared_ptr<Object>>) && ...)>>
+        // std::shared_ptr<Object> CallFromRuntime(const std::shared_ptr<ScopeLike>& callerScope,TArgs... args);
         
         virtual std::shared_ptr<Object> HandleCall(std::shared_ptr<FunctionScope>& scope) = 0;
         

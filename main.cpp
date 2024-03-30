@@ -145,8 +145,7 @@ int main(const int argc, char *argv[])
         });
 
         const auto path = absolute(std::filesystem::path(args[0]));
-        const auto module = program->ImportModule(path.string());
-        
+        const auto mod = program->ImportModule(path.string());
     }
     catch (std::runtime_error& e)
     {

@@ -100,14 +100,16 @@ namespace vs::frontend
 
     std::shared_ptr<Object> Function::Call(const std::shared_ptr<ScopeLike>& callerScope,const std::vector<std::shared_ptr<Object>>& args )
     {
+
+        
         std::vector<std::shared_ptr<Object>> callArgs = args;
         
         while(callArgs.size() < _args.size())
         {
             callArgs.emplace_back(makeNull());
         }
-        
-        auto fnScope =  makeFunctionScope(cast<Function>(this->GetRef()),callerScope,_scope,_args,callArgs);
+        const auto myRef = cast<Function>(this->GetRef());
+        auto fnScope =  makeFunctionScope(myRef,callerScope ? callerScope : makeCallScope({"<native>",0,0},myRef,{}),_scope,_args,callArgs);
         return HandleCall(fnScope);
     }
     
