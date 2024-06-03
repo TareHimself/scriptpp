@@ -2,41 +2,41 @@
 #include <fstream>
 #include <filesystem>
 #include "vscript/vscript.hpp"
-#include "vscript/frontend/Error.hpp"
+#include "vscript/runtime/Error.hpp"
 
 using namespace vs;
 
 void runRepl()
 {
-        auto program = frontend::makeProgram();
+        auto program = runtime::makeProgram();
 
-        program->AddLambda("print", {}, [](std::shared_ptr<frontend::FunctionScope>& scope)
+        program->AddLambda("print", {}, [](const std::shared_ptr<runtime::FunctionScope>& scope)
         {
             for (const auto& arg : scope->GetArgs())
             {
-                auto s = arg->ToString();
-                std::cout << arg->ToString() << " ";
+                auto s = arg->ToString(scope);
+                std::cout << arg->ToString(scope) << " ";
             }
             std::cout << std::endl;
         
-            return frontend::makeNull();
+            return runtime::makeNull();
         });
         
-        program->AddLambda("input", {"prompt"}, [](std::shared_ptr<frontend::FunctionScope>& scope)
+        program->AddLambda("input", {"prompt"}, [](const std::shared_ptr<runtime::FunctionScope>& scope)
         {
-            if (auto prompt = scope->Find("prompt", false); prompt != frontend::makeNull())
+            if (const auto prompt = scope->Find("prompt", false); prompt != runtime::makeNull())
             {
-                std::cout << prompt->ToString() << std::endl;
+                std::cout << prompt->ToString(scope) << std::endl;
             }
         
             std::string result;
             std::getline(std::cin, result);
         
-            return frontend::makeString(result);
+            return runtime::makeString(result);
         });
         
     std::string input;
-    const auto mod = frontend::makeModule(program);
+    const auto mod = runtime::makeModule(program);
 
     while (input != "quit")
     {
@@ -52,12 +52,12 @@ void runRepl()
             {
                 input += ";";
             }
-            backend::Tokenized tokens;
+            frontend::Tokenized tokens;
             tokenize(tokens, input,"<terminal>");
-            const auto ast = backend::parse(tokens);
+            const auto ast = frontend::parse(tokens);
             for (auto& statement : ast->statements)
             {
-                if (const auto result = frontend::evalStatement(statement, mod))
+                if (const auto result = runtime::evalStatement(statement, mod))
                 {
                     std::cout << result->ToString() << std::endl;
                 }
@@ -67,7 +67,7 @@ void runRepl()
         {
             std::cerr << e.what() << std::endl;
         }
-        catch (std::shared_ptr<frontend::Error>& e)
+        catch (std::shared_ptr<runtime::Error>& e)
         {
             std::cerr << e->ToString() << std::endl;
         }
@@ -115,33 +115,31 @@ int main(const int argc, char *argv[])
     
     try
     {
-    
-        auto program = frontend::makeProgram();
+        const auto program = runtime::makeProgram();
 
-        program->AddLambda("print", {}, [](std::shared_ptr<frontend::FunctionScope>& scope)
+        program->AddLambda("print", {}, [](const std::shared_ptr<runtime::FunctionScope>& scope)
         {
             for (const auto& arg : scope->GetArgs())
             {
-                auto b = arg->ToBoolean();
-                auto s = arg->ToString();
-                std::cout << arg->ToString() << " ";
+                auto s = arg->ToString(scope);
+                std::cout << arg->ToString(scope) << " ";
             }
             std::cout << std::endl;
         
-            return frontend::makeNull();
+            return runtime::makeNull();
         });
         
-        program->AddLambda("input", {"prompt"}, [](std::shared_ptr<frontend::FunctionScope>& scope)
+        program->AddLambda("input", {"prompt"}, [](const std::shared_ptr<runtime::FunctionScope>& scope)
         {
-            if (const auto prompt = scope->Find("prompt", false); prompt != frontend::makeNull())
+            if (const auto prompt = scope->Find("prompt", false); prompt != runtime::makeNull())
             {
-                std::cout << prompt->ToString() << std::endl;
+                std::cout << prompt->ToString(scope) << std::endl;
             }
         
             std::string result;
             std::getline(std::cin, result);
         
-            return frontend::makeString(result);
+            return runtime::makeString(result);
         });
 
         const auto path = absolute(std::filesystem::path(args[0]));
@@ -157,7 +155,7 @@ int main(const int argc, char *argv[])
     {
         std::cerr << e.what() << std::endl;
     }
-    catch (std::shared_ptr<frontend::Error>& e)
+    catch (std::shared_ptr<runtime::Error>& e)
     {
         std::cerr << e->ToString() << std::endl;
     }

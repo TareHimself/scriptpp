@@ -2,7 +2,7 @@ class Bar {
 
     let a = "Hello";
     let b = "World";
-};
+}
 
 
 
@@ -18,7 +18,7 @@ class Foo : Bar {
     fn bar2(){
         
     }
-};
+}
 
 let x = Foo();
 

@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 
-#include "frontend/Object.hpp"
+#include "runtime/Object.hpp"
 
 namespace vs
 {
