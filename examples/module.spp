@@ -1,0 +1,2 @@
+let native = import("D:\\Github\\scriptpp\\nativeModuleTest\\build\\Debug\\native_module.vsnative");
+native.test();

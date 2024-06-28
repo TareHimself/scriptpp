@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "vscript/api.hpp"
-#include "vscript/frontend/frontend.hpp"
-using namespace vs::frontend;
+#include "scriptpp/api.hpp"
+#include "scriptpp/frontend/frontend.hpp"
+using namespace spp::frontend;
 int main(){
     
 }

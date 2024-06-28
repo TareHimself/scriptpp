@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.27)
 
 set(CMAKE_CXX_STANDARD 20)
 
-project(vscript VERSION 1.0.0 LANGUAGES CXX)
+project(scriptpp VERSION 1.0.0 LANGUAGES CXX)
 
 option(BUILD_DEV "Build Dev Project" ${PROJECT_IS_TOP_LEVEL})
 
@@ -26,9 +26,9 @@ if(MSVC)
 endif()
 
 if(BUILD_DEV)
-        add_executable(vscript_repl ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
-        set_target_properties(vscript_repl PROPERTIES OUTPUT_NAME "vscript")
-        target_link_libraries(vscript_repl ${PROJECT_NAME})  
+        add_executable(scriptpp_repl ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
+        set_target_properties(scriptpp_repl PROPERTIES OUTPUT_NAME "scriptpp")
+        target_link_libraries(scriptpp_repl ${PROJECT_NAME})  
 endif()
 
 

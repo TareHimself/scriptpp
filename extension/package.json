@@ -1,7 +1,7 @@
 {
-  "name": "vs",
-  "displayName": "vscript",
-  "description": "VScript Language Extension",
+  "name": "spp",
+  "displayName": "scriptpp",
+  "description": "scriptpp Language Extension",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.87.0"
@@ -11,15 +11,15 @@
   ],
   "contributes": {
     "languages": [{
-      "id": "vs",
-      "aliases": ["VScript", "vs"],
-      "extensions": [".vs"],
+      "id": "spp",
+      "aliases": ["scriptpp", "spp"],
+      "extensions": [".spp"],
       "configuration": "./language-configuration.json"
     }],
     "grammars": [{
-      "language": "vs",
-      "scopeName": "source.vs",
-      "path": "./syntaxes/vs.tmLanguage.json"
+      "language": "spp",
+      "scopeName": "source.spp",
+      "path": "./syntaxes/spp.tmLanguage.json"
     }]
   }
 }

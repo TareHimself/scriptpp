@@ -9,7 +9,7 @@ file(GLOB_RECURSE SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/module.cc" )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDE_FILES})
 # Gives our library file a .node extension without any "lib" prefix
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".vsnative")
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".sppn")
 #set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 
 target_include_directories(
@@ -21,6 +21,6 @@ target_include_directories(
 
 
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../build/Debug)
-find_library(VSCRIPT_LIB vscript)
+find_library(scriptpp_LIB scriptpp)
 
-target_link_libraries(${PROJECT_NAME} ${VSCRIPT_LIB})
+target_link_libraries(${PROJECT_NAME} ${scriptpp_LIB})

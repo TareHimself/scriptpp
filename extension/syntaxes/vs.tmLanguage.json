@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-	"name": "VScript",
+	"name": "scriptpp",
 	"patterns": [
 		{
 			"include": "#keywords"
@@ -12,25 +12,25 @@
 	"repository": {
 		"keywords": {
 			"patterns": [{
-				"name": "keyword.control.vs",
+				"name": "keyword.control.spp",
 				"match": "\\b(when|return|else|fn|class|let|for|while|break|continue)\\b"
 			},
 			{
-				"name": "keyword.operator.vs",
+				"name": "keyword.operator.spp",
 				"match": "!|==|!=|<|<=|>|>=|&&|\\|\\|"
 			}]
 		},
 		"strings": {
-			"name": "string.quoted.double.vs",
+			"name": "string.quoted.double.spp",
 			"begin": "\"",
 			"end": "\"",
 			"patterns": [
 				{
-					"name": "constant.character.escape.vs",
+					"name": "constant.character.escape.spp",
 					"match": "\\\\."
 				}
 			]
 		}
 	},
-	"scopeName": "source.vs"
+	"scopeName": "source.spp"
 }

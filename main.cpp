@@ -1,10 +1,10 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
-#include "vscript/vscript.hpp"
-#include "vscript/runtime/Error.hpp"
+#include "scriptpp/scriptpp.hpp"
+#include "scriptpp/runtime/Error.hpp"
 
-using namespace vs;
+using namespace spp;
 
 void runRepl()
 {
@@ -146,8 +146,8 @@ int main(const int argc, char *argv[])
         const auto mod = program->ImportModule(path.string());
 
 
-        // const auto resolved = vs::frontend::resolveReference(mod->Find("main"));
-        // if (const auto entry = vs::cast<vs::frontend::Function>(resolved)) {
+        // const auto resolved = spp::frontend::resolveReference(mod->Find("main"));
+        // if (const auto entry = spp::cast<spp::frontend::Function>(resolved)) {
         //     entry->Call({});
         // }
     }

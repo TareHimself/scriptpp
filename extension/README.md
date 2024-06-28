@@ -1,6 +1,6 @@
-# vs README
+# spp README
 
-This is the README for your extension "vs". After writing up a brief description, we recommend including the following sections.
+This is the README for your extension "spp". After writing up a brief description, we recommend including the following sections.
 
 ## Features
 
@@ -18,7 +18,7 @@ If you have any requirements or dependencies, add a section describing those and
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+Include if your extension adds any spp Code settings through the `contributes.configuration` extension point.
 
 For example:
 
