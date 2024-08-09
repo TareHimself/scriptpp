@@ -1,10 +1,10 @@
 {
   "name": "spp",
-  "displayName": "scriptpp",
-  "description": "scriptpp Language Extension",
+  "displayName": "ScriptPP",
+  "description": "Vs Code Support for Script PP Language",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.87.0"
+    "vscode": "^1.89.0"
   },
   "categories": [
     "Programming Languages"
@@ -12,14 +12,14 @@
   "contributes": {
     "languages": [{
       "id": "spp",
-      "aliases": ["scriptpp", "spp"],
+      "aliases": ["ScriptPP", "spp"],
       "extensions": [".spp"],
       "configuration": "./language-configuration.json"
     }],
     "grammars": [{
       "language": "spp",
       "scopeName": "source.spp",
-      "path": "./syntaxes/spp.tmLanguage.json"
+      "path": "./syntaxes/scriptpp.tmLanguage.json"
     }]
   }
 }

@@ -2,7 +2,7 @@
 #include <fstream>
 #include <filesystem>
 #include "scriptpp/scriptpp.hpp"
-#include "scriptpp/runtime/Error.hpp"
+#include "scriptpp/runtime/Exception.hpp"
 
 using namespace spp;
 
@@ -17,7 +17,7 @@ void runRepl()
                 auto s = arg->ToString(scope);
                 std::cout << arg->ToString(scope) << " ";
             }
-            std::cout << std::endl;
+            std::cout << '\n';
         
             return runtime::makeNull();
         });
@@ -26,7 +26,7 @@ void runRepl()
         {
             if (const auto prompt = scope->Find("prompt", false); prompt != runtime::makeNull())
             {
-                std::cout << prompt->ToString(scope) << std::endl;
+                std::cout << prompt->ToString(scope) << '\n';
             }
         
             std::string result;
@@ -48,28 +48,25 @@ void runRepl()
                 break;
             }
 
-            if (!input.ends_with(";"))
+            input = trim(input);
+            
+            if (!input.empty() && !input.ends_with(";"))
             {
                 input += ";";
             }
-            frontend::Tokenized tokens;
-            tokenize(tokens, input,"<terminal>");
+            auto tokens = frontend::tokenize(input,"<terminal>");
             const auto ast = frontend::parse(tokens);
             for (auto& statement : ast->statements)
             {
                 if (const auto result = runtime::evalStatement(statement, mod))
                 {
-                    std::cout << result->ToString() << std::endl;
+                    std::cout << result->ToString() << '\n';
                 }
             }
         }
-        catch (std::runtime_error& e)
+        catch (std::exception& e)
         {
-            std::cerr << e.what() << std::endl;
-        }
-        catch (std::shared_ptr<runtime::Error>& e)
-        {
-            std::cerr << e->ToString() << std::endl;
+            std::cerr << e.what() << '\n';
         }
     }
 }
@@ -81,7 +78,7 @@ void profile(const std::string& name, const std::function<void()>& operation)
     const auto diff = std::chrono::system_clock::now().time_since_epoch() - start;
 
     std::cout << "[profile] " << name + " -> " << std::chrono::duration_cast<std::chrono::milliseconds>(diff) <<
-        std::endl;
+        '\n';
 }
 
 template <typename T>
@@ -124,7 +121,7 @@ int main(const int argc, char *argv[])
                 auto s = arg->ToString(scope);
                 std::cout << arg->ToString(scope) << " ";
             }
-            std::cout << std::endl;
+            std::cout << '\n';
         
             return runtime::makeNull();
         });
@@ -133,7 +130,7 @@ int main(const int argc, char *argv[])
         {
             if (const auto prompt = scope->Find("prompt", false); prompt != runtime::makeNull())
             {
-                std::cout << prompt->ToString(scope) << std::endl;
+                std::cout << prompt->ToString(scope) << '\n';
             }
         
             std::string result;
@@ -144,20 +141,11 @@ int main(const int argc, char *argv[])
 
         const auto path = absolute(std::filesystem::path(args[0]));
         const auto mod = program->ImportModule(path.string());
-
-
-        // const auto resolved = spp::frontend::resolveReference(mod->Find("main"));
-        // if (const auto entry = spp::cast<spp::frontend::Function>(resolved)) {
-        //     entry->Call({});
-        // }
+        
     }
-    catch (std::runtime_error& e)
+    catch (std::exception& e)
     {
-        std::cerr << e.what() << std::endl;
-    }
-    catch (std::shared_ptr<runtime::Error>& e)
-    {
-        std::cerr << e->ToString() << std::endl;
+        std::cerr << e.what() << '\n';
     }
     return 0;
 }

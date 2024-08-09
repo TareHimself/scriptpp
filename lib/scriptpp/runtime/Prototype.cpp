@@ -33,7 +33,7 @@ namespace spp::runtime
         std::vector<std::string> args;
         for(auto &statement : _prototype->scope->statements)
         {
-            if(statement->type == frontend::NT_Function)
+            if(statement->type == frontend::ENodeType::Function)
             {
                 if(const auto fn = std::dynamic_pointer_cast<frontend::FunctionNode>(statement))
                 {

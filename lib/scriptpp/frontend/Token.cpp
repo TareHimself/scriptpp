@@ -1,14 +1,14 @@
 ﻿#include "scriptpp/frontend/Token.hpp"
 
+#include <ranges>
 #include <stdexcept>
 
 #include "scriptpp/utils.hpp"
 
 namespace spp::frontend {
-    TokenDebugInfo::TokenDebugInfo(const uint32_t& inLine, const uint32_t& inCol)
+    TokenDebugInfo::TokenDebugInfo(const uint32_t& inLine, const uint32_t& inCol) : TokenDebugInfo(inLine,inCol,inLine,inCol + 1)
     {
-        line = inLine;
-        col = inCol;
+        
     }
 
     TokenDebugInfo::TokenDebugInfo(const std::string& inFile, const uint32_t& inLine, const uint32_t& inCol) : TokenDebugInfo(inLine,inCol)
@@ -17,168 +17,114 @@ namespace spp::frontend {
         
     }
 
+    TokenDebugInfo::TokenDebugInfo(const uint32_t& inStartLine, const uint32_t& inStartCol, const uint32_t& inEndLine,
+        const uint32_t& inEndCol) 
+    {
+        startLine = inStartLine;
+        endLine = inEndLine;
+        startCol = inStartCol;
+        endCol = inEndCol;
+    }
+
+    TokenDebugInfo::TokenDebugInfo(const std::string& inFile, const uint32_t& inStartLine, const uint32_t& inStartCol,
+        const uint32_t& inEndLine, const uint32_t& inEndCol) : TokenDebugInfo(inStartLine,inStartCol,inEndLine,inEndCol)
+    {
+        file = inFile;
+    }
+
     std::string TokenDebugInfo::ToString() const
     {
-        return join({file,std::to_string(line),std::to_string(col)},":");
+        return join({file,std::to_string(startLine),std::to_string(startCol)},":");
     }
 
-    void RawTokens::ThrowAt(const std::string& message, const RawToken& token)
+    TokenDebugInfo TokenDebugInfo::operator+(const TokenDebugInfo& other) const
     {
-        throw std::runtime_error(message + "\n" + token.debugInfo.file + " " + std::to_string(token.debugInfo.line) + ":" + std::to_string(token.debugInfo.col));
+        auto minStartLine = std::min(startLine,other.startLine);
+        auto minStartCol = startLine == minStartLine && other.startLine == minStartLine ? std::min(startCol,other.startCol) : (startLine == minStartLine ? startCol : other.startCol);
+
+        auto maxEndLine = std::max(endLine,other.endLine);
+        auto maxEndCol = startLine == maxEndLine && other.endLine == maxEndLine ? std::max(endCol,other.endCol) : (endLine == maxEndLine ? endCol : other.endCol);
+        
+        return TokenDebugInfo{file,minStartLine,minStartCol,maxEndLine,maxEndCol};
     }
 
-    TokenList<RawToken>& RawTokens::ExpectFront(const ETokenType& token)
+    TokenDebugInfo& TokenDebugInfo::operator+=(const TokenDebugInfo& other)
     {
-        return ExpectFront(Token::KeyWordMap[token]);
-    }
+        if(this == &other) return *this;
 
-    TokenList<RawToken>& RawTokens::ExpectFront(const std::string& token)
-    {
-        if(_tokens.empty())
-        {
-            ThrowExpectedInput();
-        }
-
-        if(_tokens.front().data != token)
-        {
-            ThrowAt("Expected " + token + " but got " + _tokens.front().data,_tokens.front());
-        }
+        *this = *this + other;
 
         return *this;
     }
 
-    TokenList<RawToken>& RawTokens::ExpectBack(const ETokenType& token)
+    Token::Token(ETokenType inType, uint32_t inLine, uint32_t inCol) : Token(inType,TokenDebugInfo{inLine,inCol})
     {
-        return ExpectBack(Token::KeyWordMap[token]);
     }
 
-    TokenList<RawToken>& RawTokens::ExpectBack(const std::string& token)
+    Token::Token(ETokenType inType, const TokenDebugInfo& inDebugInfo) : Token(inType,KeyWordMap.contains(inType) ? KeyWordMap[inType] : "",inDebugInfo)
     {
-        if(_tokens.empty())
-        {
-            ThrowExpectedInput();
-        }
-
-        if(_tokens.back().data != token)
-        {
-            ThrowAt("Expected " + token + " but got " + _tokens.back().data,_tokens.back());
-        }
-
-        return *this;
     }
-    
-    Token::Token(ETokenType inType, uint32_t inLine, uint32_t inCol)
+
+    Token::Token(ETokenType inType, const Token& otherToken) : Token(inType,otherToken.value,otherToken.debugInfo)
+    {
+
+    }
+
+    Token::Token(ETokenType inType, const std::string& inValue, const TokenDebugInfo& inDebugInfo)
     {
         type = inType;
-        value = KeyWordMap.contains(type) ? KeyWordMap[type] : "";
-        debugInfo.line = inLine;
-        debugInfo.col = inCol;
-    }
-
-    Token::Token(ETokenType inType, const TokenDebugInfo& inDebugInfo)
-    {
+        value = inValue;
         debugInfo = inDebugInfo;
     }
 
-    Token::Token(ETokenType inType, const RawToken& token)
+    Token::Token(const std::string& data, const TokenDebugInfo& inDebugInfo)
     {
-        type = inType;
-        value = token.data;
-        debugInfo = token.debugInfo;
-    }
-
-    Token::Token(const RawToken& token)
-    {
-        type = TokenMap[token.data];
-        value = token.data;
-        debugInfo = token.debugInfo;
-    }
-
-    void Tokenized::ThrowAt(const std::string& message, const Token& token)
-    {
-        throw std::runtime_error("Error at " + token.debugInfo.file + " " + std::to_string(token.debugInfo.line) + ":" + std::to_string(token.debugInfo.col) + "\n" + message);
-    }
-
-    TokenList<Token>& Tokenized::ExpectFront(const ETokenType& token)
-    {
-        return ExpectFront(Token::KeyWordMap[token]);
-    }
-
-    TokenList<Token>& Tokenized::ExpectFront(const std::string& token)
-    {
-        if(_tokens.empty())
-        {
-            ThrowExpectedInput();
-        }
-
-        if(_tokens.front().value != token)
-        {
-            ThrowAt("Expected " + token + " but got " + _tokens.front().value,_tokens.front());
-        }
-
-        return *this;
-    }
-
-    TokenList<Token>& Tokenized::ExpectBack(const ETokenType& token)
-    {
-        return ExpectBack(Token::KeyWordMap[token]);
-    }
-
-    TokenList<Token>& Tokenized::ExpectBack(const std::string& token)
-    {
-        if(_tokens.empty())
-        {
-            ThrowExpectedInput();
-        }
-
-        if(_tokens.back().value != token)
-        {
-            ThrowAt("Expected " + token + " but got " + _tokens.back().value,_tokens.back());
-        }
-
-        return *this;
+        type = TokenMap.contains(data) ? TokenMap[data] : (data == "true" || data == "false" ? ETokenType::BooleanLiteral : ETokenType::Unknown);
+        value = data;
+        debugInfo = inDebugInfo;
     }
 
     std::unordered_map<std::string, ETokenType> Token::TokenMap = {
-        {"=", TT_Assign},
-        {"let", TT_Let},
-        {"{", TT_OpenBrace},
-        {"}", TT_CloseBrace},
-        {"(", TT_OpenParen},
-        {")", TT_CloseParen},
-        {"fn", TT_Function},
-        {"\"", TT_DoubleQuote},
-        {"\'", TT_SingleQuote},
-        {";", TT_StatementEnd},
-        {"null", TT_Null},
-        {"return", TT_Return},
-        {"==", TT_OpEqual},
-        {"!=", TT_OpNotEqual},
-        {"<", TT_OpLess},
-        {"<=", TT_OpLessEqual},
-        {">", TT_OpGreater},
-        {">=", TT_OpGreaterEqual},
-        {"/", TT_OpDivide},
-        {"*", TT_OpMultiply},
-        {"+", TT_OpAdd},
-        {"-", TT_OpSubtract},
-        {"%", TT_OpMod},
-        {"when", TT_When},
-        {"[", TT_OpenBracket},
-        {"]", TT_CloseBracket},
-        {"class", TT_Class},
-        {"||",TT_OpOr},
-        {"&&",TT_OpAdd},
-        {"!",TT_OpNot},
-        {"for",TT_For},
-        {"while",TT_While},
-        {".",TT_Access},
-        {",",TT_Comma},
-        {"break",TT_Break},
-        {"continue",TT_Continue},
-        {"try",TT_Try},
-        {"catch",TT_Catch},
-        {"throw",TT_Throw}
+        {"=", ETokenType::Assign},
+        {"let", ETokenType::Let},
+        {"{", ETokenType::OpenBrace},
+        {"}", ETokenType::CloseBrace},
+        {"(", ETokenType::OpenParen},
+        {")", ETokenType::CloseParen},
+        {"fn", ETokenType::Function},
+        {"\"", ETokenType::DoubleQuote},
+        {"\'", ETokenType::SingleQuote},
+        {";", ETokenType::StatementEnd},
+        {"null", ETokenType::Null},
+        {"return", ETokenType::Return},
+        {"==", ETokenType::OpEqual},
+        {"!=", ETokenType::OpNotEqual},
+        {"<", ETokenType::OpLess},
+        {"<=", ETokenType::OpLessEqual},
+        {">", ETokenType::OpGreater},
+        {">=", ETokenType::OpGreaterEqual},
+        {"/", ETokenType::OpDivide},
+        {"*", ETokenType::OpMultiply},
+        {"+", ETokenType::OpAdd},
+        {"-", ETokenType::OpSubtract},
+        {"%", ETokenType::OpMod},
+        {"when", ETokenType::When},
+        {"[", ETokenType::OpenBracket},
+        {"]", ETokenType::CloseBracket},
+        {"class", ETokenType::Class},
+        {"||",ETokenType::OpOr},
+        {"&&",ETokenType::OpAdd},
+        {"!",ETokenType::OpNot},
+        {"for",ETokenType::For},
+        {"while",ETokenType::While},
+        {".",ETokenType::Access},
+        {",",ETokenType::Comma},
+        {"break",ETokenType::Break},
+        {"continue",ETokenType::Continue},
+        {"try",ETokenType::Try},
+        {"catch",ETokenType::Catch},
+        {"throw",ETokenType::Throw},
+        {"->",ETokenType::Arrow}
     };
 
     std::unordered_map<ETokenType, std::string> Token::KeyWordMap = ([]
@@ -192,18 +138,18 @@ namespace spp::frontend {
         return result;
     })();
 
-    std::map<uint32_t, std::set<std::string>> Token::Sizes = ([]
+    std::map<int, std::set<std::string>> Token::Sizes = ([]
     {
-        std::map<uint32_t, std::set<std::string>> result;
-        for (auto& kv : TokenMap)
+        std::map<int, std::set<std::string>> result;
+        for (const auto& fst : TokenMap | std::views::keys)
         {
-            if (result.contains(kv.first.size()))
+            if (result.contains(fst.size()))
             {
-                result[kv.first.size()].emplace(kv.first);
+                result[fst.size()].emplace(fst);
             }
             else
             {
-                result.insert({static_cast<uint32_t>(kv.first.size()), {kv.first}});
+                result.insert({static_cast<int>(fst.size()), {fst}});
             }
         }
 

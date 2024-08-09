@@ -27,8 +27,8 @@ namespace spp::runtime
         std::string ToString(const std::shared_ptr<ScopeLike>& scope) const override;
         bool ToBoolean(const std::shared_ptr<ScopeLike>& scope) const override;
 
-        std::shared_ptr<Object> Get(const std::shared_ptr<Object>& key) const override;
-        void Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val) override;
+        std::shared_ptr<Object> Get(const std::shared_ptr<Object>& key, const std::shared_ptr<ScopeLike>& scope) const override;
+        void Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val, const std::shared_ptr<ScopeLike>& scope) override;
         void Set(const std::string& key, const std::shared_ptr<Object>& val) override;
         virtual void Set(const size_t& index,const std::shared_ptr<Object>& val);
 

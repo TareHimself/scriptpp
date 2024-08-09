@@ -1,0 +1,107 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "ScriptPP",
+	"fileTypes": [
+		"spp"
+	],
+	"foldingStartMarker": "\\{",
+	"foldingStopMarker": "\\}",
+	"patterns": [
+		{
+			"include": "#scopes"
+		},
+		{
+			"include": "#global"
+		},
+		{
+			"include": "#block"
+		}
+	],
+	"repository": {
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.line.block.spp",
+					"begin": "/\\*",
+					"end": "\\*/"
+				},
+				{
+					"name": "comment.line.double-slspp.spp",
+					"begin": "//",
+					"end": "$"
+				}
+			]
+		},
+		"literals": {
+			"patterns": [
+				{
+					"name": "constant.numeric.float.spp",
+					"match": "\\b[0-9]+\\.[0-9]+\\b"
+				},
+				{
+					"name": "constant.numeric.float.spp",
+					"match": "\\b[0-9]+\b"
+				},
+				{
+					"name": "string.quoted.double.spp",
+					"begin": "\"",
+					"end": "\"",
+					"patterns": [
+						{
+							"name": "constant.character.escape.spp",
+							"match": "\\\\."
+						}
+					]
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.spp",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.spp",
+					"match": "\\\\."
+				}
+			]
+		},
+		"global": {
+			"patterns": [
+				{
+					"include": "#comments"
+				},
+				{
+					"include": "#literals"
+				},
+				{
+					"include": "#strings"
+				},
+				{
+					"name": "meta.preprocessor.spp",
+					"match": "\bimport\b"
+				},
+				{
+					"name" : "keyword.operator.spp",
+					"match": "(<|>|=|&&|\\|\\||\\+|\\-|\/|\\*|%|->)"
+				},
+				{
+					"name": "keyword.control.spp",
+					"match": "\\b(let|for|break|continue|while|discard|do|return|when)\\b"
+				},
+				{
+					"include": "#types"
+				}
+			]
+		},
+		"block" : {
+			"begin": "{",
+			"end": "}",
+			"patterns": [
+				{ "include": "#block"},
+				{ "include": "#global"}
+			]
+		}
+	},
+	"scopeName": "source.spp"
+}

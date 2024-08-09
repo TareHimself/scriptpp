@@ -13,28 +13,28 @@ if(const auto n = cast<Number>(other)) \
 { \
     switch (n->GetNumberType()) \
     { \
-    case NT_Int: \
+    case ENumberType::Int: \
         { \
             if(const auto o = castStatic<TNumber<int>>(n)) \
             { \
                 operation \
             } \
         } \
-    case NT_Int64: \
+    case ENumberType::Int64: \
         { \
             if(const auto o = castStatic<TNumber<uint64_t>>(n)) \
             { \
                 operation \
             } \
         } \
-    case NT_Float: \
+    case ENumberType::Float: \
         { \
             if(const auto o = castStatic<TNumber<float>>(n)) \
             { \
                 operation \
             } \
         } \
-    case NT_Double: \
+    case ENumberType::Double: \
         { \
             if(const auto o = castStatic<TNumber<double>>(n)) \
             { \
@@ -50,15 +50,13 @@ if(const auto n = cast<Number>(other)) \
     template<typename  T,typename  = std::enable_if_t<std::is_integral_v<T> | std::is_floating_point_v<T>>>
     std::shared_ptr<TNumber<T>> makeNumber(const T& num);
     
-    enum ENumberType
+    enum class ENumberType
     {
-        NT_Int,
-        NT_Int64,
-        NT_Float,
-        NT_Double
+        Int,
+        Int64,
+        Float,
+        Double
     };
-
-    
     
     template<typename T,typename  = std::enable_if_t<std::is_integral_v<T>>>
     inline T mod(T a, T b,int d = 0)
@@ -201,25 +199,25 @@ if(const auto n = cast<Number>(other)) \
     {
         if(std::is_same_v<T,int>)
         {
-            return NT_Int;
+            return ENumberType::Int;
         }
 
         if(std::is_same_v<T,uint64_t>)
         {
-            return NT_Int64;
+            return ENumberType::Int64;
         }
 
         if(std::is_same_v<T,float>)
         {
-            return NT_Float;
+            return ENumberType::Float;
         }
 
         if(std::is_same_v<T,double>)
         {
-            return NT_Double;
+            return ENumberType::Double;
         }
 
-        return NT_Int;
+        return ENumberType::Int;
     }
 
     template <typename T, typename T0>

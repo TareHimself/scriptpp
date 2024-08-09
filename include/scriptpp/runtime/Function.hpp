@@ -5,7 +5,7 @@
 
 #include "Object.hpp"
 #include "Scope.hpp"
-#include "scriptpp/frontend/ast.hpp"
+#include "scriptpp/frontend/parser.hpp"
 
 namespace spp::runtime
 {
@@ -13,11 +13,12 @@ namespace spp::runtime
     
     class FunctionScope : public Scope
     {
-        std::vector<std::shared_ptr<Object>> _args;
-        std::unordered_map<std::string,uint32_t> _argIndexes;
-        std::shared_ptr<Object> _result;
-        std::weak_ptr<Function> _fn;
-        std::shared_ptr<ScopeLike> _callerScope;
+        std::vector<std::shared_ptr<Object>> _args{};
+        std::unordered_map<std::string,uint32_t> _argIndexes{};
+        std::shared_ptr<Object> _result{};
+        std::weak_ptr<Function> _fn{};
+        std::shared_ptr<ScopeLike> _callerScope{};
+        std::shared_ptr<ScopeLike> _ownerScope{};
         
     public:
 
@@ -28,6 +29,8 @@ namespace spp::runtime
         EScopeType GetScopeType() const override;
 
         std::shared_ptr<Object> Find(const std::string& id, bool searchParent = true) const override;
+
+        std::shared_ptr<Object> FindArg(const std::string& id);
 
         virtual std::weak_ptr<Function> GetFunction() const;
 
@@ -43,9 +46,9 @@ namespace spp::runtime
     {
         std::string _name;
         std::vector<std::string> _args;
-        std::shared_ptr<ScopeLike> _scope;
+        std::shared_ptr<ScopeLike> _declarationScope;
     public:
-        Function(const std::shared_ptr<ScopeLike>& scope,const std::string& name,const std::vector<std::string>& args);
+        Function(const std::shared_ptr<ScopeLike>& declarationScope,const std::string& name,const std::vector<std::string>& args);
         EObjectType GetType() const override;
         bool ToBoolean(const std::shared_ptr<ScopeLike>& scope) const override;
         std::string ToString(const std::shared_ptr<ScopeLike>& scope = {}) const override;

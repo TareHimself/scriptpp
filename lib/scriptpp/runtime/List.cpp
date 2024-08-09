@@ -69,7 +69,7 @@ namespace spp::runtime
         return !_vec.empty();
     }
 
-    std::shared_ptr<Object> List::Get(const std::shared_ptr<Object>& key) const
+    std::shared_ptr<Object> List::Get(const std::shared_ptr<Object>& key, const std::shared_ptr<ScopeLike>& scope) const
     {
         if(key->GetType() == OT_Number)
         {
@@ -81,17 +81,17 @@ namespace spp::runtime
             
             return makeListReference(this,i);
         }
-        return DynamicObject::Get(key);
+        return DynamicObject::Get(key, scope);
     }
 
-    void List::Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val)
+    void List::Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val, const std::shared_ptr<ScopeLike>& scope)
     {
         if(key->GetType() == OT_Number)
         {
             Set(cast<Number>(key)->GetValueAs<int>(),val);
             return;
         }
-        DynamicObject::Set(key, val);
+        DynamicObject::Set(key, val,scope);
     }
 
     void List::Set(const std::string& key, const std::shared_ptr<Object>& val)

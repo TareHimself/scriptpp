@@ -25,7 +25,7 @@ class NetworkPacket {
     fn fromBytes(){
 
     }
-};
+}
 
 let data = NetworkPacket().serialize();
 print(data);

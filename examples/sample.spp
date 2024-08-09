@@ -1,0 +1,12 @@
+class Foo {
+    fn bar() -> throw "This is an error";
+}
+
+
+let x = 10;
+let y = when{
+    x < 200 -> "yes";
+    else -> "no";
+};
+
+print(y,x,Foo,Foo(),Foo().bar());

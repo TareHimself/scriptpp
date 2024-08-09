@@ -77,7 +77,7 @@ namespace spp::runtime
         return makeNumber(trim(_str));
     }
 
-    std::shared_ptr<Object> String::Get(const std::shared_ptr<Object>& key) const
+    std::shared_ptr<Object> String::Get(const std::shared_ptr<Object>& key, const std::shared_ptr<ScopeLike>& scope) const
     {
         if(key->GetType() == OT_Number)
         {
@@ -93,10 +93,10 @@ namespace spp::runtime
             });
         }
         
-        return DynamicObject::Get(key);
+        return DynamicObject::Get(key,scope);
     }
 
-    void String::Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val)
+    void String::Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val, const std::shared_ptr<ScopeLike>& scope)
     {
         if(key->GetType() == OT_Number)
         {
@@ -108,7 +108,7 @@ namespace spp::runtime
             }
             
         }
-        DynamicObject::Set(key, val);
+        DynamicObject::Set(key, val, scope);
     }
 
     std::shared_ptr<Object> String::Add(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope)

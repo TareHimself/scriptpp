@@ -3,7 +3,7 @@
 #include "Function.hpp"
 #include "Object.hpp"
 #include "Scope.hpp"
-#include "scriptpp/frontend/ast.hpp"
+#include "scriptpp/frontend/parser.hpp"
 
 namespace spp::runtime
 {

@@ -2,6 +2,7 @@
 
 #include "scriptpp/utils.hpp"
 #include "scriptpp/runtime/eval.hpp"
+#include "scriptpp/runtime/Exception.hpp"
 #include "scriptpp/runtime/Null.hpp"
 
 namespace spp::runtime
@@ -24,8 +25,19 @@ namespace spp::runtime
         return Find(key,false);
     }
 
-    std::shared_ptr<Object> DynamicObject::Get(const std::shared_ptr<Object>& key) const
+    std::shared_ptr<Object> DynamicObject::Get(const std::shared_ptr<Object>& key, const std::shared_ptr<ScopeLike>& scope) const
     {
+        if(const auto impl = Get(ReservedDynamicFunctions::GET))
+        {
+            if(const auto fn = resolveReference(impl); fn && fn->IsCallable())
+            {
+                if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
+                {
+                    return actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope),key);
+                }
+            }
+        }
+        
         if(key->GetType() == OT_String)
         {
             return Get(key->ToString());
@@ -61,14 +73,27 @@ namespace spp::runtime
         }
     }
 
-    void DynamicObject::Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val)
+    void DynamicObject::Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val, const std::shared_ptr<ScopeLike>& scope)
     {
+        if(const auto impl = Get(ReservedDynamicFunctions::SET))
+        {
+            if(const auto fn = resolveReference(impl); fn && fn->IsCallable())
+            {
+                if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
+                {
+                    actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope),key,val);
+                    return;
+                }
+            }
+        }
+        
         if(key->GetType() == OT_String)
         {
             Set(key->ToString(),val);
+            return;
         }
 
-        throw std::runtime_error("This object does not support none string keys");
+        throw makeException(scope,"This object does not support none string keys");
     }
 
     bool DynamicObject::Has(const std::string& id, bool searchParent) const

@@ -1,24 +1,24 @@
-﻿#include "scriptpp/runtime/Error.hpp"
+﻿#include "scriptpp/runtime/Exception.hpp"
 
 #include "scriptpp/utils.hpp"
 
 namespace spp::runtime
 {
-    Error::Error(const std::shared_ptr<ScopeLike>& scope, const std::string& data,const std::optional<frontend::TokenDebugInfo>& debugInfo) : DynamicObject({})
+    Exception::Exception(const std::shared_ptr<ScopeLike>& scope, const std::string& data,const std::optional<frontend::TokenDebugInfo>& debugInfo) : DynamicObject({})
     {
         _callstack = makeList({});
         _data = makeString(data);
-        Error::GenerateCallStack(scope,debugInfo);
+        Exception::GenerateCallStack(scope,debugInfo);
     }
 
-    Error::Error(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& data,const std::optional<frontend::TokenDebugInfo>& debugInfo) : DynamicObject({})
+    Exception::Exception(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& data,const std::optional<frontend::TokenDebugInfo>& debugInfo) : DynamicObject({})
     {
         _callstack = makeList({});
         _data = data;
-        Error::GenerateCallStack(scope,debugInfo);
+        Exception::GenerateCallStack(scope,debugInfo);
     }
 
-    void Error::GenerateCallStack(const std::shared_ptr<ScopeLike>& scope,const std::optional<frontend::TokenDebugInfo>& debugInfo)
+    void Exception::GenerateCallStack(const std::shared_ptr<ScopeLike>& scope,const std::optional<frontend::TokenDebugInfo>& debugInfo)
     {
         auto &callstackVec = _callstack->GetNative();
         
@@ -73,10 +73,10 @@ namespace spp::runtime
         Set("data",_data);
     }
 
-    std::string Error::ToString(const std::shared_ptr<ScopeLike>& scope) const
+    std::string Exception::ToString(const std::shared_ptr<ScopeLike>& scope) const
     {
         std::string err;
-        err += "Error: " + _data->ToString(scope);
+        err += "Exception: " + _data->ToString(scope);
 
         for(const auto &callstackVec = _callstack->GetNative(); auto &call : callstackVec)
         {
@@ -86,13 +86,18 @@ namespace spp::runtime
         return err;
     }
 
-    std::shared_ptr<Error> makeError(const std::shared_ptr<ScopeLike>& scope, const std::string& data,const std::optional<frontend::TokenDebugInfo>& debugInfo)
+    ExceptionContainer::ExceptionContainer(const std::shared_ptr<Exception>& inException) : std::runtime_error(inException->ToString())
     {
-        return makeObject<Error>(scope,data,debugInfo);
+        exception = inException;
+    }
+    
+    ExceptionContainer makeException(const std::shared_ptr<ScopeLike>& scope, const std::string& data,const std::optional<frontend::TokenDebugInfo>& debugInfo)
+    {
+        return {makeObject<Exception>(scope,data,debugInfo)};
     }
 
-    std::shared_ptr<Error> makeError(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& data,const std::optional<frontend::TokenDebugInfo>& debugInfo)
+    ExceptionContainer makeException(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& data,const std::optional<frontend::TokenDebugInfo>& debugInfo)
     {
-        return makeObject<Error>(scope,data,debugInfo);
+        return {makeObject<Exception>(scope,data,debugInfo)};
     }
 }

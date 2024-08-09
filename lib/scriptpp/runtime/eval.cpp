@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include "scriptpp/utils.hpp"
 #include "scriptpp/runtime/Boolean.hpp"
-#include "scriptpp/runtime/Error.hpp"
+#include "scriptpp/runtime/Exception.hpp"
 #include "scriptpp/runtime/List.hpp"
 #include "scriptpp/runtime/Null.hpp"
 #include "scriptpp/runtime/Number.hpp"
@@ -20,33 +20,33 @@ namespace spp::runtime
         auto right = resolveReference(evalExpression(ast->right,scope));
         switch (ast->op)
         {
-        case frontend::BinaryOpNode::BO_Divide:
+        case frontend::EBinaryOp::Divide:
             return left->Divide(right, scope);
-        case frontend::BinaryOpNode::BO_Multiply:
+        case frontend::EBinaryOp::Multiply:
             return left->Multiply(right, scope);
-        case frontend::BinaryOpNode::BO_Add:
+        case frontend::EBinaryOp::Add:
             return left->Add(right, scope);
-        case frontend::BinaryOpNode::BO_Subtract:
+        case frontend::EBinaryOp::Subtract:
             return left->Subtract(right, scope);
-        case frontend::BinaryOpNode::BO_Mod:
+        case frontend::EBinaryOp::Mod:
             return left->Mod(right, scope);
-        case frontend::BinaryOpNode::BO_And:
+        case frontend::EBinaryOp::And:
             return makeBoolean(left->ToBoolean(scope) && right->ToBoolean(scope));
-        case frontend::BinaryOpNode::BO_Or:
+        case frontend::EBinaryOp::Or:
             return makeBoolean(left->ToBoolean(scope) || right->ToBoolean(scope));
-        case frontend::BinaryOpNode::BO_Not:
+        case frontend::EBinaryOp::Not:
             throw std::runtime_error("This needs work");
-        case frontend::BinaryOpNode::BO_Equal:
+        case frontend::EBinaryOp::Equal:
             return makeBoolean(left->Equal(right, scope));
-        case frontend::BinaryOpNode::BO_NotEqual:
+        case frontend::EBinaryOp::NotEqual:
             return makeBoolean(left->NotEqual(right, scope));
-        case frontend::BinaryOpNode::BO_Less:
+        case frontend::EBinaryOp::Less:
             return makeBoolean(left->Less(right, scope));
-        case frontend::BinaryOpNode::BO_LessEqual:
+        case frontend::EBinaryOp::LessEqual:
             return makeBoolean(left->LessEqual(right, scope));
-        case frontend::BinaryOpNode::BO_Greater:
+        case frontend::EBinaryOp::Greater:
             return makeBoolean(left->Greater(right, scope));
-        case frontend::BinaryOpNode::BO_GreaterEqual:
+        case frontend::EBinaryOp::GreaterEqual:
             return makeBoolean(left->GreaterEqual(right, scope));
         }
 
@@ -96,44 +96,48 @@ namespace spp::runtime
     {
         switch (ast->type)
         {
-        case frontend::NT_Variable:
+        case  frontend::ENodeType::NoOp:
             {
-                if (const auto r = std::dynamic_pointer_cast<frontend::VariableNode>(ast))
+                return makeBoolean(true);
+            }
+        case frontend::ENodeType::Identifier:
+            {
+                if (const auto r = std::dynamic_pointer_cast<frontend::IdentifierNode>(ast))
                 {
                     auto found = scope->Find(r->value);
                     if(!found) // every call to find should return a reference unless it was not found
                     {
-                        throw makeError(scope,"\"" + r->value + "\" does not exist.",ast->debugInfo);
+                        throw makeException(scope,"\"" + r->value + "\" does not exist.",ast->debugInfo);
                     }
                     return found;
                 }
-                throw makeError(scope,"Expected variable",ast->debugInfo);
+                throw makeException(scope,"Expected variable",ast->debugInfo);
             }
-        case frontend::NT_StringLiteral:
+        case frontend::ENodeType::StringLiteral:
             {
-                if (const auto r = std::dynamic_pointer_cast<frontend::LiteralNode>(ast))
+                if (const auto r = std::dynamic_pointer_cast<frontend::StringLiteralNode>(ast))
                 {
                     return makeString(r->value);
                 }
-                throw makeError(scope,"Expected string literal",ast->debugInfo);
+                throw makeException(scope,"Expected string literal",ast->debugInfo);
             }
-        case frontend::NT_NumericLiteral:
+        case frontend::ENodeType::NumericLiteral:
             {
-                if (const auto r = std::dynamic_pointer_cast<frontend::LiteralNode>(ast))
+                if (const auto r = std::dynamic_pointer_cast<frontend::NumericLiteralNode>(ast))
                 {
                     return makeNumber(r->value);
                 }
-                throw makeError(scope,"Expected numeric literal",ast->debugInfo);
+                throw makeException(scope,"Expected numeric literal",ast->debugInfo);
             }
-        case frontend::NT_BooleanLiteral:
+        case frontend::ENodeType::BooleanLiteral:
             {
-                if (const auto r = std::dynamic_pointer_cast<frontend::LiteralNode>(ast))
+                if (const auto r = std::dynamic_pointer_cast<frontend::BooleanLiteralNode>(ast))
                 {
                     return makeBoolean(r->value);
                 }
-                throw makeError(scope,"Expected boolean literal",ast->debugInfo);
+                throw makeException(scope,"Expected boolean literal",ast->debugInfo);
             }
-        case frontend::NT_ListLiteral:
+        case frontend::ENodeType::ListLiteral:
             {
                 if (const auto r = std::dynamic_pointer_cast<frontend::ListLiteralNode>(ast))
                 {
@@ -145,56 +149,56 @@ namespace spp::runtime
                     }
                     return makeList(items);
                 }
-                throw makeError(scope,"Expected list literal",ast->debugInfo);
+                throw makeException(scope,"Expected list literal",ast->debugInfo);
             }
-        case frontend::NT_NullLiteral:
+        case frontend::ENodeType::NullLiteral:
             {
-                if (const auto r = std::dynamic_pointer_cast<frontend::LiteralNode>(ast))
+                if (const auto r = std::dynamic_pointer_cast<frontend::NullLiteralNode>(ast))
                 {
                     return makeNull();
                 }
-                throw makeError(scope,"Expected null literal",ast->debugInfo);
+                throw makeException(scope,"Expected null literal",ast->debugInfo);
             }
-        case frontend::NT_BinaryOp:
+        case frontend::ENodeType::BinaryOp:
             {
                 if (const auto r = std::dynamic_pointer_cast<frontend::BinaryOpNode>(ast))
                 {
                     return evalBinaryOperation(r, scope);
                 }
-                throw makeError(scope,"Expected binary operation",ast->debugInfo);
+                throw makeException(scope,"Expected binary operation",ast->debugInfo);
             }
-        case frontend::NT_When:
+        case frontend::ENodeType::When:
             if (const auto r = std::dynamic_pointer_cast<frontend::WhenNode>(ast))
             {
                 return evalWhen(r, scope);
             }
-        case frontend::NT_Assign:
+        case frontend::ENodeType::Assign:
             if (const auto r = std::dynamic_pointer_cast<frontend::AssignNode>(ast))
             {
                 return evalAssign(r, scope);
             }
-        case frontend::NT_Function:
+        case frontend::ENodeType::Function:
             if (const auto r = std::dynamic_pointer_cast<frontend::FunctionNode>(ast))
             {
                 return evalFunction(r, scope);
             }
-        case frontend::NT_Call:
+        case frontend::ENodeType::Call:
             if (const auto r = std::dynamic_pointer_cast<frontend::CallNode>(ast))
             {
                 return evalCall(r, scope);
             }
-        case frontend::NT_Access:
+        case frontend::ENodeType::Access:
             if (const auto r = std::dynamic_pointer_cast<frontend::AccessNode>(ast))
             {
                 return evalAccess(r, scope);
             }
-        case frontend::NT_Access2:
-            if (const auto r = std::dynamic_pointer_cast<frontend::AccessNode2>(ast))
+        case frontend::ENodeType::Index:
+            if (const auto r = std::dynamic_pointer_cast<frontend::IndexNode>(ast))
             {
-                return evalAccess2(r, scope);
+                return evalIndex(r, scope);
             }
         default:
-            throw makeError(scope,"Unknown expression",ast->debugInfo);
+            throw makeException(scope,"Unknown expression",ast->debugInfo);
         }
     }
 
@@ -254,7 +258,7 @@ namespace spp::runtime
 
             if(!target->IsCallable())
             {
-                throw makeError(scope,target->ToString(scope) + " is not callable",ast->debugInfo);
+                throw makeException(scope,target->ToString(scope) + " is not callable",ast->debugInfo);
             }
 
             if(auto [asCall,callScope] = resolveCallable(target,scope); asCall)
@@ -263,7 +267,7 @@ namespace spp::runtime
             }
         }
 
-        throw makeError(scope,"Call Failed",ast->debugInfo);
+        throw makeException(scope,"Call Failed",ast->debugInfo);
     }
 
     std::shared_ptr<Object> evalFor(const std::shared_ptr<frontend::ForNode>& ast, const std::shared_ptr<ScopeLike>& scope)
@@ -347,7 +351,7 @@ namespace spp::runtime
     {
         switch (ast->type)
         {
-        case frontend::NT_CreateAndAssign:
+        case frontend::ENodeType::CreateAndAssign:
             {
                 if (const auto a = std::dynamic_pointer_cast<frontend::CreateAndAssignNode>(ast))
                 {
@@ -357,7 +361,7 @@ namespace spp::runtime
                 }
             }
             break;
-        case frontend::NT_Function:
+        case frontend::ENodeType::Function:
             {
                 if (const auto a = std::dynamic_pointer_cast<frontend::FunctionNode>(ast))
                 {
@@ -370,7 +374,7 @@ namespace spp::runtime
                 }
             }
             break;
-        case frontend::NT_Call:
+        case frontend::ENodeType::Call:
             {
                 if (const auto a = std::dynamic_pointer_cast<frontend::CallNode>(ast))
                 {
@@ -378,7 +382,7 @@ namespace spp::runtime
                 }
             }
             break;
-        case frontend::NT_Scope:
+        case frontend::ENodeType::Scope:
             {
                 if (const auto a = std::dynamic_pointer_cast<frontend::ScopeNode>(ast))
                 {
@@ -386,7 +390,7 @@ namespace spp::runtime
                 }
             }
             break;
-        case frontend::NT_Return:
+        case frontend::ENodeType::Return:
             {
                 if (const auto a = std::dynamic_pointer_cast<frontend::ReturnNode>(ast))
                 {
@@ -398,15 +402,15 @@ namespace spp::runtime
                 }
             }
             break;
-        case frontend::NT_Throw:
+        case frontend::ENodeType::Throw:
             {
                 if (const auto a = std::dynamic_pointer_cast<frontend::ThrowNode>(ast))
                 {
-                    throw makeError(scope,evalExpression(a->expression,scope),ast->debugInfo);
+                    throw makeException(scope,evalExpression(a->expression,scope),ast->debugInfo);
                 }
             }
             break;
-        case frontend::NT_TryCatch:
+        case frontend::ENodeType::TryCatch:
             {
                 if (const auto a = std::dynamic_pointer_cast<frontend::TryCatchNode>(ast))
                 {
@@ -414,7 +418,7 @@ namespace spp::runtime
                 }
             }
             break;
-        case frontend::NT_When:
+        case frontend::ENodeType::When:
             {
                 if (const auto a = std::dynamic_pointer_cast<frontend::WhenNode>(ast))
                 {
@@ -422,7 +426,7 @@ namespace spp::runtime
                 }
             }
             break;
-        case frontend::NT_For:
+        case frontend::ENodeType::For:
             {
                 if (const auto a = std::dynamic_pointer_cast<frontend::ForNode>(ast))
                 {
@@ -430,7 +434,7 @@ namespace spp::runtime
                 }
             }
             break;
-        case frontend::NT_While:
+        case frontend::ENodeType::While:
             {
                 if (const auto a = std::dynamic_pointer_cast<frontend::WhileNode>(ast))
                 {
@@ -438,11 +442,11 @@ namespace spp::runtime
                 }
             }
             break;
-        case frontend::NT_Break:
+        case frontend::ENodeType::Break:
             return makeFlowControl(FlowControl::Break);
-        case frontend::NT_Continue:
+        case frontend::ENodeType::Continue:
             return makeFlowControl(FlowControl::Continue);
-        case frontend::NT_Class:
+        case frontend::ENodeType::Class:
             {
                 if (const auto a = std::dynamic_pointer_cast<frontend::PrototypeNode>(ast))
                 {
@@ -464,16 +468,12 @@ namespace spp::runtime
         if (const auto rTarget = cast<DynamicObject>(resolveReference(target)))
         {
             return evalExpression(ast->right, rTarget);
-            // if (const auto asDynamic = rTarget.Cast<DynamicObject>(); asDynamic.IsValid())
-            // {
-            //     
-            // }
         }
 
-        throw makeError(scope,target->ToString(scope) + " is not a dynamic object",ast->debugInfo);
+        throw makeException(scope,target->ToString(scope) + " is not a dynamic object",ast->debugInfo);
     }
 
-    std::shared_ptr<Object> evalAccess2(const std::shared_ptr<frontend::AccessNode2>& ast,
+    std::shared_ptr<Object> evalIndex(const std::shared_ptr<frontend::IndexNode>& ast,
                                       const std::shared_ptr<ScopeLike>& scope)
     {
         const auto target = evalExpression(ast->left, scope);
@@ -482,20 +482,35 @@ namespace spp::runtime
             const auto within = evalExpression(ast->within, scope);
             const auto rWithin = resolveReference(within);
 
-            if(auto getResult = rTarget->Get(rWithin))
+            if(auto getResult = rTarget->Get(rWithin, scope))
             {
                 return getResult;
             }
             
-            throw makeError(scope, rWithin->ToString(scope) + " cannot be used to index " + rTarget->ToString(scope),ast->debugInfo);
+            throw makeException(scope, rWithin->ToString(scope) + " cannot be used to index " + rTarget->ToString(scope),ast->debugInfo);
         }
 
-        throw makeError(scope,target->ToString(scope) + " is not a dynamic object",ast->debugInfo);
+        throw makeException(scope,target->ToString(scope) + " is not indexable",ast->debugInfo);
     }
 
     std::shared_ptr<Object> evalAssign(const std::shared_ptr<frontend::AssignNode>& ast,
                                      const std::shared_ptr<ScopeLike>& scope)
     {
+        if(ast->left->type == frontend::ENodeType::Index)
+        {
+            if(auto asIndex = cast<frontend::IndexNode>(ast->left))
+            {
+                if(auto target = cast<DynamicObject>(resolveReference(evalExpression(asIndex->left,scope))))
+                {
+                    auto trueKey = resolveReference(evalExpression(asIndex->within,scope));
+                    auto right = evalExpression(ast->value,scope);
+                    auto trueVal = resolveReference(right);
+                    target->Set(trueKey,trueVal,scope);
+                    return right;
+                }
+            }
+        }
+        
         if(auto left = evalExpression(ast->left,scope); left->GetType() == OT_Reference)
         {
             auto right = evalExpression(ast->value,scope);
@@ -504,7 +519,7 @@ namespace spp::runtime
             return right;
         }
         
-        throw makeError(scope,"Assign failed",ast->debugInfo);
+        throw makeException(scope,"Assign failed",ast->debugInfo);
     }
 
     std::shared_ptr<Object> evalTryCatch(const std::shared_ptr<frontend::TryCatchNode>& ast,
@@ -514,19 +529,35 @@ namespace spp::runtime
         {
             return runScope(ast->tryScope,scope);
         }
-        catch (std::shared_ptr<Error> & e)
+        catch (ExceptionContainer & e)
         {
             auto catchScope = makeScope(scope);
+            
             if(!ast->catchArgumentName.empty())
             {
-                catchScope->Create(ast->catchArgumentName,e);
+                catchScope->Create(ast->catchArgumentName,e.exception);
             }
+            
             return runScope(ast->catchScope,catchScope);
         }
     }
 
     std::shared_ptr<Module> evalModule(const std::shared_ptr<frontend::ModuleNode>& ast,
-                                     const std::shared_ptr<Program>& program)
+        const std::shared_ptr<Program>& program, const std::shared_ptr<ScopeLike>& scope)
+    {
+        auto mod = makeModule(program);
+        
+        for (auto& statement : ast->statements)
+        {
+            evalStatement(statement, scope);
+        }
+
+        return mod;
+    }
+
+
+    std::shared_ptr<Module> evalModule(const std::shared_ptr<frontend::ModuleNode>& ast,
+                                       const std::shared_ptr<Program>& program)
     {
         auto mod = makeModule(program);
         
@@ -563,17 +594,17 @@ namespace spp::runtime
     {
         switch (ast->type)
         {
-        case frontend::NT_Module:
+        case frontend::ENodeType::Module:
             {
                 const auto program = makeProgram();
                 return evalModule(std::dynamic_pointer_cast<frontend::ModuleNode>(ast),program);
                 
             }
-        case frontend::NT_Function:
+        case frontend::ENodeType::Function:
             {
                 return evalFunction(std::dynamic_pointer_cast<frontend::FunctionNode>(ast), makeScope());
             }
-        case frontend::NT_Statement:
+        case frontend::ENodeType::Statement:
             {
                 const auto scope = makeScope();
                 return evalStatement(ast, scope);

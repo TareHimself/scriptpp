@@ -9,41 +9,42 @@
 
 namespace spp::frontend
 {
-    enum ENodeType
+    enum class ENodeType
     {
-        NT_Unknown,
-        NT_BinaryOp,
-        NT_StringLiteral,
-        NT_NumericLiteral,
-        NT_NullLiteral,
-        NT_ListLiteral,
-        NT_Function,
-        NT_Statement,
-        NT_Module,
-        NT_Return,
-        NT_Identifier,
-        NT_CreateAndAssign,
-        NT_Assign,
-        NT_Call,
-        NT_BooleanLiteral,
-        NT_When,
-        NT_Scope,
-        NT_For,
-        NT_While,
-        NT_Break,
-        NT_Continue,
-        NT_Class,
-        NT_Access,
-        NT_Access2,
-        NT_Throw,
-        NT_TryCatch,
+        Unknown,
+        BinaryOp,
+        StringLiteral,
+        NumericLiteral,
+        NullLiteral,
+        ListLiteral,
+        Function,
+        Statement,
+        Module,
+        Return,
+        Identifier,
+        CreateAndAssign,
+        Assign,
+        Call,
+        BooleanLiteral,
+        When,
+        Scope,
+        For,
+        While,
+        Break,
+        Continue,
+        Class,
+        Access,
+        Index,
+        Throw,
+        TryCatch,
+        NoOp
     };
 
     
 
     struct Node
     {
-        ENodeType type = NT_Unknown;
+        ENodeType type = ENodeType::Unknown;
         
         TokenDebugInfo debugInfo;
 
@@ -65,27 +66,28 @@ namespace spp::frontend
         HasLeft(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft);
     };
 
+    enum class EBinaryOp
+    {
+        Divide,
+        Multiply,
+        Add,
+        Subtract,
+        Mod,
+        And,
+        Or,
+        Not,
+        Equal,
+        NotEqual,
+        Less,
+        LessEqual,
+        Greater,
+        GreaterEqual,
+            
+    };
     
     struct BinaryOpNode : HasLeft
     {
-        enum EBinaryOp
-        {
-            BO_Divide,
-            BO_Multiply,
-            BO_Add,
-            BO_Subtract,
-            BO_Mod,
-            BO_And,
-            BO_Or,
-            BO_Not,
-            BO_Equal,
-            BO_NotEqual,
-            BO_Less,
-            BO_LessEqual,
-            BO_Greater,
-            BO_GreaterEqual,
-            
-        };
+        
         
         std::shared_ptr<Node> right;
         EBinaryOp op;
@@ -144,6 +146,13 @@ namespace spp::frontend
     {
         std::shared_ptr<Node> value;
         AssignNode(const TokenDebugInfo& inDebugInfo,const  std::shared_ptr<Node>& inTarget,const std::shared_ptr<Node>& inValue);
+        
+    };
+
+    struct NoOpNode : Node
+    {
+        NoOpNode();
+        
     };
 
     struct IdentifierNode : Node
@@ -170,11 +179,11 @@ namespace spp::frontend
         
     };
 
-    struct AccessNode2 : HasLeft
+    struct IndexNode : HasLeft
     {
         std::shared_ptr<Node> within;
 
-        AccessNode2(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft,const std::shared_ptr<Node>& inWithin);
+        IndexNode(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft,const std::shared_ptr<Node>& inWithin);
         
     };
     

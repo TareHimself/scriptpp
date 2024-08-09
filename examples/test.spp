@@ -1,9 +1,4 @@
-class Test {
-    let x = 20;
+let z = 20;
+let y = List(1,2,3,4,5,6,7,8,9,10);
+print(z,y[z - 13]);
 
-    fn __to_string__ (){
-        return "this is a custom to string";
-    }
-}
-
-print(Test());

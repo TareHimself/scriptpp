@@ -3,7 +3,7 @@
 #include <stdexcept>
 
 #include "scriptpp/utils.hpp"
-#include "scriptpp/runtime/Error.hpp"
+#include "scriptpp/runtime/Exception.hpp"
 #include "scriptpp/runtime/eval.hpp"
 #include "scriptpp/runtime/List.hpp"
 #include "scriptpp/runtime/Null.hpp"
@@ -29,8 +29,6 @@ namespace spp::runtime
         return ST_Function;
     }
 
-    std::string FunctionScope::ARGUMENTS_KEY = "__args__";
-
     std::shared_ptr<Object> FunctionScope::Find(const std::string& id, bool searchParent) const
     {
         if(id == ARGUMENTS_KEY)
@@ -54,6 +52,21 @@ namespace spp::runtime
         return Scope::Find(id);
     }
 
+    std::shared_ptr<Object> FunctionScope::FindArg(const std::string& id)
+    {
+        if(_argIndexes.contains(id))
+        {
+            if(_args.size() > _argIndexes.at(id))
+            {
+                return _args[_argIndexes.at(id)];
+            }
+        }
+
+        return makeNull();
+    }
+
+    std::string FunctionScope::ARGUMENTS_KEY = "__args__";
+
     std::weak_ptr<Function> FunctionScope::GetFunction() const
     {
         return _fn;
@@ -76,9 +89,9 @@ namespace spp::runtime
     }
     
 
-    Function::Function(const std::shared_ptr<ScopeLike>& scope, const std::string& name, const std::vector<std::string>& args)
+    Function::Function(const std::shared_ptr<ScopeLike>& declarationScope, const std::string& name, const std::vector<std::string>& args)
     {
-        _scope = scope;
+        _declarationScope = declarationScope;
         _name = name;
         _args = args;
     }
@@ -109,7 +122,7 @@ namespace spp::runtime
             callArgs.emplace_back(makeNull());
         }
         const auto myRef = cast<Function>(this->GetRef());
-        auto fnScope =  makeFunctionScope(myRef,callerScope ? callerScope : makeCallScope({"<native>",0,0},myRef,{}),_scope,_args,callArgs);
+        auto fnScope =  makeFunctionScope(myRef,callerScope ? callerScope : makeCallScope({"<native>",0,0},myRef,{}),_declarationScope,_args,callArgs);
         fnScope->Create(FunctionScope::ARGUMENTS_KEY,makeList(args));
         return HandleCall(fnScope);
     }
@@ -144,7 +157,7 @@ namespace spp::runtime
         }
         catch (std::exception& e)
         {
-            throw makeError(scope,e.what());
+            throw makeException(scope,e.what());
         }
     }
 

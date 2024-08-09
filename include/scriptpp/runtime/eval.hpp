@@ -7,7 +7,7 @@
 #include "Object.hpp"
 #include "Prototype.hpp"
 #include "Scope.hpp"
-#include "scriptpp/frontend/ast.hpp"
+#include "scriptpp/frontend/parser.hpp"
 
 namespace spp::runtime
 {
@@ -36,14 +36,19 @@ namespace spp::runtime
                                           const std::shared_ptr<ScopeLike>& scope);
     std::shared_ptr<Object> evalAccess(const std::shared_ptr<frontend::AccessNode>& ast,
                                        const std::shared_ptr<ScopeLike>& scope);
-    std::shared_ptr<Object> evalAccess2(const std::shared_ptr<frontend::AccessNode2>& ast,
+    std::shared_ptr<Object> evalIndex(const std::shared_ptr<frontend::IndexNode>& ast,
                                         const std::shared_ptr<ScopeLike>& scope);
     std::shared_ptr<Object> evalAssign(const std::shared_ptr<frontend::AssignNode>& ast,
                                        const std::shared_ptr<ScopeLike>& scope);
     std::shared_ptr<Object> evalTryCatch(const std::shared_ptr<frontend::TryCatchNode>& ast,
                                          const std::shared_ptr<ScopeLike>& scope);
+
     std::shared_ptr<Module> evalModule(const std::shared_ptr<frontend::ModuleNode>& ast,
-                                       const std::shared_ptr<Program>& scope);
+                                       const std::shared_ptr<Program>& program,const std::shared_ptr<ScopeLike>& scope);
+    
+    std::shared_ptr<Module> evalModule(const std::shared_ptr<frontend::ModuleNode>& ast,
+                                       const std::shared_ptr<Program>& program);
+    
     std::shared_ptr<Prototype> evalClass(const std::shared_ptr<frontend::PrototypeNode>& ast,
                                          const std::shared_ptr<ScopeLike>& scope);
     std::shared_ptr<DynamicObject> createDynamicFromPrototype(const std::shared_ptr<frontend::PrototypeNode>& ast,

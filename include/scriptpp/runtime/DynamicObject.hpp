@@ -11,6 +11,8 @@ namespace spp::runtime
     struct ReservedDynamicFunctions
     {
         inline static std::string CALL = "__call__";
+        inline static std::string GET = "__get__";
+        inline static std::string SET = "__set__";
         inline static std::string CONSTRUCTOR = "__ctor__";
         inline static std::string ADD = "__add__";
         inline static std::string SUBTRACT = "__subtract__";
@@ -23,7 +25,7 @@ namespace spp::runtime
         inline static std::string LESS = "__less__";
         inline static std::string GREATER = "__greater__";
         
-        std::set<std::string> OVERRIDABLE_METHODS = {CALL,CONSTRUCTOR,ADD,SUBTRACT,DIVIDE,MULTIPLY,MOD,TO_STRING,TO_BOOLEAN,EQUAL,LESS,GREATER};
+        std::set<std::string> OVERRIDABLE_METHODS = {CALL,GET,SET,CONSTRUCTOR,ADD,SUBTRACT,DIVIDE,MULTIPLY,MOD,TO_STRING,TO_BOOLEAN,EQUAL,LESS,GREATER};
     };
     
     class DynamicObject : public Object, public ScopeLike
@@ -39,11 +41,11 @@ namespace spp::runtime
         
         virtual void Set(const std::string& key, const std::shared_ptr<Object>& val);
 
-        virtual void Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val);
+        virtual void Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val, const std::shared_ptr<ScopeLike>& scope);
 
         virtual std::shared_ptr<Object> Get(const std::string& key) const;
 
-        virtual std::shared_ptr<Object> Get(const std::shared_ptr<Object>& key) const;
+        virtual std::shared_ptr<Object> Get(const std::shared_ptr<Object>& key, const std::shared_ptr<ScopeLike>& scope) const;
 
         virtual bool HasOwn(const std::string& id) const;
 

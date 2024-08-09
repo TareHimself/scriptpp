@@ -26,6 +26,12 @@ namespace spp::runtime
         virtual std::shared_ptr<Object> Import(const std::shared_ptr<FunctionScope>& scope);
 
         virtual std::shared_ptr<Object> GetCwd(const std::shared_ptr<FunctionScope>& scope);
+        
+        virtual std::shared_ptr<Object> Eval(const std::shared_ptr<FunctionScope>& scope);
+
+        virtual std::shared_ptr<Object> Eval(std::string& expression);
+
+        
 
         std::shared_ptr<Object> Find(const std::string& id, bool searchParent) const override;
     };
