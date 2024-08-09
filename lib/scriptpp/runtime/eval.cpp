@@ -61,7 +61,7 @@ namespace spp::runtime
         {
             if (auto evalResult = evalStatement(statement, scope))
             {
-                if (evalResult->GetType() == OT_ReturnValue)
+                if (evalResult->GetType() == EObjectType::ReturnValue)
                 {
                     if (scope->GetScopeType() == ST_Function)
                     {
@@ -211,7 +211,7 @@ namespace spp::runtime
     std::pair<std::shared_ptr<Function>, std::shared_ptr<ScopeLike>> resolveCallable(
         const std::shared_ptr<Object>& target,const std::shared_ptr<ScopeLike>& scope)
     {
-        if (target->GetType() == OT_Function)
+        if (target->GetType() == EObjectType::Function)
         {
             if (auto asCall = cast<Function>(target))
             {
@@ -219,7 +219,7 @@ namespace spp::runtime
             }
         }
 
-        if (target->GetType() == OT_Dynamic)
+        if (target->GetType() == EObjectType::Dynamic)
         {
             if (const auto asDynamic = cast<DynamicObject>(target))
             {
@@ -278,14 +278,14 @@ namespace spp::runtime
         {
             if (auto temp = resolveReference(runScope(ast->body, scope)))
             {
-                if (temp->GetType() == OT_ReturnValue)
+                if (temp->GetType() == EObjectType::ReturnValue)
                 {
                     if (scope->HasScopeType(ST_Function))
                     {
                         return temp;
                     }
                 }
-                else if (temp->GetType() == OT_FlowControl)
+                else if (temp->GetType() == EObjectType::FlowControl)
                 {
                     if (const auto flow = cast<FlowControl>(temp))
                     {
@@ -318,14 +318,14 @@ namespace spp::runtime
         {
             if (auto temp = runScope(ast->body, scope))
             {
-                if (temp->GetType() == OT_ReturnValue)
+                if (temp->GetType() == EObjectType::ReturnValue)
                 {
                     if (scope->HasScopeType(ST_Function))
                     {
                         return temp;
                     }
                 }
-                else if (temp->GetType() == OT_FlowControl)
+                else if (temp->GetType() == EObjectType::FlowControl)
                 {
                     if (const auto flow = cast<FlowControl>(temp))
                     {
@@ -511,7 +511,7 @@ namespace spp::runtime
             }
         }
         
-        if(auto left = evalExpression(ast->left,scope); left->GetType() == OT_Reference)
+        if(auto left = evalExpression(ast->left,scope); left->GetType() == EObjectType::Reference)
         {
             auto right = evalExpression(ast->value,scope);
             const auto trueRight = resolveReference(right);

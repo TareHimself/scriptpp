@@ -14,7 +14,7 @@ namespace spp::runtime
 
     EObjectType Null::GetType() const
     {
-        return EObjectType::OT_Null;
+        return EObjectType::Null;
     }
     
 

@@ -94,7 +94,7 @@ namespace spp::runtime
 
     EObjectType ReturnValue::GetType() const
     {
-        return OT_ReturnValue;
+        return EObjectType::ReturnValue;
     }
 
     std::string ReturnValue::ToString(const std::shared_ptr<ScopeLike>& scope) const
@@ -114,7 +114,7 @@ namespace spp::runtime
 
     EObjectType FlowControl::GetType() const
     {
-        return OT_FlowControl;
+        return EObjectType::FlowControl;
     }
 
     std::string FlowControl::ToString(const std::shared_ptr<ScopeLike>& scope) const

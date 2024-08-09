@@ -22,7 +22,7 @@ namespace spp::runtime
 
     EObjectType String::GetType() const
     {
-        return OT_String;
+        return EObjectType::String;
     }
 
     std::string String::ToString(const std::shared_ptr<ScopeLike>& scope) const
@@ -79,7 +79,7 @@ namespace spp::runtime
 
     std::shared_ptr<Object> String::Get(const std::shared_ptr<Object>& key, const std::shared_ptr<ScopeLike>& scope) const
     {
-        if(key->GetType() == OT_Number)
+        if(key->GetType() == EObjectType::Number)
         {
             const auto i = cast<Number>(key)->GetValueAs<int>();
             if(i >= _str.size())
@@ -98,7 +98,7 @@ namespace spp::runtime
 
     void String::Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val, const std::shared_ptr<ScopeLike>& scope)
     {
-        if(key->GetType() == OT_Number)
+        if(key->GetType() == EObjectType::Number)
         {
             const auto idx =cast<Number>(key)->GetValueAs<int>();
             if(idx > 0 && idx < _str.size())

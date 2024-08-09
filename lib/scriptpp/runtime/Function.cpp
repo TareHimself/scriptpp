@@ -98,7 +98,7 @@ namespace spp::runtime
 
     EObjectType Function::GetType() const
     {
-        return OT_Function;
+        return EObjectType::Function;
     }
 
     bool Function::ToBoolean(const std::shared_ptr<ScopeLike>& scope) const

@@ -9,7 +9,7 @@ namespace spp::runtime
 {
     EObjectType Number::GetType() const
     {
-        return EObjectType::OT_Number;
+        return EObjectType::Number;
     }
 
     std::shared_ptr<Object> Number::Add(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope)

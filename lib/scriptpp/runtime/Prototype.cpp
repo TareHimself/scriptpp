@@ -60,7 +60,7 @@ namespace spp::runtime
         
         if(dynamicObj->Has(ReservedDynamicFunctions::CONSTRUCTOR,false))
         {
-            if(auto ctor = cast<Function>(dynamicObj->Find(ReservedDynamicFunctions::CONSTRUCTOR,false)); ctor && ctor->GetType() == OT_Function)
+            if(auto ctor = cast<Function>(dynamicObj->Find(ReservedDynamicFunctions::CONSTRUCTOR,false)); ctor && ctor->GetType() == EObjectType::Function)
             {
                 ctor->HandleCall(fnScope);
             }

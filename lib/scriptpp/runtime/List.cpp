@@ -53,7 +53,7 @@ namespace spp::runtime
         std::string result = "[";
         for(auto i = 0; i < _vec.size(); i++)
         {
-            result += _vec.at(i)->GetType() == OT_String ? "\"" + _vec.at(i)->ToString(scope) + "\"" : _vec.at(i)->ToString(scope);
+            result += _vec.at(i)->GetType() == EObjectType::String ? "\"" + _vec.at(i)->ToString(scope) + "\"" : _vec.at(i)->ToString(scope);
             if(i != _vec.size() - 1)
             {
                 result += " , ";
@@ -71,7 +71,7 @@ namespace spp::runtime
 
     std::shared_ptr<Object> List::Get(const std::shared_ptr<Object>& key, const std::shared_ptr<ScopeLike>& scope) const
     {
-        if(key->GetType() == OT_Number)
+        if(key->GetType() == EObjectType::Number)
         {
             const auto i = cast<Number>(key)->GetValueAs<int>();
             if(i >= _vec.size())
@@ -86,7 +86,7 @@ namespace spp::runtime
 
     void List::Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val, const std::shared_ptr<ScopeLike>& scope)
     {
-        if(key->GetType() == OT_Number)
+        if(key->GetType() == EObjectType::Number)
         {
             Set(cast<Number>(key)->GetValueAs<int>(),val);
             return;
@@ -259,7 +259,7 @@ namespace spp::runtime
             const auto self = cast<DynamicObject>(this->GetRef());
             std::ranges::sort(_vec,[fn,self] (const std::shared_ptr<Object>& a,const std::shared_ptr<Object>& b)
             {
-                if(const auto r = fn->Call(self,a,b); r->GetType() == OT_Number)
+                if(const auto r = fn->Call(self,a,b); r->GetType() == EObjectType::Number)
                 {
                     const int i = cast<Number,Object>(r)->GetValueAs<int>();
                     return i;

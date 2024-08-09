@@ -10,7 +10,7 @@ namespace spp::runtime
 
     EObjectType Module::GetType() const
     {
-        return OT_Module;
+        return EObjectType::Module;
     }
 
     std::string Module::ToString(const std::shared_ptr<ScopeLike>& scope) const

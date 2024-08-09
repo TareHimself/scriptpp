@@ -38,7 +38,7 @@ namespace spp::runtime
             }
         }
         
-        if(key->GetType() == OT_String)
+        if(key->GetType() == EObjectType::String)
         {
             return Get(key->ToString());
         }
@@ -53,7 +53,7 @@ namespace spp::runtime
 
     bool DynamicObject::HasOwn(const std::shared_ptr<Object>& key) const
     {
-        if(key->GetType() == OT_String)
+        if(key->GetType() == EObjectType::String)
         {
             return HasOwn(key->ToString());
         }
@@ -87,7 +87,7 @@ namespace spp::runtime
             }
         }
         
-        if(key->GetType() == OT_String)
+        if(key->GetType() == EObjectType::String)
         {
             Set(key->ToString(),val);
             return;
@@ -151,7 +151,7 @@ namespace spp::runtime
 
     EObjectType DynamicObject::GetType() const
     {
-        return OT_Dynamic;
+        return EObjectType::Dynamic;
     }
 
     std::string DynamicObject::ToString(const std::shared_ptr<ScopeLike>& scope) const

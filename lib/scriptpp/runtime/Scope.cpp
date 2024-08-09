@@ -261,7 +261,7 @@ namespace spp::runtime
 
     EObjectType Scope::GetType() const
     {
-        return OT_Scope;
+        return EObjectType::Scope;
     }
     
     std::list<EScopeType> Scope::GetScopeStack() const
@@ -281,7 +281,7 @@ namespace spp::runtime
 
     EObjectType Reference::GetType() const
     {
-        return OT_Reference;
+        return EObjectType::Reference;
     }
 
     std::string Reference::ToString(const std::shared_ptr<ScopeLike>& scope) const
@@ -367,7 +367,7 @@ namespace spp::runtime
             return obj;
         }
         
-        if(obj->GetType() == OT_Reference)
+        if(obj->GetType() == EObjectType::Reference)
         {
             return cast<Reference>(obj)->Get();
         }

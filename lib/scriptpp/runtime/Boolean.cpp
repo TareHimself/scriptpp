@@ -9,7 +9,7 @@ namespace spp::runtime
 
     EObjectType Boolean::GetType() const
     {
-        return OT_Boolean;
+        return EObjectType::Boolean;
     }
 
     bool Boolean::ToBoolean(const std::shared_ptr<ScopeLike>& scope) const

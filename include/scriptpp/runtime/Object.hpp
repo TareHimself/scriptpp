@@ -9,21 +9,21 @@ namespace spp::runtime
 {
     class ScopeLike;
 
-    enum EObjectType
+    enum class EObjectType
     {
-        OT_Null,
-        OT_Number,
-        OT_String,
-        OT_Boolean,
-        OT_Callable,
-        OT_Function,
-        OT_Scope,
-        OT_Module,
-        OT_ReturnValue,
-        OT_FlowControl,
-        OT_Array,
-        OT_Dynamic,
-        OT_Reference
+        Null,
+        Number,
+        String,
+        Boolean,
+        Callable,
+        Function,
+        Scope,
+        Module,
+        ReturnValue,
+        FlowControl,
+        Array,
+        Dynamic,
+        Reference
     };
     
     class Object : public std::enable_shared_from_this<Object> {
