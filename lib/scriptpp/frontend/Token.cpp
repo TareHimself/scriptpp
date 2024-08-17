@@ -111,7 +111,7 @@ namespace spp::frontend {
         {"when", ETokenType::When},
         {"[", ETokenType::OpenBracket},
         {"]", ETokenType::CloseBracket},
-        {"class", ETokenType::Class},
+        {"proto", ETokenType::Proto},
         {"||",ETokenType::OpOr},
         {"&&",ETokenType::OpAdd},
         {"!",ETokenType::OpNot},

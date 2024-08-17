@@ -101,10 +101,10 @@ namespace spp::frontend
         type = ENodeType::ListLiteral;
     }
 
-    CreateAndAssignNode::CreateAndAssignNode(const TokenDebugInfo& inDebugInfo, const std::string& inName,
+    CreateAndAssignNode::CreateAndAssignNode(const TokenDebugInfo& inDebugInfo,const std::vector<std::string>& inIdentifiers,
                                              const std::shared_ptr<Node>& inValue) : Node(inDebugInfo)
     {
-        name = inName;
+        identifiers = inIdentifiers;
         value = inValue;
         type = ENodeType::CreateAndAssign;
     }
@@ -341,6 +341,8 @@ namespace spp::frontend
         case ETokenType::Throw:
             tokens.RemoveFront();
             return std::make_shared<ThrowNode>(tok.debugInfo,parseExpression(tokens));
+        case ETokenType::Let:
+            return parseLet(tokens);
         case ETokenType::OpSubtract:
             tokens.RemoveFront();
             return std::make_shared<BinaryOpNode>(tok.debugInfo,parsePrimary(tokens),std::make_shared<NumericLiteralNode>(tok.debugInfo,"-1"),EBinaryOp::Multiply);
@@ -530,7 +532,19 @@ namespace spp::frontend
         
         return std::make_shared<TryCatchNode>(tryTok.debugInfo,tryScope,catchScope,catchArg);
     }
-    
+
+    std::shared_ptr<CreateAndAssignNode> parseLet(TokenList& tokens)
+    {
+        auto token = tokens.ExpectFront(ETokenType::Let).RemoveFront();
+        std::vector<std::string> ids{};
+        while(tokens.Front().type != ETokenType::Assign)
+        {
+            ids.push_back(tokens.ExpectFront(ETokenType::Unknown).RemoveFront().value);
+        }
+        tokens.RemoveFront();
+        return std::make_shared<CreateAndAssignNode>(token.debugInfo,ids, parseExpression(tokens));
+    }
+
     std::shared_ptr<Node> parseStatement(TokenList& tokens)
     {
         switch (tokens.Front().type)
@@ -553,13 +567,10 @@ namespace spp::frontend
             }
         case ETokenType::Let:
             {
-                auto token = tokens.RemoveFront();
-                auto identifier = tokens.ExpectFront(ETokenType::Unknown).RemoveFront();
-                tokens.ExpectFront(ETokenType::Assign).RemoveFront();
                 TokenList statement;
                 getStatementTokens(statement, tokens);
                 
-                return std::make_shared<CreateAndAssignNode>(token.debugInfo,identifier.value, parseExpression(statement));
+                return parseLet(statement);
             }
         case ETokenType::When:
             {
@@ -581,9 +592,13 @@ namespace spp::frontend
             {
                 return parseWhile(tokens);
             }
-        case ETokenType::Class:
+        case ETokenType::Proto:
             {
                 return parseClass(tokens);
+            }
+        case ETokenType::OpenBrace:
+            {
+                return parseScope(tokens);
             }
         case ETokenType::Try:
             {
@@ -705,7 +720,7 @@ namespace spp::frontend
 
     std::shared_ptr<PrototypeNode> parseClass(TokenList& tokens)
     {
-        auto debug = tokens.ExpectFront(ETokenType::Class).RemoveFront().debugInfo;
+        auto debug = tokens.ExpectFront(ETokenType::Proto).RemoveFront().debugInfo;
         
         auto className = tokens.ExpectFront(ETokenType::Unknown).RemoveFront().value;
         
@@ -802,8 +817,8 @@ namespace spp::frontend
 
     std::shared_ptr<ScopeNode> parseScope(TokenList& tokens)
     {
-        auto token = tokens.Front();
-        tokens.RemoveFront(); // remove first brace
+        auto token = tokens.RemoveFront(); // remove first brace
+ 
         TokenList content;
         getTokensTill(content,tokens,{ETokenType::CloseBrace},1);
 

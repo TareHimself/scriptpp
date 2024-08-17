@@ -1,4 +1,4 @@
-class Bar {
+proto Bar {
 
     let a = "Hello";
     let b = "World";
@@ -6,7 +6,7 @@ class Bar {
 
 
 
-class Foo : Bar {
+proto Foo : Bar {
     let x = 0;
     let y = 0;
     let z = 0;

@@ -1,4 +1,4 @@
-
+/*
 fn main(){
     let d = [1,2,3,4,5,6,7,8,9,10];
     for(let i = 0; i < 10; i = i + 1){
@@ -7,8 +7,32 @@ fn main(){
         print(d);
         continue;
     }
+    print("Should be null",f);
+    {
+        let f = {
+            fn () -> print("Hello");
+        };
+
+        f();
+    }
+    print("YO");
+    print("Should be null",f);
 }
 
 main();
-print("Hello");
- 
+*/
+
+print("Should be null",f);
+// Scopes can return values
+let x = {
+    print("YO");
+    // let statements return the value; so technically let x = let y = 20; is the same as let x y = 20;
+    let f = 2;
+};
+print("Should be null",f);
+print("Should not be null",x);
+let x y = 20;
+print("x should equal y",x,y);
+let z = let w = [0,1,2,3,4,"FOO"];
+print("z should equal w",z,w,z == w);
+z.push(4,3,2,1);

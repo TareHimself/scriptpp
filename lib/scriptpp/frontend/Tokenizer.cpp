@@ -12,13 +12,24 @@ namespace spp::frontend
 
         if(search.contains(tokens.Front().value)) return {};
 
-        auto pending = tokens.Front();
-        tokens.RemoveFront();
-        while(tokens && !search.contains(tokens.Front().value))
+        auto pending = tokens.RemoveFront();
+        
+        if(search.contains(pending.value)) return pending;
+        
+        while(tokens)
         {
             auto front = tokens.Front();
             pending = Token{pending.value + front.value,pending.debugInfo + front.debugInfo};
             tokens.RemoveFront();
+            for (auto &item : search)
+            {
+                if(pending.value.size() >= item.size() && pending.value.substr(pending.value.size() - item.size(),item.size()) == item)
+                {
+                    pending.value = pending.value.substr(0,pending.value.size() - item.size());
+                    pending.debugInfo.endCol -= item.size();
+                    return pending;
+                }
+            } 
         }
 
         return pending;
@@ -36,7 +47,6 @@ namespace spp::frontend
         case ETokenType::CloseBracket:
         case ETokenType::Comma:
         case ETokenType::StatementEnd:
-        case ETokenType::Assign:
             return true;
         default:
             return false;
@@ -88,32 +98,6 @@ namespace spp::frontend
         while(rawTokens)
         {
             auto curToken = rawTokens.Front();
-            
-            if(curToken.value == " " || curToken.value == "\n" || curToken.value == "\r")
-            {
-                rawTokens.RemoveFront();
-                continue;
-            }
-
-            if(curToken.value == "\"" || curToken.value == "\'")
-            {
-                auto tok = rawTokens.RemoveFront();
-                auto consumed = joinTokensTill(rawTokens,std::set{tok.value});
-                rawTokens.RemoveFront();
-                if(consumed.has_value())
-                {
-                    auto consumedTok = consumed.value();
-                    
-                    result.InsertBack({ETokenType::StringLiteral,consumedTok.value,consumedTok.debugInfo});
-                }
-            }
-
-            if(isSplitToken(curToken))
-            {
-                rawTokens.RemoveFront();
-                result.InsertBack(curToken);
-                continue;
-            }
 
             if(curToken.value == "/")
             {
@@ -132,7 +116,7 @@ namespace spp::frontend
                             auto next = rawTokens.RemoveFront();
                             combined = Token{combined.value + next.value,combined.debugInfo + next.debugInfo};
                         }
-                        result.InsertBack(Token{ETokenType::StringLiteral,combined});
+                        //result.InsertBack(Token{ETokenType::StringLiteral,combined});
                         continue;
                     }
 
@@ -140,10 +124,36 @@ namespace spp::frontend
                     {
                         rawTokens.RemoveFront();
                         joinTokensTill(rawTokens,std::set<std::string>{"*/"});
+                        continue;
                     }
                 }
 
                 rawTokens.InsertFront(curToken);
+            }
+            
+            if(curToken.value == " " || curToken.value == "\n" || curToken.value == "\r")
+            {
+                rawTokens.RemoveFront();
+                continue;
+            }
+
+            if(curToken.value == "\"" || curToken.value == "\'")
+            {
+                auto tok = rawTokens.RemoveFront();
+                auto consumed = joinTokensTill(rawTokens,std::set{tok.value});
+                if(consumed.has_value())
+                {
+                    auto consumedTok = consumed.value();
+                    
+                    result.InsertBack({ETokenType::StringLiteral,consumedTok.value,consumedTok.debugInfo});
+                }
+            }
+
+            if(isSplitToken(curToken))
+            {
+                rawTokens.RemoveFront();
+                result.InsertBack(curToken);
+                continue;
             }
 
             auto maxSize = std::ranges::reverse_view(Token::Sizes).begin()->first;

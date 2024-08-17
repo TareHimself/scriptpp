@@ -37,7 +37,7 @@ namespace spp::frontend
         OpMod,
         BooleanLiteral,
         When,
-        Class,
+        Proto,
         For,
         While,
         Access,

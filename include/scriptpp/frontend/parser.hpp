@@ -136,9 +136,9 @@ namespace spp::frontend
 
     struct CreateAndAssignNode : Node
     {
-        std::string name;
+        std::vector<std::string> identifiers{};
         std::shared_ptr<Node> value;
-        CreateAndAssignNode(const TokenDebugInfo& inDebugInfo,const std::string& inName,const std::shared_ptr<Node>& inValue);
+        CreateAndAssignNode(const TokenDebugInfo& inDebugInfo,const std::vector<std::string>& inIdentifiers,const std::shared_ptr<Node>& inValue);
         
     };
 
@@ -311,6 +311,8 @@ namespace spp::frontend
     std::shared_ptr<WhileNode> parseWhile(TokenList &tokens);
 
     std::shared_ptr<TryCatchNode> parseTryCatch(TokenList& tokens);
+
+    std::shared_ptr<CreateAndAssignNode> parseLet(TokenList &tokens);
     
     std::shared_ptr<Node> parseStatement(TokenList &tokens);
 

@@ -6,7 +6,7 @@ namespace spp::api
 {
     typedef void (__stdcall* _vs_import)(std::shared_ptr<runtime::Module>& mod,std::shared_ptr<runtime::Program>& scope);
 
-#define VS_API_MODULE(name,func) \
+#define SPP_API_MODULE(name,func) \
     auto _create_fn = ##func; \
     extern "C" __declspec(dllexport) void _vs_import(std::shared_ptr<spp::runtime::Module>& mod,std::shared_ptr<spp::runtime::Program>& program) \
     { \

@@ -1,4 +1,4 @@
-class Foo {
+proto Foo {
     fn bar() -> throw "This is an error";
 }
 

@@ -18,4 +18,4 @@ std::shared_ptr<Module> CreateModule(const std::shared_ptr<Program>& program)
     return mod;
 }
 
-VS_API_MODULE(native_test,CreateModule)
+SPP_API_MODULE(native_test,CreateModule)

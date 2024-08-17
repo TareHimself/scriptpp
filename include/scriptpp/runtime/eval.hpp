@@ -15,6 +15,10 @@ namespace spp::runtime
                                                 const std::shared_ptr<ScopeLike>& scope);
     std::shared_ptr<Object> runScope(const std::shared_ptr<frontend::ScopeNode>& ast,
                                      const std::shared_ptr<ScopeLike>& scope);
+
+    std::shared_ptr<Object> evalScope(const std::shared_ptr<frontend::ScopeNode>& ast,
+                                     const std::shared_ptr<ScopeLike>& outerScope);
+    
     std::shared_ptr<Object> evalWhen(const std::shared_ptr<frontend::WhenNode>& ast,
                                      const std::shared_ptr<ScopeLike>& scope);
     std::shared_ptr<Object> evalExpression(const std::shared_ptr<frontend::Node>& ast,
@@ -40,6 +44,10 @@ namespace spp::runtime
                                         const std::shared_ptr<ScopeLike>& scope);
     std::shared_ptr<Object> evalAssign(const std::shared_ptr<frontend::AssignNode>& ast,
                                        const std::shared_ptr<ScopeLike>& scope);
+
+    std::shared_ptr<Object> evalCreateAndAssign(const std::shared_ptr<frontend::CreateAndAssignNode>& ast,
+                                           const std::shared_ptr<ScopeLike>& scope);
+    
     std::shared_ptr<Object> evalTryCatch(const std::shared_ptr<frontend::TryCatchNode>& ast,
                                          const std::shared_ptr<ScopeLike>& scope);
 

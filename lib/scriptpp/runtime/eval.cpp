@@ -55,7 +55,7 @@ namespace spp::runtime
 
     std::shared_ptr<Object> runScope(const std::shared_ptr<frontend::ScopeNode>& ast, const std::shared_ptr<ScopeLike>& scope)
     {
-        std::shared_ptr<Object> lastResult = makeNull();
+        std::shared_ptr<Object> lastResult{};
 
         for (const auto& statement : ast->statements)
         {
@@ -75,7 +75,24 @@ namespace spp::runtime
             }
         }
 
-        return lastResult;
+        return lastResult ? lastResult : makeNull();
+    }
+
+    std::shared_ptr<Object> evalScope(const std::shared_ptr<frontend::ScopeNode>& ast,
+        const std::shared_ptr<ScopeLike>& outerScope)
+    {
+        std::shared_ptr<Object> lastResult{};
+        auto scope = makeScope(outerScope);
+
+        for (const auto& statement : ast->statements)
+        {
+            if (auto evalResult = evalStatement(statement, scope))
+            {
+                lastResult = evalResult;
+            }
+        }
+
+        return lastResult ? lastResult : makeNull();
     }
 
     std::shared_ptr<Object> evalWhen(const std::shared_ptr<frontend::WhenNode>& ast, const std::shared_ptr<ScopeLike>& scope)
@@ -196,6 +213,16 @@ namespace spp::runtime
             if (const auto r = std::dynamic_pointer_cast<frontend::IndexNode>(ast))
             {
                 return evalIndex(r, scope);
+            }
+        case frontend::ENodeType::Scope:
+            if (const auto r = std::dynamic_pointer_cast<frontend::ScopeNode>(ast))
+            {
+                return evalScope(r, scope);
+            }
+        case frontend::ENodeType::CreateAndAssign:
+            if (const auto r = std::dynamic_pointer_cast<frontend::CreateAndAssignNode>(ast))
+            {
+                return evalCreateAndAssign(r, scope);
             }
         default:
             throw makeException(scope,"Unknown expression",ast->debugInfo);
@@ -355,9 +382,7 @@ namespace spp::runtime
             {
                 if (const auto a = std::dynamic_pointer_cast<frontend::CreateAndAssignNode>(ast))
                 {
-                    auto result = evalExpression(a->value, scope);
-                    scope->Assign(a->name, resolveReference(result));
-                    return result;
+                    return evalCreateAndAssign(a,scope);
                 }
             }
             break;
@@ -386,7 +411,7 @@ namespace spp::runtime
             {
                 if (const auto a = std::dynamic_pointer_cast<frontend::ScopeNode>(ast))
                 {
-                    return runScope(a, scope);
+                    return evalScope(a, scope);
                 }
             }
             break;
@@ -522,8 +547,19 @@ namespace spp::runtime
         throw makeException(scope,"Assign failed",ast->debugInfo);
     }
 
-    std::shared_ptr<Object> evalTryCatch(const std::shared_ptr<frontend::TryCatchNode>& ast,
+    std::shared_ptr<Object> evalCreateAndAssign(const std::shared_ptr<frontend::CreateAndAssignNode>& ast,
         const std::shared_ptr<ScopeLike>& scope)
+    {
+        auto result = evalExpression(ast->value, scope);
+        for (auto &identifier : ast->identifiers)
+        {
+            scope->Assign(identifier, resolveReference(result));
+        }
+        return result;
+    }
+
+    std::shared_ptr<Object> evalTryCatch(const std::shared_ptr<frontend::TryCatchNode>& ast,
+                                         const std::shared_ptr<ScopeLike>& scope)
     {
         try
         {
