@@ -323,6 +323,21 @@ namespace spp::runtime
         return HasOwn(ReservedDynamicFunctions::CALL);
     }
 
+    size_t DynamicObject::GetHashCode(const std::shared_ptr<ScopeLike>& scope)
+    {
+        auto result = Object::GetHashCode(scope);
+        for (auto &property : _properties)
+        {
+            if(property.second->IsCallable())
+            {
+                continue;
+            }
+
+            result = hashCombine(result,property.second->GetHashCode());
+        }
+        return result;
+    }
+
 
     DynamicObjectReference::DynamicObjectReference(const std::string& id, const std::shared_ptr<DynamicObject>& obj,
                                                    const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& val) : Reference(scope,val)

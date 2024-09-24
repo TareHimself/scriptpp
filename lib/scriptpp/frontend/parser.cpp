@@ -172,11 +172,18 @@ namespace spp::frontend
         catchArgumentName = inCatchArgName;
     }
 
-    FunctionNode::FunctionNode(const TokenDebugInfo& inDebugInfo, const std::string& inName,
-                               const std::vector<std::string>& inArgs, const std::shared_ptr<ScopeNode>& inBody) : Node(inDebugInfo)
+    ParameterNode::ParameterNode(const TokenDebugInfo& inDebugInfo, const std::string& inName,
+        const std::shared_ptr<Node>& inDefaultValue) : Node(inDebugInfo,ENodeType::FunctionParameter)
     {
         name = inName;
-        args = inArgs;
+        defaultValue = inDefaultValue;
+    }
+
+    FunctionNode::FunctionNode(const TokenDebugInfo& inDebugInfo, const std::string& inName,
+                               const std::vector<std::shared_ptr<ParameterNode>>& inParams, const std::shared_ptr<ScopeNode>& inBody) : Node(inDebugInfo)
+    {
+        name = inName;
+        params = inParams;
         body = inBody;
         type = ENodeType::Function;
     }
@@ -613,7 +620,7 @@ namespace spp::frontend
         }
     }
 
-    std::vector<std::string> parseFunctionArguments(TokenList& tokens)
+    std::vector<std::shared_ptr<ParameterNode>> parseFunctionParameters(TokenList& tokens)
     {
         TokenList argumentTokens{};
         
@@ -623,7 +630,7 @@ namespace spp::frontend
         
         tokens.ExpectFront(ETokenType::CloseParen).RemoveFront();
         
-        std::vector<std::string> args;
+        std::vector<std::shared_ptr<ParameterNode>> args;
         
         while(argumentTokens)
         {
@@ -635,8 +642,18 @@ namespace spp::frontend
             {
                 argumentTokens.RemoveFront();
             }
-            
-            args.push_back(argumentExpression.ExpectFront(ETokenType::Unknown).RemoveFront().value);
+
+            auto name = argumentExpression.ExpectFront(ETokenType::Unknown).RemoveFront();
+            if(argumentExpression && argumentExpression.Front().type == ETokenType::Assign)
+            {
+                argumentExpression.RemoveFront();
+                auto defaultVal = parseExpression(argumentExpression);
+                args.push_back(std::make_shared<ParameterNode>(name.debugInfo + defaultVal->debugInfo,name.value,defaultVal));
+            }
+            else
+            {
+                args.push_back(std::make_shared<ParameterNode>(name.debugInfo,name.value));
+            }
         }
         
         return args;
@@ -647,7 +664,7 @@ namespace spp::frontend
         auto token = tokens.ExpectFront(ETokenType::Function).RemoveFront();
         std::string identifier = tokens.Front().type == ETokenType::OpenParen ? ""  : tokens.ExpectFront(ETokenType::Unknown).RemoveFront().value;
         
-        std::vector<std::string> args = parseFunctionArguments(tokens);
+        std::vector<std::shared_ptr<ParameterNode>> args = parseFunctionParameters(tokens);
         
         if(tokens.Front().type == ETokenType::OpenBrace)
         {

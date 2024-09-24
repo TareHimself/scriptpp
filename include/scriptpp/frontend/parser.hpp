@@ -18,6 +18,7 @@ namespace spp::frontend
         NullLiteral,
         ListLiteral,
         Function,
+        FunctionParameter,
         Statement,
         Module,
         Return,
@@ -225,13 +226,20 @@ namespace spp::frontend
         TryCatchNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<ScopeNode>& inTryScope,const std::shared_ptr<ScopeNode>& inCatchScope,const std::string& inCatchArgName);
     };
 
+    struct ParameterNode : Node
+    {
+        std::string name;
+        std::shared_ptr<Node> defaultValue;
+        ParameterNode(const TokenDebugInfo& inDebugInfo,const std::string& inName, const std::shared_ptr<Node>& inDefaultValue = {});
+    };
+    
     struct FunctionNode : Node
     {
         std::string name;
-        std::vector<std::string> args;
+        std::vector<std::shared_ptr<ParameterNode>> params;
         std::shared_ptr<ScopeNode> body;
 
-        FunctionNode(const TokenDebugInfo& inDebugInfo,const std::string& inName, const std::vector<std::string>& inArgs,const std::shared_ptr<ScopeNode>& inBody);
+        FunctionNode(const TokenDebugInfo& inDebugInfo,const std::string& inName, const std::vector<std::shared_ptr<ParameterNode>>& inParams,const std::shared_ptr<ScopeNode>& inBody);
         
     };
 
@@ -316,7 +324,7 @@ namespace spp::frontend
     
     std::shared_ptr<Node> parseStatement(TokenList &tokens);
 
-    std::vector<std::string> parseFunctionArguments(TokenList &tokens);
+    std::vector<std::shared_ptr<ParameterNode>> parseFunctionParameters(TokenList &tokens);
     
     std::shared_ptr<FunctionNode> parseFunction(TokenList &tokens);
     

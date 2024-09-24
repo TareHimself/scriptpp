@@ -109,6 +109,8 @@ if(const auto n = cast<Number>(other)) \
         
         ENumberType GetNumberType() const override;
 
+        size_t GetHashCode(const std::shared_ptr<ScopeLike>& scope) override;
+
         virtual T GetValue() const;
     };
 
@@ -218,6 +220,12 @@ if(const auto n = cast<Number>(other)) \
         }
 
         return ENumberType::Int;
+    }
+
+    template <typename T, typename T0>
+    size_t TNumber<T, T0>::GetHashCode(const std::shared_ptr<ScopeLike>& scope)
+    {
+        return hashCombine(GetType(),GetValue());
     }
 
     template <typename T, typename T0>

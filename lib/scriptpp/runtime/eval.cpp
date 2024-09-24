@@ -634,7 +634,6 @@ namespace spp::runtime
             {
                 const auto program = makeProgram();
                 return evalModule(std::dynamic_pointer_cast<frontend::ModuleNode>(ast),program);
-                
             }
         case frontend::ENodeType::Function:
             {

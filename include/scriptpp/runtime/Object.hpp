@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <string>
-
+#include <optional>
 #include "scriptpp/utils.hpp"
 
 
@@ -26,7 +26,8 @@ namespace spp::runtime
         Reference
     };
     
-    class Object : public std::enable_shared_from_this<Object> {
+    class Object : public std::enable_shared_from_this<Object>
+    {
     public:
         virtual ~Object() = default;
 
@@ -51,12 +52,17 @@ namespace spp::runtime
         virtual std::shared_ptr<Object> Divide(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope = {});
         virtual std::shared_ptr<Object> Multiply(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope = {});
 
+        virtual size_t GetHashCode(const std::shared_ptr<ScopeLike>& scope = {});
+        
         virtual bool IsCallable() const;
 
         virtual unsigned long long GetAddress() const;
 
         std::shared_ptr<Object> GetRef() const;
+        
     };
+
+    
     
 
 
@@ -109,4 +115,19 @@ namespace spp::runtime
     std::shared_ptr<FlowControl> makeFlowControl(const FlowControl::EFlowControlOp& val);
 
     
+}
+
+namespace std {
+    template <>
+    struct hash<std::shared_ptr<spp::runtime::Object>> {
+        size_t operator()(const std::shared_ptr<spp::runtime::Object>& obj) const {
+            return obj->GetHashCode();
+        }
+    };
+    template <> 
+    struct equal_to<std::shared_ptr<spp::runtime::Object>> {
+        bool operator()(const std::shared_ptr<spp::runtime::Object>& lhs, const std::shared_ptr<spp::runtime::Object>& rhs) const {
+            return lhs && rhs && lhs->Equal(rhs);
+        } 
+    };
 }

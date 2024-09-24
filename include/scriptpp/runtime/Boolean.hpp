@@ -11,7 +11,7 @@ namespace spp::runtime
         EObjectType GetType() const override;
         bool ToBoolean(const std::shared_ptr<ScopeLike>& scope) const override;
         std::string ToString(const std::shared_ptr<ScopeLike>& scope) const override;
-        
+        size_t GetHashCode(const std::shared_ptr<ScopeLike>& scope) override;
     };
 
 

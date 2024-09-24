@@ -141,5 +141,37 @@ std::shared_ptr<To> cast(const std::shared_ptr<From>& ptr) {
     std::shared_ptr<To> castStatic(const std::shared_ptr<From>& ptr) {
         return std::static_pointer_cast<To,From>(ptr);
     }
-    
+
+
+    template <typename T, typename... Args>
+    std::vector<T> vectorOf(T first, Args... args);
+
+    template <typename T>
+    std::vector<T> vectorOf();
+
+    template <typename T, typename... Args>
+    std::vector<T> vectorOf(T first, Args... args) {
+        return std::vector<T>{first, args...};
+    }
+
+    template <typename T>
+    std::vector<T> vectorOf()
+    {
+        return std::vector<T>{};
+    }
+
+    template <typename T, typename... Rest>
+    void _hashCombineHelper(size_t& result, const T& v, const Rest&... rest)
+    {
+        result ^= std::hash<T>{}(v) + 0x9e3779b9 + (result << 6) + (result >> 2);
+        (_hashCombineHelper(result, rest), ...);
+    }
+
+    template <typename... Rest>
+    size_t hashCombine(const Rest&... rest)
+    {
+        size_t seed = 0;
+        (_hashCombineHelper(seed,rest), ...);
+        return seed;
+    }
 }

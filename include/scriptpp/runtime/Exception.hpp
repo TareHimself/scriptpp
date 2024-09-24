@@ -24,7 +24,7 @@ namespace spp::runtime
     struct ExceptionContainer : std::runtime_error
     {
         std::shared_ptr<Exception> exception{};
-        ExceptionContainer(const std::shared_ptr<Exception>& inException);
+        ExceptionContainer(const std::shared_ptr<Exception>& inException,const std::shared_ptr<ScopeLike>& scope = {});
     };
     
 

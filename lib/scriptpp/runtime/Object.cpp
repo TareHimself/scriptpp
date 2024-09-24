@@ -6,7 +6,6 @@
 
 namespace spp::runtime
 {
-
     bool Object::ToBoolean(const std::shared_ptr<ScopeLike>& scope) const
     {
         return true;
@@ -71,6 +70,11 @@ namespace spp::runtime
         return makeNull();
     }
 
+    size_t Object::GetHashCode(const std::shared_ptr<ScopeLike>& scope)
+    {
+        return static_cast<size_t>(GetType());
+    }
+
     bool Object::IsCallable() const
     {
         return false;
@@ -85,7 +89,6 @@ namespace spp::runtime
     {
         return std::const_pointer_cast<Object>(shared_from_this());
     }
-    
 
     ReturnValue::ReturnValue(const std::shared_ptr<Object>& val)
     {

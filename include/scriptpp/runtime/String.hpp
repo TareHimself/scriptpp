@@ -21,6 +21,7 @@ namespace spp::runtime
         std::shared_ptr<Object> Trim(const std::shared_ptr<FunctionScope>& fnScope);
         std::shared_ptr<Object> Get(const std::shared_ptr<Object>& key, const std::shared_ptr<ScopeLike>& scope) const override;
         void Set(const std::shared_ptr<Object>& key, const std::shared_ptr<Object>& val, const std::shared_ptr<ScopeLike>& scope) override;
+        size_t GetHashCode(const std::shared_ptr<ScopeLike>& scope) override;
         
     };
 

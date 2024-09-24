@@ -66,6 +66,7 @@ namespace spp::frontend
         case ETokenType::OpNot:
         case ETokenType::OpLess:
         case ETokenType::OpGreater:
+        case ETokenType::Access:
             return true;
             default:
                 return isSplitToken(token) || token.value == " " || token.value == "\n" || token.value == "\r";
@@ -147,13 +148,6 @@ namespace spp::frontend
                     
                     result.InsertBack({ETokenType::StringLiteral,consumedTok.value,consumedTok.debugInfo});
                 }
-            }
-
-            if(isSplitToken(curToken))
-            {
-                rawTokens.RemoveFront();
-                result.InsertBack(curToken);
-                continue;
             }
 
             auto maxSize = std::ranges::reverse_view(Token::Sizes).begin()->first;

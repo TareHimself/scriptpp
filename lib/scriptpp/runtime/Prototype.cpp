@@ -26,11 +26,24 @@ namespace spp::runtime
         return true;
     }
 
+    size_t Prototype::GetHashCode(const std::shared_ptr<ScopeLike>& scope)
+    {
+        return hashCombine(DynamicObject::GetHashCode(scope),GetAddress());
+    }
+
     RuntimePrototype::RuntimePrototype(const std::shared_ptr<ScopeLike>& scope,
                                        const std::shared_ptr<frontend::PrototypeNode>& prototype) : Prototype(scope)
     {
         _prototype = prototype;
-        std::vector<std::string> args;
+        
+    }
+
+    void RuntimePrototype::Init()
+    {
+        Prototype::Init();
+        
+        std::vector<std::shared_ptr<frontend::ParameterNode>> args{};
+        
         for(auto &statement : _prototype->scope->statements)
         {
             if(statement->type == frontend::ENodeType::Function)
@@ -39,14 +52,14 @@ namespace spp::runtime
                 {
                     if(fn->name == ReservedDynamicFunctions::CONSTRUCTOR)
                     {
-                        args = fn->args;
+                        args = fn->params;
                         break;
                     }
                 }
             }
         }
         
-        AddNativeMemberFunction(ReservedDynamicFunctions::CALL,this,args,&RuntimePrototype::Create);
+        AddNativeMemberFunction(ReservedDynamicFunctions::CALL,this,args,&RuntimePrototype::CreateInstance);
     }
 
     std::string RuntimePrototype::ToString(const std::shared_ptr<ScopeLike>& scope) const
@@ -54,7 +67,7 @@ namespace spp::runtime
         return "<Prototype : " + _prototype->id + ">";
     }
 
-    std::shared_ptr<Object> RuntimePrototype::Create(std::shared_ptr<FunctionScope>& fnScope)
+    std::shared_ptr<Object> RuntimePrototype::CreateInstance(std::shared_ptr<FunctionScope>& fnScope)
     {
         auto dynamicObj = createDynamicFromPrototype(_prototype,cast<RuntimePrototype>(this->GetRef()));
         

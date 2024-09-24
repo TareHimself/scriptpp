@@ -12,15 +12,16 @@ namespace spp::runtime
 {
 
     FunctionScope::FunctionScope(const std::weak_ptr<Function>& fn, const std::shared_ptr<ScopeLike>& calledFrom,
-        const std::shared_ptr<ScopeLike>& scope, const std::vector<std::string>& argNames,
+        const std::shared_ptr<ScopeLike>& scope, const std::vector<std::shared_ptr<frontend::ParameterNode>>& parameters,
         const std::vector<std::shared_ptr<Object>>& args) : Scope(scope)
     {
         _fn = fn;
         _callerScope = calledFrom;
         _args = args;
-        for(auto i = 0; i < argNames.size(); i++)
+        
+        for(auto i = 0; i < parameters.size(); i++)
         {
-            _argIndexes.insert({argNames[i],i});
+            _argIndexes.insert({parameters[i]->name,i});
         }
     }
 
@@ -51,7 +52,7 @@ namespace spp::runtime
 
         return Scope::Find(id);
     }
-
+    
     std::shared_ptr<Object> FunctionScope::FindArg(const std::string& id)
     {
         if(_argIndexes.contains(id))
@@ -63,6 +64,12 @@ namespace spp::runtime
         }
 
         return makeNull();
+    }
+
+    std::shared_ptr<Object> FunctionScope::GetArg(const uint32_t& index)
+    {
+        if(index >= _args.size()) return makeNull();
+        return _args[index];
     }
 
     std::string FunctionScope::ARGUMENTS_KEY = "__args__";
@@ -83,17 +90,29 @@ namespace spp::runtime
     }
 
     std::shared_ptr<FunctionScope> makeFunctionScope(const std::weak_ptr<Function>& fn,const std::shared_ptr<ScopeLike>& callerScope,const std::shared_ptr<ScopeLike>& parent,
-                                                   const std::vector<std::string>& argNames, const std::vector<std::shared_ptr<Object>>& args)
+                                                   const std::vector<std::shared_ptr<frontend::ParameterNode>>& parameters, const std::vector<std::shared_ptr<Object>>& args)
     {
-        return makeObject<FunctionScope>(fn,callerScope,parent,argNames,args);
+        return makeObject<FunctionScope>(fn,callerScope,parent,parameters,args);
     }
     
 
-    Function::Function(const std::shared_ptr<ScopeLike>& declarationScope, const std::string& name, const std::vector<std::string>& args)
+    Function::Function(const std::shared_ptr<ScopeLike>& declarationScope, const std::string& name, const std::vector<std::shared_ptr<frontend::ParameterNode>>& params)
     {
         _declarationScope = declarationScope;
         _name = name;
-        _args = args;
+        _params = params;
+    }
+
+    Function::Function(const std::shared_ptr<ScopeLike>& declarationScope, const std::string& name,
+        const std::vector<std::string>& params)
+    {
+        _declarationScope = declarationScope;
+        _name = name;
+        _params.reserve(params.size());
+        for (auto &param : params)
+        {
+            _params.push_back(std::make_shared<frontend::ParameterNode>(frontend::TokenDebugInfo{},param));
+        }
     }
 
     EObjectType Function::GetType() const
@@ -108,7 +127,16 @@ namespace spp::runtime
 
     std::string Function::ToString(const std::shared_ptr<ScopeLike>& scope) const
     {
-        return "fn " + _name +  + "(" + join(_args,",") + ")";
+        std::vector<std::string> strParams{};
+        
+        strParams.reserve(_params.size());
+        
+        for (auto &param : _params)
+        {
+            strParams.push_back(param->name);
+        }
+        
+        return "fn " + _name +  + "(" + join(strParams,",") + ")";
     }
 
     std::shared_ptr<Object> Function::Call(const std::shared_ptr<ScopeLike>& callerScope,const std::vector<std::shared_ptr<Object>>& args )
@@ -117,14 +145,34 @@ namespace spp::runtime
         
         std::vector<std::shared_ptr<Object>> callArgs = args;
         
-        while(callArgs.size() < _args.size())
+        // Resolve default arguments and pass null for missing arguments
+        if(callArgs.size() != _params.size() && callArgs.size() < _params.size())
         {
-            callArgs.emplace_back(makeNull());
+            callArgs.reserve(_params.size());
+            for(auto i = callArgs.size(); i < _params.size(); i++)
+            {
+                if(_params[i]->defaultValue)
+                {
+                    auto defaultVal = evalExpression(_params[i]->defaultValue,_declarationScope);
+                    callArgs.push_back(resolveReference(defaultVal));
+                }
+                else
+                {
+                    callArgs.push_back(makeNull());
+                }
+                
+            }
         }
+        
         const auto myRef = cast<Function>(this->GetRef());
-        auto fnScope =  makeFunctionScope(myRef,callerScope ? callerScope : makeCallScope({"<native>",0,0},myRef,{}),_declarationScope,_args,callArgs);
+        auto fnScope =  makeFunctionScope(myRef,callerScope ? callerScope : makeCallScope({"<native>",0,0},myRef,{}),_declarationScope,_params,callArgs);
         fnScope->Create(FunctionScope::ARGUMENTS_KEY,makeList(args));
         return HandleCall(fnScope);
+    }
+
+    std::shared_ptr<ScopeLike> Function::GetDeclarationScope() const
+    {
+        return _declarationScope;
     }
 
     bool Function::IsCallable() const
@@ -133,7 +181,7 @@ namespace spp::runtime
     }
 
     RuntimeFunction::RuntimeFunction(const std::shared_ptr<ScopeLike>& scope,
-                                     const std::shared_ptr<frontend::FunctionNode>& function) : Function(scope,function->name,function->args)
+                                     const std::shared_ptr<frontend::FunctionNode>& function) : Function(scope,function->name,function->params)
     {
         _function = function;
     }
@@ -144,7 +192,13 @@ namespace spp::runtime
     }
 
     NativeFunction::NativeFunction(const std::shared_ptr<ScopeLike>& scope, const std::string& name,
-                                   const std::vector<std::string>& args, const NativeFunctionType& func) : Function(scope,name,args)
+                                   const std::vector<std::string>& params, const NativeFunctionType& func) : Function(scope,name,params)
+    {
+        _func = func;
+    }
+
+    NativeFunction::NativeFunction(const std::shared_ptr<ScopeLike>& scope, const std::string& name,
+        const std::vector<std::shared_ptr<frontend::ParameterNode>>& params, const NativeFunctionType& func) : Function(scope,name,params)
     {
         _func = func;
     }
@@ -172,10 +226,22 @@ namespace spp::runtime
         return fn;
     }
     
-    std::shared_ptr<NativeFunction> makeNativeFunction(const std::shared_ptr<ScopeLike>& scope,const std::string& name, const std::vector<std::string>& args,
+    std::shared_ptr<NativeFunction> makeNativeFunction(const std::shared_ptr<ScopeLike>& scope,const std::string& name, const std::vector<std::string>& params,
         const NativeFunctionType& nativeFunction,bool addToScope)
     {
-        auto fn = makeObject<NativeFunction>(scope,name,args,nativeFunction);
+        auto fn = makeObject<NativeFunction>(scope,name,params,nativeFunction);
+        if(scope && addToScope)
+        {
+            scope->Assign(name,fn);
+        }
+        return fn;
+    }
+
+    std::shared_ptr<NativeFunction> makeNativeFunction(const std::shared_ptr<ScopeLike>& scope, const std::string& name,
+        const std::vector<std::shared_ptr<frontend::ParameterNode>>& params, const NativeFunctionType& nativeFunction,
+        bool addToScope)
+    {
+        auto fn = makeObject<NativeFunction>(scope,name,params,nativeFunction);
         if(scope && addToScope)
         {
             scope->Assign(name,fn);

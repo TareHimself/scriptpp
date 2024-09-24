@@ -1,0 +1,27 @@
+
+// calling a function based on a when statement
+for(let i = 0; i < 10; i = i + 1){
+    when {
+        i == 0 -> print("X is zero");
+        i == 1 -> print("X is one");
+        i == 2 -> print("X is two");
+        i == 3 -> print("X is three");
+        i == 4 -> print("X is four");
+        i == 5 -> print("X is five");
+        i == 6 -> print("X is six");
+        i == 7 -> print("X is seven");
+        i == 8 -> print("X is eight");
+        i == 9 -> print("X is nine");
+        i == 10 -> print("X is ten");
+        else -> print("Out of range");
+    };
+}
+
+// initialize a variable based on a when statement
+
+let a = 1;
+let x = when {
+    a == 1 -> "THIS IS ONE";
+    else -> "THIS IS NOT ONE";
+};
+print(a,x);

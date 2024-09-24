@@ -86,18 +86,19 @@ namespace spp::runtime
         return err;
     }
 
-    ExceptionContainer::ExceptionContainer(const std::shared_ptr<Exception>& inException) : std::runtime_error(inException->ToString())
+    ExceptionContainer::ExceptionContainer(const std::shared_ptr<Exception>& inException,
+        const std::shared_ptr<ScopeLike>& scope) : std::runtime_error(inException->ToString(scope))
     {
-        exception = inException;
+        
     }
-    
+
     ExceptionContainer makeException(const std::shared_ptr<ScopeLike>& scope, const std::string& data,const std::optional<frontend::TokenDebugInfo>& debugInfo)
     {
-        return {makeObject<Exception>(scope,data,debugInfo)};
+        return {makeObject<Exception>(scope,data,debugInfo),scope};
     }
 
     ExceptionContainer makeException(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& data,const std::optional<frontend::TokenDebugInfo>& debugInfo)
     {
-        return {makeObject<Exception>(scope,data,debugInfo)};
+        return {makeObject<Exception>(scope,data,debugInfo),scope};
     }
 }

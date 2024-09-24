@@ -72,10 +72,16 @@ namespace spp::runtime
         using TNativeDynamicMemberFunctionConst = std::shared_ptr<Object>(T::*)(const std::shared_ptr<FunctionScope>&);
         
         template<typename T>
-        void AddNativeMemberFunction(const std::string& name,T * instance,const std::vector<std::string>& args,TNativeDynamicMemberFunction<T> func);
+        void AddNativeMemberFunction(const std::string& name,T * instance,const std::vector<std::string>& params,TNativeDynamicMemberFunction<T> func);
 
         template<typename T>
-        void AddNativeMemberFunction(const std::string& name,T * instance,const std::vector<std::string>& args,TNativeDynamicMemberFunctionConst<T> func);
+        void AddNativeMemberFunction(const std::string& name,T * instance,const std::vector<std::string>& params,TNativeDynamicMemberFunctionConst<T> func);
+
+        template<typename T>
+        void AddNativeMemberFunction(const std::string& name,T * instance,const std::vector<std::shared_ptr<frontend::ParameterNode>>& params,TNativeDynamicMemberFunction<T> func);
+
+        template<typename T>
+        void AddNativeMemberFunction(const std::string& name,T * instance,const std::vector<std::shared_ptr<frontend::ParameterNode>>& params,TNativeDynamicMemberFunctionConst<T> func);
 
         
         void AddLambda(const std::string& name,const std::vector<std::string>& args,const std::function<std::shared_ptr<Object>(std::shared_ptr<FunctionScope>&)>& func);
@@ -92,20 +98,36 @@ namespace spp::runtime
         std::shared_ptr<Object> Multiply(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope) override;
 
         bool IsCallable() const override;
+
+        size_t GetHashCode(const std::shared_ptr<ScopeLike>& scope) override;
     };
 
     template <typename T>
-    void DynamicObject::AddNativeMemberFunction(const std::string& name, T* instance,const std::vector<std::string>& args,
+    void DynamicObject::AddNativeMemberFunction(const std::string& name, T* instance,const std::vector<std::string>& params,
         TNativeDynamicMemberFunction<T> func)
     {
-        DynamicObject::Set(name, makeNativeFunction(_selfFunctionScope, name, args,std::bind(func,instance,std::placeholders::_1),false));
+        DynamicObject::Set(name, makeNativeFunction(_selfFunctionScope, name, params,std::bind(func,instance,std::placeholders::_1),false));
     }
 
     template <typename T>
-    void DynamicObject::AddNativeMemberFunction(const std::string& name, T* instance, const std::vector<std::string>& args,
+    void DynamicObject::AddNativeMemberFunction(const std::string& name, T* instance, const std::vector<std::string>& params,
         TNativeDynamicMemberFunctionConst<T> func)
     {
-        DynamicObject::Set(name, makeNativeFunction(_selfFunctionScope, name, args,std::bind(func,instance,std::placeholders::_1),false));
+        DynamicObject::Set(name, makeNativeFunction(_selfFunctionScope, name, params,std::bind(func,instance,std::placeholders::_1),false));
+    }
+
+    template <typename T>
+    void DynamicObject::AddNativeMemberFunction(const std::string& name, T* instance,const std::vector<std::shared_ptr<frontend::ParameterNode>>& params,
+        TNativeDynamicMemberFunction<T> func)
+    {
+        DynamicObject::Set(name, makeNativeFunction(_selfFunctionScope, name, params,std::bind(func,instance,std::placeholders::_1),false));
+    }
+
+    template <typename T>
+    void DynamicObject::AddNativeMemberFunction(const std::string& name, T* instance, const std::vector<std::shared_ptr<frontend::ParameterNode>>& params,
+        TNativeDynamicMemberFunctionConst<T> func)
+    {
+        DynamicObject::Set(name, makeNativeFunction(_selfFunctionScope, name, params,std::bind(func,instance,std::placeholders::_1),false));
     }
 
     class DynamicObjectReference : public Reference

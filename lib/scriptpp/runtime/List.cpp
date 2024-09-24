@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "scriptpp/utils.hpp"
+#include "scriptpp/runtime/Exception.hpp"
 #include "scriptpp/runtime/Null.hpp"
 #include "scriptpp/runtime/Number.hpp"
 #include "scriptpp/runtime/Number.hpp"
@@ -30,17 +31,17 @@ namespace spp::runtime
     {
         DynamicObject::Init();
 
-        AddNativeMemberFunction("pop",this,{},&List::Pop);
-        AddNativeMemberFunction("push",this,{},&List::Push);
-        AddNativeMemberFunction("map",this,{"callback"},&List::Map);
-        AddNativeMemberFunction("forEach",this,{"callback"},&List::ForEach);
-        AddNativeMemberFunction("filter",this,{"callback"},&List::Filter);
-        AddNativeMemberFunction("find",this,{"callback"},&List::FindItem);
-        AddNativeMemberFunction("size",this,{},&List::Size);
-        AddNativeMemberFunction("join",this,{"delimiter"},&List::Join);
-        AddNativeMemberFunction("findIndex",this,{"callback"},&List::FindIndex);
-        AddNativeMemberFunction("sort",this,{"callback"},&List::Sort);
-        AddNativeMemberFunction("reverse",this,{},&List::Reverse);
+        AddNativeMemberFunction("pop",this,vectorOf<std::string>(),&List::Pop);
+        AddNativeMemberFunction("push",this,vectorOf<std::string>(),&List::Push);
+        AddNativeMemberFunction("map",this,vectorOf<std::string>("callback"),&List::Map);
+        AddNativeMemberFunction("forEach",this,vectorOf<std::string>("callback"),&List::ForEach);
+        AddNativeMemberFunction("filter",this,vectorOf<std::string>("callback"),&List::Filter);
+        AddNativeMemberFunction("find",this,vectorOf<std::string>("callback"),&List::FindItem);
+        AddNativeMemberFunction("size",this,vectorOf<std::string>(),&List::Size);
+        AddNativeMemberFunction("join",this,vectorOf<std::string>("delimiter"),&List::Join);
+        AddNativeMemberFunction("findIndex",this,vectorOf<std::string>("callback"),&List::FindIndex);
+        AddNativeMemberFunction("sort",this,vectorOf<std::string>("callback"),&List::Sort);
+        AddNativeMemberFunction("reverse",this,vectorOf<std::string>(),&List::Reverse);
     }
 
     List::List(const std::vector<std::shared_ptr<Object>>& vec) : DynamicObject(makeScope())
@@ -76,7 +77,7 @@ namespace spp::runtime
             const auto i = cast<Number>(key)->GetValueAs<int>();
             if(i >= _vec.size())
             {
-                throw std::runtime_error("Index out of range " + std::to_string(i));
+                throw makeException(scope,"Index out of range " + std::to_string(i));
             }
             
             return makeListReference(this,i);
@@ -103,7 +104,7 @@ namespace spp::runtime
     {
         if(index >= _vec.size())
         {
-            throw std::runtime_error("Index out of range " + std::to_string(index));
+            throw makeException({},"Index out of range " + std::to_string(index));
         }
 
         _vec[index] = val;
@@ -123,7 +124,7 @@ namespace spp::runtime
     {
         if(_vec.empty())
         {
-            throw std::runtime_error("Attempted to pop from empty list");
+            throw makeException(fnScope,"Attempted to pop from empty list");
         }
 
         auto last = _vec.back();
@@ -138,7 +139,7 @@ namespace spp::runtime
         const auto args = fnScope->GetArgs();
         if (args.empty())
         {
-            throw std::runtime_error("No Callback passed to findIndex");
+            throw makeException(fnScope,"No Callback passed to findIndex");
         }
 
         if (const auto fn = cast<Function>(resolveReference(args[0])))
@@ -161,7 +162,7 @@ namespace spp::runtime
         const auto args = fnScope->GetArgs();
         if (args.empty())
         {
-            throw std::runtime_error("No Callback passed to findIndex");
+            throw makeException(fnScope,"No Callback passed to findIndex");
         }
 
         if (const auto fn = cast<Function>(resolveReference(args[0])))
@@ -181,7 +182,7 @@ namespace spp::runtime
         const auto args = fnScope->GetArgs();
         if (args.empty())
         {
-            throw std::runtime_error("No Callback passed to ");
+            throw makeException(fnScope,"No Callback passed to ");
         }
 
         if (auto fn = cast<Function>(resolveReference(args[0])))
@@ -207,7 +208,7 @@ namespace spp::runtime
         const auto args = fnScope->GetArgs();
         if (args.empty())
         {
-            throw std::runtime_error("No Callback passed to find");
+            throw makeException(fnScope,"No Callback passed to find");
         }
 
         if (auto fn = cast<Function>(resolveReference(args[0])))
@@ -230,7 +231,7 @@ namespace spp::runtime
         const auto args = fnScope->GetArgs();
         if (args.empty())
         {
-            throw std::runtime_error("No Callback passed to findIndex");
+            throw makeException(fnScope,"No Callback passed to findIndex");
         }
 
         if (auto fn = cast<Function>(resolveReference(args[0])))
@@ -335,8 +336,18 @@ namespace spp::runtime
         return _vec;
     }
 
+    size_t List::GetHashCode(const std::shared_ptr<ScopeLike>& scope)
+    {
+        auto result = DynamicObject::GetHashCode(scope);
+        for (auto &object : _vec)
+        {
+            result = hashCombine(result,object->GetHashCode());
+        }
+        return result;
+    }
+
     ListPrototype::ListPrototype() : Prototype(makeScope(), makeNativeFunction(
-                                                   {}, ReservedDynamicFunctions::CALL, {},
+                                                   {}, ReservedDynamicFunctions::CALL, vectorOf<std::string>(),
                                                    [](const std::shared_ptr<FunctionScope>& fnScope)
                                                    {
                                                        return makeList(fnScope->GetArgs());

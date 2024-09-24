@@ -11,8 +11,8 @@ namespace spp::runtime
     {
         DynamicObject::Init();
         AddNativeMemberFunction("split",this,{"delimiter"},&String::Split);
-        AddNativeMemberFunction("size",this,{},&String::Size);
-        AddNativeMemberFunction("size",this,{},&String::Size);
+        AddNativeMemberFunction("size",this,vectorOf<std::string>(),&String::Size);
+        AddNativeMemberFunction("size",this,vectorOf<std::string>(),&String::Size);
     }
 
     String::String(const std::string& str) : DynamicObject({})
@@ -27,6 +27,7 @@ namespace spp::runtime
 
     std::string String::ToString(const std::shared_ptr<ScopeLike>& scope) const
     {
+        
         return _str;
     }
 
@@ -109,6 +110,11 @@ namespace spp::runtime
             
         }
         DynamicObject::Set(key, val, scope);
+    }
+
+    size_t String::GetHashCode(const std::shared_ptr<ScopeLike>& scope)
+    {
+        return hashCombine(GetType(),_str);
     }
 
     std::shared_ptr<Object> String::Add(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope)

@@ -9,8 +9,6 @@ namespace spp::runtime
 {
     class Prototype : public DynamicObject
     {
-        
-        
     public:
         Prototype(const std::shared_ptr<ScopeLike>& scope);
 
@@ -18,6 +16,8 @@ namespace spp::runtime
         
         std::string ToString(const std::shared_ptr<ScopeLike>& scope) const override;
         bool ToBoolean(const std::shared_ptr<ScopeLike>& scope) const override;
+
+        size_t GetHashCode(const std::shared_ptr<ScopeLike>& scope) override;
     };
 
     class RuntimePrototype : public Prototype
@@ -28,9 +28,11 @@ namespace spp::runtime
     public:
         RuntimePrototype(const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<frontend::PrototypeNode>& prototype);
 
+        void Init() override;
+
         std::string ToString(const std::shared_ptr<ScopeLike>& scope) const override;
 
-        std::shared_ptr<Object> Create(std::shared_ptr<FunctionScope>& fnScope);
+        std::shared_ptr<Object> CreateInstance(std::shared_ptr<FunctionScope>& fnScope);
     };
     
 

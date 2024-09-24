@@ -28,6 +28,11 @@ namespace spp::runtime
         return ST_Module;
     }
 
+    size_t Module::GetHashCode(const std::shared_ptr<ScopeLike>& scope)
+    {
+        return hashCombine(DynamicObject::GetHashCode(scope),GetAddress());
+    }
+
     std::shared_ptr<Module> makeModule(const std::shared_ptr<Program>& scope)
     {
         return makeObject<Module>(scope);

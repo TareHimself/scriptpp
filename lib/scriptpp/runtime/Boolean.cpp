@@ -22,6 +22,11 @@ namespace spp::runtime
         return _value ? "true" : "false";
     }
 
+    size_t Boolean::GetHashCode(const std::shared_ptr<ScopeLike>& scope)
+    {
+        return hashCombine(Object::GetHashCode(scope),_value);
+    }
+
     std::shared_ptr<Boolean> makeBoolean(const std::string& val)
     {
         return makeObject<Boolean>(val == "true");

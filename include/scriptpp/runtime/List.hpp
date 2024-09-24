@@ -46,6 +46,8 @@ namespace spp::runtime
 
         virtual std::vector<std::shared_ptr<Object>>& GetNative();
         static std::shared_ptr<ListPrototype> Prototype;
+
+        size_t GetHashCode(const std::shared_ptr<ScopeLike>& scope) override;
     };
 
     class ListPrototype : public Prototype

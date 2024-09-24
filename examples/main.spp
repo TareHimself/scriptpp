@@ -22,17 +22,59 @@ fn main(){
 main();
 */
 
-print("Should be null",f);
-// Scopes can return values
-let x = {
-    print("YO");
-    // let statements return the value; so technically let x = let y = 20; is the same as let x y = 20;
-    let f = 2;
-};
-print("Should be null",f);
-print("Should not be null",x);
-let x y = 20;
-print("x should equal y",x,y);
-let z = let w = [0,1,2,3,4,"FOO"];
-print("z should equal w",z,w,z == w);
-z.push(4,3,2,1);
+fn misc() {
+    print("Should be null",f);
+    // Scopes can return values
+    let x = {
+        print("YO");
+        // let statements return the value; so technically let x = let y = 20; is the same as let x y = 20;
+        let f = 2;
+    };
+    print("Should be null",f);
+    print("Should not be null",x);
+    let x y = 20;
+    print("x should equal y",x,y);
+    let z = let w = [0,1,2,3,4];
+    print("z should equal w",z,w,z == w);
+    let g = Dict();
+    g.put(2,29).put("2","200");
+    print(g);
+}
+
+
+/*
+def Fibonacci(n):
+    if n < 0:
+        print("Incorrect input")
+    elif n == 0:
+        return 0
+    elif n == 1 or n == 2:
+        return 1
+    else:
+        return Fibonacci(n-1) + Fibonacci(n-2)
+*/
+// Computes fib(n) using dp
+fn fib(n,storage = Dict()) -> when {
+    storage.has(n) -> {
+        print("Using storage",n);
+        storage[n];
+    };
+    else -> {
+        print("Computing",n,storage);
+        let result = when {
+            n < 0 -> throw "Incorrect Input";
+            n == 0 -> 0;
+            n == 1 || n == 2 -> 1;
+            else -> fib(n - 1,storage) + fib(n - 2,storage);
+        };
+        storage.put(n,result);
+        result;
+    };
+}
+
+fn doThread(){
+    let x = Thread(fn () -> print("This is from a thread"));
+    x.start();
+    x.join();
+}
+doThread();

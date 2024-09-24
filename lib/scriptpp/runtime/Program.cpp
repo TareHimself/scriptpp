@@ -5,9 +5,11 @@
 #include "scriptpp/api.hpp"
 #include "scriptpp/utils.hpp"
 #include "scriptpp/frontend/tokenizer.hpp"
+#include "scriptpp/runtime/Dictionary.hpp"
 #include "scriptpp/runtime/Exception.hpp"
 #include "scriptpp/runtime/eval.hpp"
 #include "scriptpp/runtime/Null.hpp"
+#include "scriptpp/runtime/Thread.hpp"
 
 namespace spp::runtime
 {
@@ -38,7 +40,14 @@ namespace spp::runtime
             return Eval(scope);
         });
 
+        // list support
         Set("List",List::Prototype);
+
+        // Dictionary support
+        Set("Dict",Dictionary::Prototype);
+
+        // Thread support
+        Set("Thread",Thread::Prototype);
     }
 
     std::shared_ptr<Module> Program::ImportModule(const std::string& id)
@@ -145,6 +154,11 @@ namespace spp::runtime
         }
         
         return DynamicObject::Find(id, searchParent);
+    }
+
+    size_t Program::GetHashCode(const std::shared_ptr<ScopeLike>& scope)
+    {
+        return hashCombine(DynamicObject::GetHashCode(scope),GetAddress());
     }
 
     std::shared_ptr<Program> makeProgram()
