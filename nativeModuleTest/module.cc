@@ -15,6 +15,8 @@ std::shared_ptr<Module> CreateModule(const std::shared_ptr<Program>& program)
         std::cout << "Hello from a native module function" << std::endl;
         return makeNull();
     });
+
+    
     return mod;
 }
 

@@ -12,17 +12,19 @@ namespace spp::runtime
 {
 
     FunctionScope::FunctionScope(const std::weak_ptr<Function>& fn, const std::shared_ptr<ScopeLike>& calledFrom,
-        const std::shared_ptr<ScopeLike>& scope, const std::vector<std::shared_ptr<frontend::ParameterNode>>& parameters,
-        const std::vector<std::shared_ptr<Object>>& args) : Scope(scope)
+        const std::shared_ptr<ScopeLike>& scope,
+        const std::vector<std::shared_ptr<frontend::ParameterNode>>& parameters,
+        const std::unordered_map<std::string, std::shared_ptr<Object>>& args,
+        const std::vector<std::shared_ptr<Object>>& positionalArgs): Scope(scope)
     {
         _fn = fn;
         _callerScope = calledFrom;
-        _args = args;
-        
-        for(auto i = 0; i < parameters.size(); i++)
+        _arguments = args;
+        _positionalArguments = positionalArgs;
+        for (auto i = 0; i < parameters.size() && i < positionalArgs.size(); i++)
         {
-            _argIndexes.insert({parameters[i]->name,i});
-        }
+            _arguments.insert_or_assign(std::to_string(i),_positionalArguments.at(i));
+        } 
     }
 
     EScopeType FunctionScope::GetScopeType() const
@@ -41,35 +43,27 @@ namespace spp::runtime
 
             return makeReferenceWithId(id,cast<FunctionScope>(this->GetRef()),Scope::Find(ARGUMENTS_KEY,false));
         }
-        
-        if(_argIndexes.contains(id))
+
+        if(_arguments.contains(id))
         {
-            if(_args.size() > _argIndexes.at(id))
-            {
-                return _args[_argIndexes.at(id)];
-            }
+            return _arguments.at(id);
         }
 
         return Scope::Find(id);
     }
     
-    std::shared_ptr<Object> FunctionScope::FindArg(const std::string& id)
+    std::shared_ptr<Object> FunctionScope::FindArg(const std::string& id,bool required)
     {
-        if(_argIndexes.contains(id))
-        {
-            if(_args.size() > _argIndexes.at(id))
-            {
-                return _args[_argIndexes.at(id)];
-            }
-        }
+        if(!_arguments.contains(id)) throw makeException({},"Missing required argument : " + id);
 
-        return makeNull();
+        return _arguments.at(id);
     }
 
     std::shared_ptr<Object> FunctionScope::GetArg(const uint32_t& index)
     {
-        if(index >= _args.size()) return makeNull();
-        return _args[index];
+        if(index >= _positionalArguments.size()) return makeNull();
+
+        return _positionalArguments.at(index);
     }
 
     std::string FunctionScope::ARGUMENTS_KEY = "__args__";
@@ -79,9 +73,14 @@ namespace spp::runtime
         return _fn;
     }
 
-    std::vector<std::shared_ptr<Object>> FunctionScope::GetArgs() const
+    std::unordered_map<std::string,std::shared_ptr<Object>> FunctionScope::GetNamedArgs() const
     {
-        return _args;
+        return _arguments;
+    }
+
+    std::vector<std::shared_ptr<Object>> FunctionScope::GetPositionalArgs() const
+    {
+        return _positionalArguments;
     }
 
     std::shared_ptr<ScopeLike> FunctionScope::GetCallerScope() const
@@ -90,9 +89,9 @@ namespace spp::runtime
     }
 
     std::shared_ptr<FunctionScope> makeFunctionScope(const std::weak_ptr<Function>& fn,const std::shared_ptr<ScopeLike>& callerScope,const std::shared_ptr<ScopeLike>& parent,
-                                                   const std::vector<std::shared_ptr<frontend::ParameterNode>>& parameters, const std::vector<std::shared_ptr<Object>>& args)
+                                                   const std::vector<std::shared_ptr<frontend::ParameterNode>>& parameters, const std::unordered_map<std::string,std::shared_ptr<Object>>& args,const std::vector<std::shared_ptr<Object>>& positionalArgs)
     {
-        return makeObject<FunctionScope>(fn,callerScope,parent,parameters,args);
+        return makeObject<FunctionScope>(fn,callerScope,parent,parameters,args,positionalArgs);
     }
     
 
@@ -139,34 +138,12 @@ namespace spp::runtime
         return "fn " + _name +  + "(" + join(strParams,",") + ")";
     }
 
-    std::shared_ptr<Object> Function::Call(const std::shared_ptr<ScopeLike>& callerScope,const std::vector<std::shared_ptr<Object>>& args )
+    std::shared_ptr<Object> Function::Call(const std::shared_ptr<ScopeLike>& callerScope, const std::vector<std::shared_ptr<Object>>& positionalArgs, const std::
+                                           unordered_map<std::string, std::shared_ptr<Object>>& namedArgs)
     {
-
-        
-        std::vector<std::shared_ptr<Object>> callArgs = args;
-        
-        // Resolve default arguments and pass null for missing arguments
-        if(callArgs.size() != _params.size() && callArgs.size() < _params.size())
-        {
-            callArgs.reserve(_params.size());
-            for(auto i = callArgs.size(); i < _params.size(); i++)
-            {
-                if(_params[i]->defaultValue)
-                {
-                    auto defaultVal = evalExpression(_params[i]->defaultValue,_declarationScope);
-                    callArgs.push_back(resolveReference(defaultVal));
-                }
-                else
-                {
-                    callArgs.push_back(makeNull());
-                }
-                
-            }
-        }
-        
         const auto myRef = cast<Function>(this->GetRef());
-        auto fnScope =  makeFunctionScope(myRef,callerScope ? callerScope : makeCallScope({"<native>",0,0},myRef,{}),_declarationScope,_params,callArgs);
-        fnScope->Create(FunctionScope::ARGUMENTS_KEY,makeList(args));
+        auto fnScope =  makeFunctionScope(myRef,callerScope ? callerScope : makeCallScope({"<native>",0,0},myRef,{}),_declarationScope,_params,namedArgs,positionalArgs);
+        fnScope->Create(FunctionScope::ARGUMENTS_KEY,makeList(positionalArgs));
         return HandleCall(fnScope);
     }
 

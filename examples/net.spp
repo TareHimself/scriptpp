@@ -1,0 +1,7 @@
+let modulePath = "C:\Github\scriptpp\modules\net\build\Debug\net.sppn";
+
+print(modulePath);
+
+let net = import(modulePath);
+
+print(net)

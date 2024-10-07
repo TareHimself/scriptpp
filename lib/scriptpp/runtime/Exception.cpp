@@ -6,14 +6,14 @@ namespace spp::runtime
 {
     Exception::Exception(const std::shared_ptr<ScopeLike>& scope, const std::string& data,const std::optional<frontend::TokenDebugInfo>& debugInfo) : DynamicObject({})
     {
-        _callstack = makeList({});
+        _callstack = makeList();
         _data = makeString(data);
         Exception::GenerateCallStack(scope,debugInfo);
     }
 
     Exception::Exception(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& data,const std::optional<frontend::TokenDebugInfo>& debugInfo) : DynamicObject({})
     {
-        _callstack = makeList({});
+        _callstack = makeList();
         _data = data;
         Exception::GenerateCallStack(scope,debugInfo);
     }

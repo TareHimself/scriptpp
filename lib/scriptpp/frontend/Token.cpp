@@ -57,20 +57,20 @@ namespace spp::frontend {
         return *this;
     }
 
-    Token::Token(ETokenType inType, uint32_t inLine, uint32_t inCol) : Token(inType,TokenDebugInfo{inLine,inCol})
+    Token::Token(TokenType inType, uint32_t inLine, uint32_t inCol) : Token(inType,TokenDebugInfo{inLine,inCol})
     {
     }
 
-    Token::Token(ETokenType inType, const TokenDebugInfo& inDebugInfo) : Token(inType,KeyWordMap.contains(inType) ? KeyWordMap[inType] : "",inDebugInfo)
+    Token::Token(TokenType inType, const TokenDebugInfo& inDebugInfo) : Token(inType,KeyWordMap.contains(inType) ? KeyWordMap[inType] : "",inDebugInfo)
     {
     }
 
-    Token::Token(ETokenType inType, const Token& otherToken) : Token(inType,otherToken.value,otherToken.debugInfo)
+    Token::Token(TokenType inType, const Token& otherToken) : Token(inType,otherToken.value,otherToken.debugInfo)
     {
 
     }
 
-    Token::Token(ETokenType inType, const std::string& inValue, const TokenDebugInfo& inDebugInfo)
+    Token::Token(TokenType inType, const std::string& inValue, const TokenDebugInfo& inDebugInfo)
     {
         type = inType;
         value = inValue;
@@ -79,57 +79,58 @@ namespace spp::frontend {
 
     Token::Token(const std::string& data, const TokenDebugInfo& inDebugInfo)
     {
-        type = TokenMap.contains(data) ? TokenMap[data] : (data == "true" || data == "false" ? ETokenType::BooleanLiteral : ETokenType::Unknown);
+        type = TokenMap.contains(data) ? TokenMap[data] : (data == "true" || data == "false" ? TokenType::BooleanLiteral : TokenType::Unknown);
         value = data;
         debugInfo = inDebugInfo;
     }
 
-    std::unordered_map<std::string, ETokenType> Token::TokenMap = {
-        {"=", ETokenType::Assign},
-        {"let", ETokenType::Let},
-        {"{", ETokenType::OpenBrace},
-        {"}", ETokenType::CloseBrace},
-        {"(", ETokenType::OpenParen},
-        {")", ETokenType::CloseParen},
-        {"fn", ETokenType::Function},
-        {"\"", ETokenType::DoubleQuote},
-        {"\'", ETokenType::SingleQuote},
-        {";", ETokenType::StatementEnd},
-        {"null", ETokenType::Null},
-        {"return", ETokenType::Return},
-        {"==", ETokenType::OpEqual},
-        {"!=", ETokenType::OpNotEqual},
-        {"<", ETokenType::OpLess},
-        {"<=", ETokenType::OpLessEqual},
-        {">", ETokenType::OpGreater},
-        {">=", ETokenType::OpGreaterEqual},
-        {"/", ETokenType::OpDivide},
-        {"*", ETokenType::OpMultiply},
-        {"+", ETokenType::OpAdd},
-        {"-", ETokenType::OpSubtract},
-        {"%", ETokenType::OpMod},
-        {"when", ETokenType::When},
-        {"[", ETokenType::OpenBracket},
-        {"]", ETokenType::CloseBracket},
-        {"proto", ETokenType::Proto},
-        {"||",ETokenType::OpOr},
-        {"&&",ETokenType::OpAdd},
-        {"!",ETokenType::OpNot},
-        {"for",ETokenType::For},
-        {"while",ETokenType::While},
-        {".",ETokenType::Access},
-        {",",ETokenType::Comma},
-        {"break",ETokenType::Break},
-        {"continue",ETokenType::Continue},
-        {"try",ETokenType::Try},
-        {"catch",ETokenType::Catch},
-        {"throw",ETokenType::Throw},
-        {"->",ETokenType::Arrow}
+    std::unordered_map<std::string, TokenType> Token::TokenMap = {
+        {"=", TokenType::Assign},
+        {"let", TokenType::Let},
+        {"{", TokenType::OpenBrace},
+        {"}", TokenType::CloseBrace},
+        {"(", TokenType::OpenParen},
+        {")", TokenType::CloseParen},
+        {"fn", TokenType::Function},
+        {"\"", TokenType::DoubleQuote},
+        {"\'", TokenType::SingleQuote},
+        {";", TokenType::StatementEnd},
+        {"null", TokenType::Null},
+        {"return", TokenType::Return},
+        {"==", TokenType::OpEqual},
+        {"!=", TokenType::OpNotEqual},
+        {"<", TokenType::OpLess},
+        {"<=", TokenType::OpLessEqual},
+        {">", TokenType::OpGreater},
+        {">=", TokenType::OpGreaterEqual},
+        {"/", TokenType::OpDivide},
+        {"*", TokenType::OpMultiply},
+        {"+", TokenType::OpAdd},
+        {"-", TokenType::OpSubtract},
+        {"%", TokenType::OpMod},
+        {"when", TokenType::When},
+        {"[", TokenType::OpenBracket},
+        {"]", TokenType::CloseBracket},
+        {"proto", TokenType::Proto},
+        {"||",TokenType::OpOr},
+        {"&&",TokenType::OpAdd},
+        {"!",TokenType::OpNot},
+        {"for",TokenType::For},
+        {"while",TokenType::While},
+        {".",TokenType::Access},
+        {",",TokenType::Comma},
+        {"break",TokenType::Break},
+        {"continue",TokenType::Continue},
+        {"try",TokenType::Try},
+        {"catch",TokenType::Catch},
+        {"throw",TokenType::Throw},
+        {"->",TokenType::Arrow},
+        {":",TokenType::Colon}
     };
 
-    std::unordered_map<ETokenType, std::string> Token::KeyWordMap = ([]
+    std::unordered_map<TokenType, std::string> Token::KeyWordMap = ([]
     {
-        std::unordered_map<ETokenType, std::string> result;
+        std::unordered_map<TokenType, std::string> result;
         for (auto& kv : TokenMap)
         {
             result.insert({kv.second, kv.first});

@@ -13,8 +13,8 @@ namespace spp::runtime
     
     class FunctionScope : public Scope
     {
-        std::vector<std::shared_ptr<Object>> _args{};
-        std::unordered_map<std::string,uint32_t> _argIndexes{};
+        std::unordered_map<std::string,std::shared_ptr<Object>> _arguments{};
+        std::vector<std::shared_ptr<Object>> _positionalArguments{};
         std::shared_ptr<Object> _result{};
         std::weak_ptr<Function> _fn{};
         std::shared_ptr<ScopeLike> _callerScope{};
@@ -24,25 +24,27 @@ namespace spp::runtime
 
         static std::string ARGUMENTS_KEY;
         
-        FunctionScope(const std::weak_ptr<Function>& fn,const std::shared_ptr<ScopeLike>& calledFrom,const std::shared_ptr<ScopeLike>& scope,const std::vector<std::shared_ptr<frontend::ParameterNode>>& parameters,const std::vector<std::shared_ptr<Object>>& args);
+        FunctionScope(const std::weak_ptr<Function>& fn,const std::shared_ptr<ScopeLike>& calledFrom,const std::shared_ptr<ScopeLike>& scope,const std::vector<std::shared_ptr<frontend::ParameterNode>>& parameters,const std::unordered_map<std::string,std::shared_ptr<Object>>& args,const std::vector<std::shared_ptr<Object>>& positionalArgs);
 
         EScopeType GetScopeType() const override;
 
         std::shared_ptr<Object> Find(const std::string& id, bool searchParent = true) const override;
 
-        std::shared_ptr<Object> FindArg(const std::string& id);
+        std::shared_ptr<Object> FindArg(const std::string& id,bool required = false);
 
         std::shared_ptr<Object> GetArg(const uint32_t& index);
 
         virtual std::weak_ptr<Function> GetFunction() const;
 
-        virtual std::vector<std::shared_ptr<Object>> GetArgs() const;
+        virtual std::unordered_map<std::string,std::shared_ptr<Object>> GetNamedArgs() const;
+
+        virtual std::vector<std::shared_ptr<Object>> GetPositionalArgs() const;
 
         std::shared_ptr<ScopeLike> GetCallerScope() const;
 
     };
 
-    std::shared_ptr<FunctionScope> makeFunctionScope(const std::weak_ptr<Function>& fn,const std::shared_ptr<ScopeLike>& callerScope,const std::shared_ptr<ScopeLike>& parent,const std::vector<std::string>& argNames,const std::vector<std::shared_ptr<Object>>& args);
+    std::shared_ptr<FunctionScope> makeFunctionScope(const std::weak_ptr<Function>& fn,const std::shared_ptr<ScopeLike>& callerScope,const std::shared_ptr<ScopeLike>& parent,const std::vector<std::string>& argNames,const std::unordered_map<std::string,std::shared_ptr<Object>>& args,const std::vector<std::shared_ptr<Object>>& positionalArgs);
     
     class Function : public Object
     {
@@ -56,7 +58,8 @@ namespace spp::runtime
         bool ToBoolean(const std::shared_ptr<ScopeLike>& scope) const override;
         std::string ToString(const std::shared_ptr<ScopeLike>& scope = {}) const override;
 
-        virtual std::shared_ptr<Object> Call(const std::shared_ptr<ScopeLike>& callerScope,const std::vector<std::shared_ptr<Object>>& args = {});
+        virtual std::shared_ptr<Object> Call(const std::shared_ptr<ScopeLike>& callerScope, const std::vector<std::shared_ptr<Object>>& positionalArgs = {}, const
+                                             std::unordered_map<std::string, std::shared_ptr<Object>>& namedArgs = {});
 
         template<typename ...TArgs, typename = std::enable_if_t<((std::is_convertible_v<TArgs, std::shared_ptr<Object>>) && ...)>>
         std::shared_ptr<Object> Call(const std::shared_ptr<ScopeLike>& callerScope,TArgs... args);

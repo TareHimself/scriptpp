@@ -11,7 +11,8 @@ namespace spp::api
 
         if(!dll)
         {
-            throw std::runtime_error("Failed to load the native module");
+            
+            throw std::runtime_error("Failed to load the native module, error code " + std::to_string(GetLastError()));
         }
 
         const auto importFn = (_vs_import)GetProcAddress(dll,"_vs_import");

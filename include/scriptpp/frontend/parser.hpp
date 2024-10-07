@@ -9,7 +9,7 @@
 
 namespace spp::frontend
 {
-    enum class ENodeType
+    enum class NodeType
     {
         Unknown,
         BinaryOp,
@@ -45,7 +45,7 @@ namespace spp::frontend
 
     struct Node
     {
-        ENodeType type = ENodeType::Unknown;
+        NodeType type = NodeType::Unknown;
         
         TokenDebugInfo debugInfo;
 
@@ -56,7 +56,7 @@ namespace spp::frontend
 
         Node(const TokenDebugInfo& inDebugInfo);
 
-        Node(const TokenDebugInfo& inDebugInfo,ENodeType inType);
+        Node(const TokenDebugInfo& inDebugInfo,NodeType inType);
         
         virtual ~Node() = default;
     };
@@ -93,12 +93,12 @@ namespace spp::frontend
         std::shared_ptr<Node> right;
         EBinaryOp op;
 
-        static EBinaryOp TokenTypeToBinaryOp(const ETokenType& tokType);
+        static EBinaryOp TokenTypeToBinaryOp(const TokenType& tokType);
         
         BinaryOpNode(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft, const std::shared_ptr<Node>& inRight, const EBinaryOp& inOp);
         
 
-        BinaryOpNode(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft, const std::shared_ptr<Node>& inRight, const ETokenType& inOp);
+        BinaryOpNode(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft, const std::shared_ptr<Node>& inRight, const TokenType& inOp);
         
     };
 
@@ -245,9 +245,10 @@ namespace spp::frontend
 
     struct CallNode : HasLeft
     {
-        std::vector<std::shared_ptr<Node>> args;
+        std::vector<std::shared_ptr<Node>> positionalArguments{};
+        std::unordered_map<std::string,std::shared_ptr<Node>> namedArguments{};
 
-        CallNode(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft,const std::vector<std::shared_ptr<Node>>& inArgs);
+        CallNode(const TokenDebugInfo& inDebugInfo,const std::shared_ptr<Node>& inLeft,const std::vector<std::shared_ptr<Node>>& inPositionalArguments,const std::unordered_map<std::string,std::shared_ptr<Node>>& inNamedArguments);
         
     };
 
@@ -330,6 +331,8 @@ namespace spp::frontend
     
 
     std::vector<std::shared_ptr<Node>> parseCallArguments(TokenList &tokens);
+
+    void parseCallArguments(TokenList &tokens,std::vector<std::shared_ptr<Node>>& positionalArgs,std::unordered_map<std::string,std::shared_ptr<Node>>& namedArgs);
     
     std::shared_ptr<WhenNode> parseWhen(TokenList &tokens);
     
@@ -338,7 +341,7 @@ namespace spp::frontend
     void getStatementTokens(TokenList& statement, TokenList& tokens);
     // Gets tokens till end (scope aware)
     void getTokensTill(TokenList& result,TokenList& tokens,const std::function<bool(const Token&,int)>& evaluator,int initialScope = 0,bool popEnd = true);
-    void getTokensTill(TokenList& result,TokenList& tokens,const std::set<ETokenType>& ends,int initialScope = 0,bool popEnd = true);
+    void getTokensTill(TokenList& result,TokenList& tokens,const std::set<TokenType>& ends,int initialScope = 0,bool popEnd = true);
     std::shared_ptr<ScopeNode> parseScope(TokenList& tokens);
     std::shared_ptr<ModuleNode> parse(TokenList tokens);
 }

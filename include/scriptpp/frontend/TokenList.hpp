@@ -21,11 +21,11 @@ namespace spp::frontend
 
         Token RemoveBack();
 
-        TokenList& ExpectFront(const ETokenType& token);
+        TokenList& ExpectFront(const TokenType& token);
         
         TokenList& ExpectFront(const std::string& token);
 
-        TokenList& ExpectBack(const ETokenType& token);
+        TokenList& ExpectBack(const TokenType& token);
         
         TokenList& ExpectBack(const std::string& token);
 

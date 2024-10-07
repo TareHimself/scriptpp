@@ -12,7 +12,7 @@ void runRepl()
 
         program->AddLambda("print", {}, [](const std::shared_ptr<runtime::FunctionScope>& scope)
         {
-            for (const auto& arg : scope->GetArgs())
+            for (const auto& arg : scope->GetPositionalArgs())
             {
                 auto s = arg->ToString(scope);
                 std::cout << arg->ToString(scope) << " ";
@@ -116,7 +116,7 @@ int main(const int argc, char *argv[])
 
         program->AddLambda("print", {}, [](const std::shared_ptr<runtime::FunctionScope>& scope)
         {
-            for (const auto& arg : scope->GetArgs())
+            for (const auto& arg : scope->GetPositionalArgs())
             {
                 auto s = arg->ToString(scope);
                 std::cout << arg->ToString(scope) << " ";

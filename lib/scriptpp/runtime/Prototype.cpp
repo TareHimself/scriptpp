@@ -46,7 +46,7 @@ namespace spp::runtime
         
         for(auto &statement : _prototype->scope->statements)
         {
-            if(statement->type == frontend::ENodeType::Function)
+            if(statement->type == frontend::NodeType::Function)
             {
                 if(const auto fn = std::dynamic_pointer_cast<frontend::FunctionNode>(statement))
                 {

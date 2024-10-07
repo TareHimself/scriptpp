@@ -9,7 +9,7 @@ namespace spp::frontend
         debugInfo = inDebugInfo;
     }
 
-    Node::Node(const TokenDebugInfo& inDebugInfo, ENodeType inType) : Node(inDebugInfo)
+    Node::Node(const TokenDebugInfo& inDebugInfo, NodeType inType) : Node(inDebugInfo)
     {
         type = inType;
     }
@@ -19,37 +19,37 @@ namespace spp::frontend
         left = inLeft;
     }
     
-    EBinaryOp BinaryOpNode::TokenTypeToBinaryOp(const ETokenType& tokType)
+    EBinaryOp BinaryOpNode::TokenTypeToBinaryOp(const TokenType& tokType)
     {
         switch (tokType)
         {
-        case ETokenType::OpAdd:
+        case TokenType::OpAdd:
             return  EBinaryOp::Add;
-        case ETokenType::OpSubtract:
+        case TokenType::OpSubtract:
             return  EBinaryOp::Subtract;
-        case ETokenType::OpDivide:
+        case TokenType::OpDivide:
             return  EBinaryOp::Divide;
-        case  ETokenType::OpMultiply:
+        case  TokenType::OpMultiply:
             return EBinaryOp::Multiply;
-        case  ETokenType::OpMod:
+        case  TokenType::OpMod:
             return EBinaryOp::Mod;
-        case  ETokenType::OpAnd:
+        case  TokenType::OpAnd:
             return EBinaryOp::And;
-        case  ETokenType::OpOr:
+        case  TokenType::OpOr:
             return EBinaryOp::Or;
-        case  ETokenType::OpNot:
+        case  TokenType::OpNot:
             return EBinaryOp::Not;
-        case  ETokenType::OpEqual:
+        case  TokenType::OpEqual:
             return EBinaryOp::Equal;
-        case  ETokenType::OpNotEqual:
+        case  TokenType::OpNotEqual:
             return EBinaryOp::NotEqual;
-        case  ETokenType::OpLess:
+        case  TokenType::OpLess:
             return EBinaryOp::Less;
-        case  ETokenType::OpLessEqual:
+        case  TokenType::OpLessEqual:
             return EBinaryOp::LessEqual;
-        case  ETokenType::OpGreater:
+        case  TokenType::OpGreater:
             return EBinaryOp::Greater;
-        case  ETokenType::OpGreaterEqual:
+        case  TokenType::OpGreaterEqual:
             return EBinaryOp::GreaterEqual;
         }
 
@@ -61,36 +61,36 @@ namespace spp::frontend
     {
         right = inRight;
         op = inOp;
-        type = ENodeType::BinaryOp;
+        type = NodeType::BinaryOp;
         isStatic = left->isStatic && right->isStatic;
     }
 
     BinaryOpNode::BinaryOpNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inLeft,
-                               const std::shared_ptr<Node>& inRight, const ETokenType& inOp) : HasLeft(inDebugInfo,inLeft)
+                               const std::shared_ptr<Node>& inRight, const TokenType& inOp) : HasLeft(inDebugInfo,inLeft)
     {
         right = inRight;
-        type = ENodeType::BinaryOp;
+        type = NodeType::BinaryOp;
             
         op = TokenTypeToBinaryOp(inOp);
         isStatic = left->isStatic && right->isStatic;
     }
 
-    NumericLiteralNode::NumericLiteralNode(const TokenDebugInfo& inDebugInfo, const std::string& inValue) : Node(inDebugInfo,ENodeType::NumericLiteral)
+    NumericLiteralNode::NumericLiteralNode(const TokenDebugInfo& inDebugInfo, const std::string& inValue) : Node(inDebugInfo,NodeType::NumericLiteral)
     {
         value = inValue;
     }
 
-    BooleanLiteralNode::BooleanLiteralNode(const TokenDebugInfo& inDebugInfo, bool inValue) : Node(inDebugInfo,ENodeType::BooleanLiteral)
+    BooleanLiteralNode::BooleanLiteralNode(const TokenDebugInfo& inDebugInfo, bool inValue) : Node(inDebugInfo,NodeType::BooleanLiteral)
     {
         value = inValue;
     }
 
-    StringLiteralNode::StringLiteralNode(const TokenDebugInfo& inDebugInfo, const std::string& inValue) : Node(inDebugInfo,ENodeType::StringLiteral)
+    StringLiteralNode::StringLiteralNode(const TokenDebugInfo& inDebugInfo, const std::string& inValue) : Node(inDebugInfo,NodeType::StringLiteral)
     {
         value = inValue;
     }
 
-    NullLiteralNode::NullLiteralNode(const TokenDebugInfo& inDebugInfo) : Node(inDebugInfo,ENodeType::NullLiteral)
+    NullLiteralNode::NullLiteralNode(const TokenDebugInfo& inDebugInfo) : Node(inDebugInfo,NodeType::NullLiteral)
     {
         
     }
@@ -98,7 +98,7 @@ namespace spp::frontend
     ListLiteralNode::ListLiteralNode(const TokenDebugInfo& inDebugInfo, const std::vector<std::shared_ptr<Node>>& inValues) : Node(inDebugInfo)
     {
         values = inValues;
-        type = ENodeType::ListLiteral;
+        type = NodeType::ListLiteral;
     }
 
     CreateAndAssignNode::CreateAndAssignNode(const TokenDebugInfo& inDebugInfo,const std::vector<std::string>& inIdentifiers,
@@ -106,66 +106,66 @@ namespace spp::frontend
     {
         identifiers = inIdentifiers;
         value = inValue;
-        type = ENodeType::CreateAndAssign;
+        type = NodeType::CreateAndAssign;
     }
 
     AssignNode::AssignNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inTarget,
                            const std::shared_ptr<Node>& inValue) : HasLeft(inDebugInfo,inTarget)
     {
         value = inValue;
-        type = ENodeType::Assign;
+        type = NodeType::Assign;
     }
 
     NoOpNode::NoOpNode() : Node()
     {
-        type = ENodeType::NoOp;
+        type = NodeType::NoOp;
     }
 
     IdentifierNode::IdentifierNode(const TokenDebugInfo& inDebugInfo, const std::string& inValue) : Node(inDebugInfo)
     {
         value = inValue;
-        type = ENodeType::Identifier;
+        type = NodeType::Identifier;
     }
 
     ScopeNode::ScopeNode(const TokenDebugInfo& inDebugInfo, const std::vector<std::shared_ptr<Node>>& inStatements) : Node(inDebugInfo)
     {
         statements = inStatements;
-        type = ENodeType::Scope;
+        type = NodeType::Scope;
     }
 
     AccessNode::AccessNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inLeft,
                            const std::shared_ptr<Node>& inRight) : HasLeft(inDebugInfo,inLeft)
     {
         right = inRight;
-        type = ENodeType::Access;
+        type = NodeType::Access;
     }
 
     IndexNode::IndexNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inLeft,
                              const std::shared_ptr<Node>& inWithin) : HasLeft(inDebugInfo,inLeft)
     {
         within = inWithin;
-        type = ENodeType::Index;
+        type = NodeType::Index;
     }
 
     WhenNode::WhenNode(const TokenDebugInfo& inDebugInfo, const std::vector<Branch>& inBranches) : Node(inDebugInfo)
     {
         branches = inBranches;
-        type = ENodeType::When;
+        type = NodeType::When;
     }
 
     ReturnNode::ReturnNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inExpression) : Node(inDebugInfo)
     {
         expression = inExpression;
-        type = ENodeType::Return;
+        type = NodeType::Return;
     }
 
-    ThrowNode::ThrowNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inExpression) : Node(inDebugInfo,ENodeType::Throw)
+    ThrowNode::ThrowNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inExpression) : Node(inDebugInfo,NodeType::Throw)
     {
         expression = inExpression;
     }
 
     TryCatchNode::TryCatchNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<ScopeNode>& inTryScope,
-        const std::shared_ptr<ScopeNode>& inCatchScope, const std::string& inCatchArgName) : Node(inDebugInfo,ENodeType::TryCatch)
+        const std::shared_ptr<ScopeNode>& inCatchScope, const std::string& inCatchArgName) : Node(inDebugInfo,NodeType::TryCatch)
     {
         tryScope = inTryScope;
         catchScope = inCatchScope;
@@ -173,7 +173,7 @@ namespace spp::frontend
     }
 
     ParameterNode::ParameterNode(const TokenDebugInfo& inDebugInfo, const std::string& inName,
-        const std::shared_ptr<Node>& inDefaultValue) : Node(inDebugInfo,ENodeType::FunctionParameter)
+        const std::shared_ptr<Node>& inDefaultValue) : Node(inDebugInfo,NodeType::FunctionParameter)
     {
         name = inName;
         defaultValue = inDefaultValue;
@@ -185,14 +185,16 @@ namespace spp::frontend
         name = inName;
         params = inParams;
         body = inBody;
-        type = ENodeType::Function;
+        type = NodeType::Function;
     }
 
     CallNode::CallNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inLeft,
-                       const std::vector<std::shared_ptr<Node>>& inArgs) : HasLeft(inDebugInfo,inLeft)
+        const std::vector<std::shared_ptr<Node>>& inPositionalArguments,
+        const std::unordered_map<std::string, std::shared_ptr<Node>>& inNamedArguments)  : HasLeft(inDebugInfo,inLeft)
     {
-        args = inArgs;
-        type = ENodeType::Call;
+        positionalArguments = inPositionalArguments;
+        namedArguments = inNamedArguments;
+        type = NodeType::Call;
     }
 
     ForNode::ForNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inInit,
@@ -203,7 +205,7 @@ namespace spp::frontend
         condition = inCondition;
         update = inUpdate;
         body = inBody;
-        type = ENodeType::For;
+        type = NodeType::For;
     }
 
     WhileNode::WhileNode(const TokenDebugInfo& inDebugInfo, const std::shared_ptr<Node>& inCondition,
@@ -211,7 +213,7 @@ namespace spp::frontend
     {
         condition = inCondition;
         body = inBody;
-        type = ENodeType::While;
+        type = NodeType::While;
     }
 
     PrototypeNode::PrototypeNode(const TokenDebugInfo& inDebugInfo, const std::string& inId,
@@ -220,13 +222,13 @@ namespace spp::frontend
         id = inId;
         parents = inParents;
         scope = inScope;
-        type = ENodeType::Class;
+        type = NodeType::Class;
     }
 
     ModuleNode::ModuleNode(const TokenDebugInfo& inDebugInfo, const std::vector<std::shared_ptr<Node>>& inStatements) : Node(inDebugInfo)
     {
         statements = inStatements;
-        type = ENodeType::Module;
+        type = NodeType::Module;
     }
 
     void parseFunctionBody(TokenList& tokens, std::vector<std::shared_ptr<Node>>& body)
@@ -240,20 +242,20 @@ namespace spp::frontend
 
             switch (tok.type)
             {
-            case ETokenType::Function:
+            case TokenType::Function:
                 body.push_back(parseFunction(tokens));
-                if(tokens && tokens.Front().type == ETokenType::StatementEnd) tokens.RemoveFront();
+                if(tokens && tokens.Front().type == TokenType::StatementEnd) tokens.RemoveFront();
                 break;
-            case ETokenType::StatementEnd:
+            case TokenType::StatementEnd:
                 tokens.RemoveFront();
                 body.push_back(parseStatement(statement));
                 statement.Clear();
                 
                 continue;
-            case ETokenType::OpenBrace:
+            case TokenType::OpenBrace:
                 scope++;
                 break;
-            case ETokenType::CloseBrace:
+            case TokenType::CloseBrace:
                 scope--;
                 if (scope == 0)
                 {
@@ -272,7 +274,7 @@ namespace spp::frontend
     {
         tokens.RemoveFront();
         TokenList inParen;
-        getTokensTill(inParen,tokens,{ETokenType::CloseParen},1);
+        getTokensTill(inParen,tokens,{TokenType::CloseParen},1);
         
 
         return parseExpression(inParen);
@@ -283,15 +285,15 @@ namespace spp::frontend
         auto token = tokens.Front();
         tokens.RemoveFront();
         TokenList listTokens;
-        getTokensTill(listTokens,tokens,{ETokenType::CloseBracket},1);
+        getTokensTill(listTokens,tokens,{TokenType::CloseBracket},1);
 
         std::vector<std::shared_ptr<Node>> items;
         while(listTokens)
         {
             TokenList itemTokens;
-            getTokensTill(itemTokens,listTokens,{ETokenType::Comma},0,false);
+            getTokensTill(itemTokens,listTokens,{TokenType::Comma},0,false);
 
-            if(listTokens && listTokens.Front().type == ETokenType::Comma)
+            if(listTokens && listTokens.Front().type == TokenType::Comma)
             {
                 listTokens.RemoveFront();
             }
@@ -317,40 +319,40 @@ namespace spp::frontend
         
         switch (tok.type)
         {
-        case ETokenType::Unknown:
+        case TokenType::Unknown:
             tokens.RemoveFront();
             return std::make_shared<IdentifierNode>(tok.debugInfo,tok.value);
-        case ETokenType::NumericLiteral:
+        case TokenType::NumericLiteral:
             tokens.RemoveFront();
             return std::make_shared<NumericLiteralNode>(tok.debugInfo,tok.value);
-        case ETokenType::StringLiteral:
+        case TokenType::StringLiteral:
             tokens.RemoveFront();
             return std::make_shared<StringLiteralNode>(tok.debugInfo,tok.value);
-        case ETokenType::BooleanLiteral:
+        case TokenType::BooleanLiteral:
             tokens.RemoveFront();
             return std::make_shared<BooleanLiteralNode>(tok.debugInfo,tok.value == "true");
-        case ETokenType::OpenParen:
+        case TokenType::OpenParen:
             return parseParen(tokens);
-        case ETokenType::OpenBrace:
+        case TokenType::OpenBrace:
                 return parseScope(tokens);
-        case ETokenType::When:
+        case TokenType::When:
             return parseWhen(tokens);
-        case ETokenType::Function:
+        case TokenType::Function:
             return parseFunction(tokens);
-        case ETokenType::Break:
-                return std::make_shared<Node>(tok.debugInfo,ENodeType::Break);
-        case ETokenType::Continue:
-                return std::make_shared<Node>(tok.debugInfo,ENodeType::Continue);
-        case ETokenType::Null:
+        case TokenType::Break:
+                return std::make_shared<Node>(tok.debugInfo,NodeType::Break);
+        case TokenType::Continue:
+                return std::make_shared<Node>(tok.debugInfo,NodeType::Continue);
+        case TokenType::Null:
             return std::make_shared<NullLiteralNode>(tok.debugInfo);
-        case ETokenType::OpenBracket:
+        case TokenType::OpenBracket:
             return parseList(tokens);
-        case ETokenType::Throw:
+        case TokenType::Throw:
             tokens.RemoveFront();
             return std::make_shared<ThrowNode>(tok.debugInfo,parseExpression(tokens));
-        case ETokenType::Let:
+        case TokenType::Let:
             return parseLet(tokens);
-        case ETokenType::OpSubtract:
+        case TokenType::OpSubtract:
             tokens.RemoveFront();
             return std::make_shared<BinaryOpNode>(tok.debugInfo,parsePrimary(tokens),std::make_shared<NumericLiteralNode>(tok.debugInfo,"-1"),EBinaryOp::Multiply);
         default:
@@ -362,17 +364,19 @@ namespace spp::frontend
     {
         auto left= parsePrimary(tokens);
         
-        while (tokens && (tokens.Front().type == ETokenType::OpenParen || tokens.Front().type == ETokenType::Access || tokens.Front().type == ETokenType::OpenBracket))
+        while (tokens && (tokens.Front().type == TokenType::OpenParen || tokens.Front().type == TokenType::Access || tokens.Front().type == TokenType::OpenBracket))
         {
             switch (tokens.Front().type)
             {
-            case ETokenType::OpenParen:
+            case TokenType::OpenParen:
                 {
-                    if(left->type == ENodeType::Access || left->type == ENodeType::Index || left->type == ENodeType::Identifier || left->type == ENodeType::Call)
+                    if(left->type == NodeType::Access || left->type == NodeType::Index || left->type == NodeType::Identifier || left->type == NodeType::Call)
                     {
                         auto token = tokens.Front();
-                        auto right = parseCallArguments(tokens);
-                        left = std::make_shared<CallNode>(token.debugInfo,left, right);
+                        std::vector<std::shared_ptr<Node>> positionalArgs{};
+                        std::unordered_map<std::string,std::shared_ptr<Node>> namedArgs{};
+                        parseCallArguments(tokens,positionalArgs,namedArgs);
+                        left = std::make_shared<CallNode>(token.debugInfo,left, positionalArgs,namedArgs);
                     }
                     else
                     {
@@ -380,7 +384,7 @@ namespace spp::frontend
                     }
                 }
                 break;
-            case ETokenType::Access:
+            case TokenType::Access:
                 {
                     auto token = tokens.Front();
                     tokens.RemoveFront();
@@ -388,12 +392,12 @@ namespace spp::frontend
                     left = std::make_shared<AccessNode>(token.debugInfo,left, right);
                 }
                 break;
-            case ETokenType::OpenBracket:
+            case TokenType::OpenBracket:
                 {
                     auto token = tokens.Front();
                     tokens.RemoveFront();
                     TokenList within;
-                    getTokensTill(within,tokens,{ETokenType::CloseBracket},1);
+                    getTokensTill(within,tokens,{TokenType::CloseBracket},1);
                     auto right = parseExpression(within);
                     left = std::make_shared<IndexNode>(token.debugInfo,left, right);
                 }
@@ -407,8 +411,8 @@ namespace spp::frontend
     {
         auto left = parseAccessors(tokens);
 
-        while (tokens && (tokens.Front().type == ETokenType::OpMultiply || tokens.Front().type == ETokenType::OpDivide || tokens.
-            Front().type == ETokenType::OpMod))
+        while (tokens && (tokens.Front().type == TokenType::OpMultiply || tokens.Front().type == TokenType::OpDivide || tokens.
+            Front().type == TokenType::OpMod))
         {
             auto token = tokens.Front();
             tokens.RemoveFront();
@@ -423,7 +427,7 @@ namespace spp::frontend
     {
         auto left = parseMultiplicativeExpression(tokens);
 
-        while (tokens && (tokens.Front().type == ETokenType::OpAdd || tokens.Front().type == ETokenType::OpSubtract))
+        while (tokens && (tokens.Front().type == TokenType::OpAdd || tokens.Front().type == TokenType::OpSubtract))
         {
             auto token = tokens.Front();
             tokens.RemoveFront();
@@ -438,9 +442,9 @@ namespace spp::frontend
     {
         auto left = parseAdditiveExpression(tokens);
 
-        while (tokens && (tokens.Front().type == ETokenType::OpEqual || tokens.Front().type == ETokenType::OpNotEqual ||
-            tokens.Front().type == ETokenType::OpLess || tokens.Front().type == ETokenType::OpLessEqual || tokens.Front().type ==
-            ETokenType::OpGreater || tokens.Front().type == ETokenType::OpGreaterEqual))
+        while (tokens && (tokens.Front().type == TokenType::OpEqual || tokens.Front().type == TokenType::OpNotEqual ||
+            tokens.Front().type == TokenType::OpLess || tokens.Front().type == TokenType::OpLessEqual || tokens.Front().type ==
+            TokenType::OpGreater || tokens.Front().type == TokenType::OpGreaterEqual))
         {
             auto token = tokens.Front();
             tokens.RemoveFront();
@@ -455,8 +459,8 @@ namespace spp::frontend
     {
         auto left = parseComparisonExpression(tokens);
 
-        while (tokens && (tokens.Front().type == ETokenType::OpAnd || tokens.Front().type == ETokenType::OpOr ||
-            tokens.Front().type == ETokenType::OpNot))
+        while (tokens && (tokens.Front().type == TokenType::OpAnd || tokens.Front().type == TokenType::OpOr ||
+            tokens.Front().type == TokenType::OpNot))
         {
             auto token = tokens.Front();
             tokens.RemoveFront();
@@ -471,7 +475,7 @@ namespace spp::frontend
     {
         auto left = parseLogicalExpression(tokens);
 
-        while (tokens && tokens.Front().type == ETokenType::Assign)
+        while (tokens && tokens.Front().type == TokenType::Assign)
         {
             auto token = tokens.Front();
             tokens.RemoveFront();
@@ -499,7 +503,7 @@ namespace spp::frontend
         auto token = tokens.RemoveFront();
         tokens.RemoveFront();
         TokenList targetTokens{};
-        getTokensTill(targetTokens,tokens,std::set{ETokenType::CloseParen},1);
+        getTokensTill(targetTokens,tokens,std::set{TokenType::CloseParen},1);
         auto initStatement = parseStatement(targetTokens);
         auto conditionStatement = parseStatement(targetTokens);
         auto updateStatement = parseExpression(targetTokens);
@@ -511,7 +515,7 @@ namespace spp::frontend
         auto token = tokens.RemoveFront();
         tokens.RemoveFront();
         TokenList targetTokens{};
-        getTokensTill(targetTokens,tokens,std::set{ETokenType::CloseParen},1);
+        getTokensTill(targetTokens,tokens,std::set{TokenType::CloseParen},1);
         
         auto conditionStatement = parseStatement(targetTokens);
         
@@ -521,19 +525,19 @@ namespace spp::frontend
     std::shared_ptr<TryCatchNode> parseTryCatch(TokenList& tokens)
     {
         std::string catchArg;
-        auto tryTok = tokens.ExpectFront(ETokenType::Try).RemoveFront();
+        auto tryTok = tokens.ExpectFront(TokenType::Try).RemoveFront();
         TokenList tryScopeTokens;
-        getTokensTill(tryScopeTokens,tokens,{ETokenType::CloseBrace},false);
+        getTokensTill(tryScopeTokens,tokens,{TokenType::CloseBrace},false);
         auto tryScope = parseScope(tryScopeTokens);
-        tokens.ExpectFront(ETokenType::Catch).RemoveFront();
-        if(tokens.Front().type == ETokenType::Unknown)
+        tokens.ExpectFront(TokenType::Catch).RemoveFront();
+        if(tokens.Front().type == TokenType::Unknown)
         {
             catchArg = tokens.Front().value;
             tokens.RemoveFront();
         }
 
         TokenList catchScopeTokens;
-        getTokensTill(catchScopeTokens,tokens,{ETokenType::CloseBrace},false);
+        getTokensTill(catchScopeTokens,tokens,{TokenType::CloseBrace},false);
         auto catchScope = parseScope(catchScopeTokens);
 
         
@@ -542,11 +546,11 @@ namespace spp::frontend
 
     std::shared_ptr<CreateAndAssignNode> parseLet(TokenList& tokens)
     {
-        auto token = tokens.ExpectFront(ETokenType::Let).RemoveFront();
+        auto token = tokens.ExpectFront(TokenType::Let).RemoveFront();
         std::vector<std::string> ids{};
-        while(tokens.Front().type != ETokenType::Assign)
+        while(tokens.Front().type != TokenType::Assign)
         {
-            ids.push_back(tokens.ExpectFront(ETokenType::Unknown).RemoveFront().value);
+            ids.push_back(tokens.ExpectFront(TokenType::Unknown).RemoveFront().value);
         }
         tokens.RemoveFront();
         return std::make_shared<CreateAndAssignNode>(token.debugInfo,ids, parseExpression(tokens));
@@ -556,7 +560,7 @@ namespace spp::frontend
     {
         switch (tokens.Front().type)
         {
-        case ETokenType::Return:
+        case TokenType::Return:
             {
                 auto token = tokens.Front();
                 tokens.RemoveFront();
@@ -564,7 +568,7 @@ namespace spp::frontend
                 getStatementTokens(statement, tokens);
                 return std::make_shared<ReturnNode>(token.debugInfo,parseExpression(statement));
             }
-        case ETokenType::Throw:
+        case TokenType::Throw:
             {
                 auto token = tokens.Front();
                 tokens.RemoveFront();
@@ -572,42 +576,42 @@ namespace spp::frontend
                 getStatementTokens(statement, tokens);
                 return std::make_shared<ThrowNode>(token.debugInfo,parseExpression(statement));
             }
-        case ETokenType::Let:
+        case TokenType::Let:
             {
                 TokenList statement;
                 getStatementTokens(statement, tokens);
                 
                 return parseLet(statement);
             }
-        case ETokenType::When:
+        case TokenType::When:
             {
                 auto when = parseWhen(tokens);
-                tokens.ExpectFront(ETokenType::StatementEnd).RemoveFront();
+                tokens.ExpectFront(TokenType::StatementEnd).RemoveFront();
                 return when;
             }
-        case ETokenType::Function:
+        case TokenType::Function:
             {
                 auto fn = parseFunction(tokens);
-                if(tokens && tokens.Front().type == ETokenType::StatementEnd) tokens.RemoveFront();
+                if(tokens && tokens.Front().type == TokenType::StatementEnd) tokens.RemoveFront();
                 return fn;
             }
-        case ETokenType::For:
+        case TokenType::For:
             {
                 return parseFor(tokens);
             }
-        case ETokenType::While:
+        case TokenType::While:
             {
                 return parseWhile(tokens);
             }
-        case ETokenType::Proto:
+        case TokenType::Proto:
             {
                 return parseClass(tokens);
             }
-        case ETokenType::OpenBrace:
+        case TokenType::OpenBrace:
             {
                 return parseScope(tokens);
             }
-        case ETokenType::Try:
+        case TokenType::Try:
             {
                 return parseTryCatch(tokens);
             }
@@ -624,11 +628,11 @@ namespace spp::frontend
     {
         TokenList argumentTokens{};
         
-        getTokensTill(argumentTokens,tokens,std::set{ETokenType::CloseParen},0,false);
+        getTokensTill(argumentTokens,tokens,std::set{TokenType::CloseParen},0,false);
         
-        argumentTokens.ExpectFront(ETokenType::OpenParen).RemoveFront();
+        argumentTokens.ExpectFront(TokenType::OpenParen).RemoveFront();
         
-        tokens.ExpectFront(ETokenType::CloseParen).RemoveFront();
+        tokens.ExpectFront(TokenType::CloseParen).RemoveFront();
         
         std::vector<std::shared_ptr<ParameterNode>> args;
         
@@ -636,15 +640,15 @@ namespace spp::frontend
         {
             TokenList argumentExpression{};
             
-            getTokensTill(argumentExpression,argumentTokens,std::set{ETokenType::Comma},0,false);
+            getTokensTill(argumentExpression,argumentTokens,std::set{TokenType::Comma},0,false);
 
-            if(argumentTokens && argumentTokens.Front().type == ETokenType::Comma)
+            if(argumentTokens && argumentTokens.Front().type == TokenType::Comma)
             {
                 argumentTokens.RemoveFront();
             }
 
-            auto name = argumentExpression.ExpectFront(ETokenType::Unknown).RemoveFront();
-            if(argumentExpression && argumentExpression.Front().type == ETokenType::Assign)
+            auto name = argumentExpression.ExpectFront(TokenType::Unknown).RemoveFront();
+            if(argumentExpression && argumentExpression.Front().type == TokenType::Assign)
             {
                 argumentExpression.RemoveFront();
                 auto defaultVal = parseExpression(argumentExpression);
@@ -661,17 +665,17 @@ namespace spp::frontend
 
     std::shared_ptr<FunctionNode> parseFunction(TokenList& tokens)
     {
-        auto token = tokens.ExpectFront(ETokenType::Function).RemoveFront();
-        std::string identifier = tokens.Front().type == ETokenType::OpenParen ? ""  : tokens.ExpectFront(ETokenType::Unknown).RemoveFront().value;
+        auto token = tokens.ExpectFront(TokenType::Function).RemoveFront();
+        std::string identifier = tokens.Front().type == TokenType::OpenParen ? ""  : tokens.ExpectFront(TokenType::Unknown).RemoveFront().value;
         
         std::vector<std::shared_ptr<ParameterNode>> args = parseFunctionParameters(tokens);
         
-        if(tokens.Front().type == ETokenType::OpenBrace)
+        if(tokens.Front().type == TokenType::OpenBrace)
         {
             return std::make_shared<FunctionNode>(token.debugInfo,identifier, args,parseScope(tokens));
         }
 
-        auto arrow = tokens.ExpectFront(ETokenType::Arrow).RemoveFront();
+        auto arrow = tokens.ExpectFront(TokenType::Arrow).RemoveFront();
         
         return std::make_shared<FunctionNode>(token.debugInfo,identifier, args,std::make_shared<ScopeNode>(arrow.debugInfo,std::vector{parseExpression(tokens)}));
     }
@@ -682,11 +686,11 @@ namespace spp::frontend
 
         TokenList callArgumentTokens{};
         
-        getTokensTill(callArgumentTokens,tokens,std::set{ETokenType::CloseParen},0,false);
+        getTokensTill(callArgumentTokens,tokens,std::set{TokenType::CloseParen},0,false);
         
-        callArgumentTokens.ExpectFront(ETokenType::OpenParen).RemoveFront();
+        callArgumentTokens.ExpectFront(TokenType::OpenParen).RemoveFront();
         
-        tokens.ExpectFront(ETokenType::CloseParen).RemoveFront();
+        tokens.ExpectFront(TokenType::CloseParen).RemoveFront();
         
         std::vector<std::shared_ptr<Node>> args;
         
@@ -694,9 +698,9 @@ namespace spp::frontend
         {
             TokenList argumentExpression{};
             
-            getTokensTill(argumentExpression,callArgumentTokens,std::set{ETokenType::Comma},0,false);
+            getTokensTill(argumentExpression,callArgumentTokens,std::set{TokenType::Comma},0,false);
 
-            if(callArgumentTokens && callArgumentTokens.Front().type == ETokenType::Comma)
+            if(callArgumentTokens && callArgumentTokens.Front().type == TokenType::Comma)
             {
                 callArgumentTokens.RemoveFront();
             }
@@ -707,25 +711,64 @@ namespace spp::frontend
         return args;
     }
 
+    void parseCallArguments(TokenList& tokens, std::vector<std::shared_ptr<Node>>& positionalArgs,
+        std::unordered_map<std::string, std::shared_ptr<Node>>& namedArgs)
+    {
+        TokenList callArgumentTokens{};
+        
+        getTokensTill(callArgumentTokens,tokens,std::set{TokenType::CloseParen},0,false);
+        
+        callArgumentTokens.ExpectFront(TokenType::OpenParen).RemoveFront();
+        
+        tokens.ExpectFront(TokenType::CloseParen).RemoveFront();
+
+        while(callArgumentTokens)
+        {
+            TokenList argumentExpression{};
+            
+            getTokensTill(argumentExpression,callArgumentTokens,std::set{TokenType::Comma},0,false);
+
+            if(callArgumentTokens && callArgumentTokens.Front().type == TokenType::Comma)
+            {
+                callArgumentTokens.RemoveFront();
+            }
+
+            {
+                if(argumentExpression)
+                {
+                    auto name = argumentExpression.RemoveFront();
+                    if(argumentExpression && argumentExpression.Front().type == TokenType::Colon)
+                    {
+                        argumentExpression.RemoveFront();
+                        namedArgs.insert_or_assign(name.value,parseExpression(argumentExpression));
+                        continue;
+                    }
+                    argumentExpression.InsertFront(name);
+                }
+            }
+            positionalArgs.push_back(parseExpression(argumentExpression));
+        }
+    }
+
     std::shared_ptr<WhenNode> parseWhen(TokenList& tokens)
     {
-        auto token = tokens.ExpectFront(ETokenType::When).RemoveFront();
+        auto token = tokens.ExpectFront(TokenType::When).RemoveFront();
         
-        tokens.ExpectFront(ETokenType::OpenBrace).RemoveFront();
+        tokens.ExpectFront(TokenType::OpenBrace).RemoveFront();
         
         std::vector<WhenNode::Branch> branches;
         
-        while(tokens.Front().type != ETokenType::CloseBrace)
+        while(tokens.Front().type != TokenType::CloseBrace)
         {
             TokenList condTokens;
-            getTokensTill(condTokens,tokens,{ETokenType::Arrow},0,false);
+            getTokensTill(condTokens,tokens,{TokenType::Arrow},0,false);
             
-            tokens.ExpectFront(ETokenType::Arrow).RemoveFront();
+            tokens.ExpectFront(TokenType::Arrow).RemoveFront();
             
             TokenList exprTokens;
-            getTokensTill(exprTokens,tokens,{ETokenType::StatementEnd},0,false);
+            getTokensTill(exprTokens,tokens,{TokenType::StatementEnd},0,false);
             
-            exprTokens.InsertBack(tokens.ExpectFront(ETokenType::StatementEnd).RemoveFront());
+            exprTokens.InsertBack(tokens.ExpectFront(TokenType::StatementEnd).RemoveFront());
             
             branches.emplace_back(parseExpression(condTokens),parseStatement(exprTokens));
         }
@@ -737,9 +780,9 @@ namespace spp::frontend
 
     std::shared_ptr<PrototypeNode> parseClass(TokenList& tokens)
     {
-        auto debug = tokens.ExpectFront(ETokenType::Proto).RemoveFront().debugInfo;
+        auto debug = tokens.ExpectFront(TokenType::Proto).RemoveFront().debugInfo;
         
-        auto className = tokens.ExpectFront(ETokenType::Unknown).RemoveFront().value;
+        auto className = tokens.ExpectFront(TokenType::Unknown).RemoveFront().value;
         
         std::vector<std::string> parents;
 
@@ -751,8 +794,8 @@ namespace spp::frontend
 
     void getStatementTokens(TokenList& statement, TokenList& tokens)
     {
-        getTokensTill(statement,tokens,{ETokenType::StatementEnd},0,false);
-        if(tokens) tokens.ExpectFront(ETokenType::StatementEnd).RemoveFront();
+        getTokensTill(statement,tokens,{TokenType::StatementEnd},0,false);
+        if(tokens) tokens.ExpectFront(TokenType::StatementEnd).RemoveFront();
     }
 
     void getTokensTill(TokenList& result, TokenList& tokens,
@@ -765,14 +808,14 @@ namespace spp::frontend
             auto tok = tokens.Front();
             switch (tok.type)
             {
-            case ETokenType::OpenBrace:
-            case ETokenType::OpenParen:
-            case ETokenType::OpenBracket:
+            case TokenType::OpenBrace:
+            case TokenType::OpenParen:
+            case TokenType::OpenBracket:
                 scope++;
                 break;
-            case ETokenType::CloseBrace:
-            case ETokenType::CloseParen:
-            case ETokenType::CloseBracket:
+            case TokenType::CloseBrace:
+            case TokenType::CloseParen:
+            case TokenType::CloseBracket:
                 scope--;
                 break;
             default:
@@ -793,7 +836,7 @@ namespace spp::frontend
         }
     }
 
-    void getTokensTill(TokenList& result, TokenList& tokens,const std::set<ETokenType>& ends,int initialScope,bool popEnd)
+    void getTokensTill(TokenList& result, TokenList& tokens,const std::set<TokenType>& ends,int initialScope,bool popEnd)
     {
         auto scope = initialScope;
         
@@ -802,14 +845,14 @@ namespace spp::frontend
             auto tok = tokens.Front();
             switch (tok.type)
             {
-            case ETokenType::OpenBrace:
-            case ETokenType::OpenParen:
-            case ETokenType::OpenBracket:
+            case TokenType::OpenBrace:
+            case TokenType::OpenParen:
+            case TokenType::OpenBracket:
                 scope++;
                 break;
-            case ETokenType::CloseBrace:
-            case ETokenType::CloseParen:
-            case ETokenType::CloseBracket:
+            case TokenType::CloseBrace:
+            case TokenType::CloseParen:
+            case TokenType::CloseBracket:
                 scope--;
                 break;
             default:
@@ -837,7 +880,7 @@ namespace spp::frontend
         auto token = tokens.RemoveFront(); // remove first brace
  
         TokenList content;
-        getTokensTill(content,tokens,{ETokenType::CloseBrace},1);
+        getTokensTill(content,tokens,{TokenType::CloseBrace},1);
 
         auto node = std::make_shared<ScopeNode>(token.debugInfo);
         

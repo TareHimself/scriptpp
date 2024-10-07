@@ -151,7 +151,7 @@ namespace spp::frontend
         return !_tokens.empty();
     }
     
-    TokenList& TokenList::ExpectFront(const ETokenType& token)
+    TokenList& TokenList::ExpectFront(const TokenType& token)
     {
         if(_tokens.empty())
         {
@@ -181,7 +181,7 @@ namespace spp::frontend
         return *this;
     }
 
-    TokenList& TokenList::ExpectBack(const ETokenType& token)
+    TokenList& TokenList::ExpectBack(const TokenType& token)
     {
         return ExpectBack(Token::KeyWordMap[token]);
     }

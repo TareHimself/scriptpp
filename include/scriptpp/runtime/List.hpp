@@ -59,6 +59,8 @@ namespace spp::runtime
     };
 
 
+    std::shared_ptr<List> makeList();
+    
     std::shared_ptr<List> makeList(const std::vector<std::shared_ptr<Object>>& items);
 
     std::shared_ptr<ListItemReference> makeListReference(const List * list,uint32_t idx);

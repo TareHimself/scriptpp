@@ -22,7 +22,7 @@ if(const auto n = cast<Number>(other)) \
         } \
     case ENumberType::Int64: \
         { \
-            if(const auto o = castStatic<TNumber<uint64_t>>(n)) \
+            if(const auto o = castStatic<TNumber<int64_t>>(n)) \
             { \
                 operation \
             } \
@@ -204,7 +204,7 @@ if(const auto n = cast<Number>(other)) \
             return ENumberType::Int;
         }
 
-        if(std::is_same_v<T,uint64_t>)
+        if(std::is_same_v<T,int64_t>)
         {
             return ENumberType::Int64;
         }

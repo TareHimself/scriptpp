@@ -1,7 +1,7 @@
 ﻿#pragma once
 namespace spp::frontend
 {
-    enum class ETokenType
+    enum class TokenType
     {
         Unknown,
         Assign,
@@ -46,6 +46,7 @@ namespace spp::frontend
         Throw,
         Try,
         Catch,
-        Arrow
+        Arrow,
+        Colon
     };
 }

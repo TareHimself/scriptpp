@@ -32,24 +32,24 @@ namespace spp::frontend
 
     struct Token
     {
-        ETokenType type;
+        TokenType type;
         std::string value;
         TokenDebugInfo debugInfo;
         
-        Token(ETokenType inType,uint32_t inLine,uint32_t inCol);
+        Token(TokenType inType,uint32_t inLine,uint32_t inCol);
 
-        Token(ETokenType inType,const TokenDebugInfo& inDebugInfo);
+        Token(TokenType inType,const TokenDebugInfo& inDebugInfo);
 
-        Token(ETokenType inType,const Token& otherToken);
+        Token(TokenType inType,const Token& otherToken);
 
-        Token(ETokenType inType,const std::string& inValue,const TokenDebugInfo& inDebugInfo); 
+        Token(TokenType inType,const std::string& inValue,const TokenDebugInfo& inDebugInfo); 
         
         
         Token(const std::string& data,const TokenDebugInfo& inDebugInfo);
 
-        static std::unordered_map<std::string, ETokenType> TokenMap;
+        static std::unordered_map<std::string, TokenType> TokenMap;
 
-        static std::unordered_map<ETokenType, std::string> KeyWordMap;
+        static std::unordered_map<TokenType, std::string> KeyWordMap;
 
         static std::map<int, std::set<std::string>> Sizes;
     };

@@ -39,14 +39,14 @@ namespace spp::frontend
     {
         switch (token.type)
         {
-        case ETokenType::OpenBrace:
-        case ETokenType::OpenParen:
-        case ETokenType::OpenBracket:
-        case ETokenType::CloseBrace:
-        case ETokenType::CloseParen:
-        case ETokenType::CloseBracket:
-        case ETokenType::Comma:
-        case ETokenType::StatementEnd:
+        case TokenType::OpenBrace:
+        case TokenType::OpenParen:
+        case TokenType::OpenBracket:
+        case TokenType::CloseBrace:
+        case TokenType::CloseParen:
+        case TokenType::CloseBracket:
+        case TokenType::Comma:
+        case TokenType::StatementEnd:
             return true;
         default:
             return false;
@@ -57,16 +57,16 @@ namespace spp::frontend
     {
         switch (token.type)
         {
-        case ETokenType::OpAdd:
-        case ETokenType::OpSubtract:
-        case ETokenType::OpDivide:
-        case ETokenType::OpMultiply:
-        case ETokenType::OpAnd:
-        case ETokenType::OpOr:
-        case ETokenType::OpNot:
-        case ETokenType::OpLess:
-        case ETokenType::OpGreater:
-        case ETokenType::Access:
+        case TokenType::OpAdd:
+        case TokenType::OpSubtract:
+        case TokenType::OpDivide:
+        case TokenType::OpMultiply:
+        case TokenType::OpAnd:
+        case TokenType::OpOr:
+        case TokenType::OpNot:
+        case TokenType::OpLess:
+        case TokenType::OpGreater:
+        case TokenType::Access:
             return true;
             default:
                 return isSplitToken(token) || token.value == " " || token.value == "\n" || token.value == "\r";
@@ -117,7 +117,7 @@ namespace spp::frontend
                             auto next = rawTokens.RemoveFront();
                             combined = Token{combined.value + next.value,combined.debugInfo + next.debugInfo};
                         }
-                        //result.InsertBack(Token{ETokenType::StringLiteral,combined});
+                        //result.InsertBack(Token{TokenType::StringLiteral,combined});
                         continue;
                     }
 
@@ -146,7 +146,7 @@ namespace spp::frontend
                 {
                     auto consumedTok = consumed.value();
                     
-                    result.InsertBack({ETokenType::StringLiteral,consumedTok.value,consumedTok.debugInfo});
+                    result.InsertBack({TokenType::StringLiteral,consumedTok.value,consumedTok.debugInfo});
                 }
             }
 
@@ -237,7 +237,7 @@ namespace spp::frontend
                         }
                     }
 
-                    result.InsertBack(Token{ETokenType::NumericLiteral,combinedStr,debugSpan});
+                    result.InsertBack(Token{TokenType::NumericLiteral,combinedStr,debugSpan});
                     continue;
                 }
 
