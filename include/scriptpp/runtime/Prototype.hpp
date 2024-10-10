@@ -11,13 +11,17 @@ namespace spp::runtime
     {
     public:
         Prototype(const std::shared_ptr<ScopeLike>& scope);
-
-        Prototype(const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<NativeFunction>& func);
         
-        std::string ToString(const std::shared_ptr<ScopeLike>& scope) const override;
+        void Init() override;
         bool ToBoolean(const std::shared_ptr<ScopeLike>& scope) const override;
 
         size_t GetHashCode(const std::shared_ptr<ScopeLike>& scope) override;
+
+        std::string ToString(const std::shared_ptr<ScopeLike>&) const override;
+
+        std::shared_ptr<Object> Construct(std::shared_ptr<FunctionScope>& scope);
+        virtual std::shared_ptr<DynamicObject> CreateInstance(std::shared_ptr<FunctionScope>& scope) = 0;
+        virtual std::string GetName() const = 0;
     };
 
     class RuntimePrototype : public Prototype
@@ -27,16 +31,11 @@ namespace spp::runtime
 
     public:
         RuntimePrototype(const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<frontend::PrototypeNode>& prototype);
+        
+        std::shared_ptr<DynamicObject> CreateInstance(std::shared_ptr<FunctionScope>& scope) override;
 
-        void Init() override;
-
-        std::string ToString(const std::shared_ptr<ScopeLike>& scope) const override;
-
-        std::shared_ptr<Object> CreateInstance(std::shared_ptr<FunctionScope>& fnScope);
+        std::string GetName() const override;
     };
     
-
     std::shared_ptr<RuntimePrototype> makePrototype(const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<frontend::PrototypeNode>& prototype);
-
-    std::shared_ptr<Prototype> makePrototype(const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<NativeFunction>& func);
 }

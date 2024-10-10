@@ -7,16 +7,7 @@
 
 using namespace spp;
 
-int64_t nowSeconds()
-{
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-}
 
-
-std::shared_ptr<runtime::Object> NowScriptPP(const std::shared_ptr<runtime::FunctionScope>& scope)
-{
-    return runtime::makeNumber(nowSeconds());
-}
 
 void runRepl()
 {
@@ -137,8 +128,6 @@ int main(const int argc, char *argv[])
         
             return runtime::makeNull();
         });
-
-        program->AddLambda("now",{},NowScriptPP);
         
         program->AddLambda("input", {"prompt"}, [](const std::shared_ptr<runtime::FunctionScope>& scope)
         {

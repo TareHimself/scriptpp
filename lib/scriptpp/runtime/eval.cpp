@@ -296,7 +296,7 @@ namespace spp::runtime
             {
                 throw makeException(scope,target->ToString(scope) + " is not callable",ast->debugInfo);
             }
-
+            
             if(auto [asCall,callScope] = resolveCallable(target,scope); asCall)
             {
                 return callFunction(ast, asCall, scope);
@@ -629,7 +629,14 @@ namespace spp::runtime
 
         for (auto& statement : ast->scope->statements)
         {
-            evalStatement(statement, dynamicObj);
+            if(statement->type == frontend::NodeType::Function)
+            {
+                if(auto result = cast<Function>(evalStatement(statement, dynamicObj)))
+                {
+                    result->SetOwner(dynamicObj);
+                } 
+            }
+            
         }
         
         return dynamicObj;

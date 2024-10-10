@@ -19,7 +19,7 @@ namespace spp::runtime
         static std::shared_ptr<ThreadPrototype> Prototype;
         explicit Thread(const std::shared_ptr<ScopeLike>& scope);
         void Init() override;
-        static std::shared_ptr<Object> CreateInstance(const std::shared_ptr<FunctionScope>& fnScope);
+        static std::shared_ptr<DynamicObject> CreateInstance(const std::shared_ptr<FunctionScope>& fnScope);
         std::shared_ptr<Object> Start(const std::shared_ptr<FunctionScope>& fnScope);
         std::shared_ptr<Object> Join(const std::shared_ptr<FunctionScope>& fnScope);
         std::shared_ptr<Object> IsActive(const std::shared_ptr<FunctionScope>& fnScope);
@@ -33,6 +33,8 @@ namespace spp::runtime
     public:
         ThreadPrototype();
 
-        std::string ToString(const std::shared_ptr<ScopeLike>& scope) const override;
+        std::string GetName() const override;
+
+        std::shared_ptr<DynamicObject> CreateInstance(std::shared_ptr<FunctionScope>& scope) override;
     };
 }

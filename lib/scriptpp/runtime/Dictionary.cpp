@@ -105,18 +105,24 @@ namespace spp::runtime
         return makeObject<Dictionary>(); 
     }
 
-    DictionaryPrototype::DictionaryPrototype() : Prototype(makeScope(), makeNativeFunction(
-                                                               {}, ReservedDynamicFunctions::CALL,vectorOf<std::string>(),
-                                                               [](const std::shared_ptr<FunctionScope>& fnScope)
-                                                               {
-                                                                   return makeDictionary();
-                                                               }))
+    DictionaryPrototype::DictionaryPrototype() : Prototype({})
     {
         
     }
 
+
     std::string DictionaryPrototype::ToString(const std::shared_ptr<ScopeLike>& scope) const
     {
         return "<Prototype : Dict>";
+    }
+
+    std::shared_ptr<DynamicObject> DictionaryPrototype::CreateInstance(std::shared_ptr<FunctionScope>& scope)
+    {
+        return makeDictionary();
+    }
+
+    std::string DictionaryPrototype::GetName() const
+    {
+        return "Dictionary";
     }
 }

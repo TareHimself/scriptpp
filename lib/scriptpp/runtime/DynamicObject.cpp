@@ -184,8 +184,15 @@ namespace spp::runtime
         return true;
     }
 
+    void DynamicObject::AddNativeMemberFunction(const std::string& name,
+        const std::shared_ptr<NativeFunction>& function)
+    {
+        function->SetOwner(this->GetRef());
+        Set(name,function);
+    }
+
     void DynamicObject::AddLambda(const std::string& name, const std::vector<std::string>& args,
-        const std::function<std::shared_ptr<Object>(std::shared_ptr<FunctionScope>&)>& func)
+                                  const std::function<std::shared_ptr<Object>(std::shared_ptr<FunctionScope>&)>& func)
     {
         DynamicObject::Set(name, makeNativeFunction(_selfFunctionScope, name, args,func, false));
     }
@@ -350,6 +357,11 @@ namespace spp::runtime
     {
         Reference::Set(val);
         _obj->Set(_id,val);
+    }
+
+    std::shared_ptr<DynamicObject> DynamicObjectReference::GetDynamicObject() const
+    {
+        return _obj;
     }
 
     std::shared_ptr<DynamicObject> makeDynamic(const std::shared_ptr<ScopeLike>& scope)

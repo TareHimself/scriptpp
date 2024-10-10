@@ -56,6 +56,9 @@ namespace spp::runtime
         ListPrototype();
 
         std::string ToString(const std::shared_ptr<ScopeLike>& scope) const override;
+
+        std::shared_ptr<DynamicObject> CreateInstance(std::shared_ptr<FunctionScope>& scope) override;
+        std::string GetName() const override;
     };
 
 

@@ -17,6 +17,7 @@ namespace spp::runtime
         std::vector<std::shared_ptr<Object>> _positionalArguments{};
         std::shared_ptr<Object> _result{};
         std::weak_ptr<Function> _fn{};
+        std::shared_ptr<Object> _functionOwner{};
         std::shared_ptr<ScopeLike> _callerScope{};
         std::shared_ptr<ScopeLike> _ownerScope{};
         
@@ -25,6 +26,8 @@ namespace spp::runtime
         static std::string ARGUMENTS_KEY;
 
         static std::string NAMED_ARGUMENTS_KEY;
+        
+        static std::string THIS_KEY;
         
         FunctionScope(const std::weak_ptr<Function>& fn,const std::shared_ptr<ScopeLike>& callScope,const std::shared_ptr<ScopeLike>& declarationScope,const std::vector<std::shared_ptr<frontend::ParameterNode>>& parameters,const std::unordered_map<std::string,std::shared_ptr<Object>>& args,const std::vector<std::shared_ptr<Object>>& positionalArgs);
 
@@ -46,13 +49,14 @@ namespace spp::runtime
 
     };
 
-    std::shared_ptr<FunctionScope> makeFunctionScope(const std::weak_ptr<Function>& fn,const std::shared_ptr<ScopeLike>& callScope,const std::shared_ptr<ScopeLike>& declarationScope,const std::vector<std::string>& argNames,const std::unordered_map<std::string,std::shared_ptr<Object>>& args,const std::vector<std::shared_ptr<Object>>& positionalArgs);
+    std::shared_ptr<FunctionScope> makeFunctionScope(const std::weak_ptr<Function>& fn,const std::shared_ptr<ScopeLike>& callScope,const std::shared_ptr<ScopeLike>& declarationScope,const std::vector<std::shared_ptr<frontend::ParameterNode>>& parameters,const std::unordered_map<std::string,std::shared_ptr<Object>>& args,const std::vector<std::shared_ptr<Object>>& positionalArgs);
     
     class Function : public Object
     {
-        std::string _name;
-         std::vector<std::shared_ptr<frontend::ParameterNode>> _params;
-        std::shared_ptr<ScopeLike> _declarationScope;
+        std::string _name{};
+         std::vector<std::shared_ptr<frontend::ParameterNode>> _params{};
+        std::shared_ptr<ScopeLike> _declarationScope{};
+        std::weak_ptr<Object> _owner{};
     public:
         Function(const std::shared_ptr<ScopeLike>& declarationScope,const std::string& name,const  std::vector<std::shared_ptr<frontend::ParameterNode>>& params);
         Function(const std::shared_ptr<ScopeLike>& declarationScope,const std::string& name,const  std::vector<std::string>& params);
@@ -76,7 +80,16 @@ namespace spp::runtime
         std::shared_ptr<ScopeLike> GetDeclarationScope() const;
 
         bool IsCallable() const override;
+
+        std::string GetName() const;
+
+        std::vector<std::shared_ptr<frontend::ParameterNode>> GetParameters() const;
+
+        void SetOwner(const std::shared_ptr<Object>& ref);
         
+        std::shared_ptr<Object> GetOwner() const;
+        
+        virtual std::shared_ptr<Function> Clone() = 0;
     };
 
     template <typename ... TArgs, typename>
@@ -95,6 +108,8 @@ namespace spp::runtime
         RuntimeFunction(const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<frontend::FunctionNode>& function);
 
         std::shared_ptr<Object> HandleCall(std::shared_ptr<FunctionScope>& scope) override;
+
+        std::shared_ptr<Function> Clone() override;
     };
 
     using NativeFunctionType = std::function<std::shared_ptr<Object>(std::shared_ptr<FunctionScope>&)>;
@@ -107,6 +122,8 @@ namespace spp::runtime
         NativeFunction(const std::shared_ptr<ScopeLike>& scope,const std::string& name, const std::vector<std::shared_ptr<frontend::ParameterNode>>& params,const NativeFunctionType& func);
 
         std::shared_ptr<Object> HandleCall(std::shared_ptr<FunctionScope>& scope) override;
+
+        std::shared_ptr<Function> Clone() override;
     };
     
     std::shared_ptr<RuntimeFunction> makeRuntimeFunction(const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<frontend::FunctionNode>& function,bool addToScope = true);

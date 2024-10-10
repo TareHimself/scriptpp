@@ -23,7 +23,7 @@ namespace spp::runtime
         AddNativeMemberFunction("join",this,vectorOf<std::string>(),&Thread::Join);
     }
 
-    std::shared_ptr<Object> Thread::CreateInstance(const std::shared_ptr<FunctionScope>& fnScope)
+    std::shared_ptr<DynamicObject> Thread::CreateInstance(const std::shared_ptr<FunctionScope>& fnScope)
     {
         auto obj = makeThread({});
         obj->Constructor(fnScope);
@@ -72,13 +72,17 @@ namespace spp::runtime
         return makeObject<Thread>(scope);
     }
 
-    ThreadPrototype::ThreadPrototype() : Prototype({},makeNativeFunction(
-                                                   {}, ReservedDynamicFunctions::CALL,vectorOf<std::string>(),Thread::CreateInstance))
+    ThreadPrototype::ThreadPrototype() : Prototype({})
     {
     }
 
-    std::string ThreadPrototype::ToString(const std::shared_ptr<ScopeLike>& scope) const
+    std::string ThreadPrototype::GetName() const
     {
-        return "<Prototype : Thread>";
+        return "Thread";
+    }
+
+    std::shared_ptr<DynamicObject> ThreadPrototype::CreateInstance(std::shared_ptr<FunctionScope>& scope)
+    {
+        return Thread::CreateInstance(scope);
     }
 }

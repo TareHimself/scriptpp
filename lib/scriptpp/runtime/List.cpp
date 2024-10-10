@@ -346,18 +346,23 @@ namespace spp::runtime
         return result;
     }
 
-    ListPrototype::ListPrototype() : Prototype(makeScope(), makeNativeFunction(
-                                                   {}, ReservedDynamicFunctions::CALL, vectorOf<std::string>(),
-                                                   [](const std::shared_ptr<FunctionScope>& fnScope)
-                                                   {
-                                                       return makeList(fnScope->GetPositionalArgs());
-                                                   }))
+    ListPrototype::ListPrototype() : Prototype(makeScope())
     {
     }
 
     std::string ListPrototype::ToString(const std::shared_ptr<ScopeLike>& scope) const
     {
         return "<Prototype : List>";
+    }
+
+    std::shared_ptr<DynamicObject> ListPrototype::CreateInstance(std::shared_ptr<FunctionScope>& scope)
+    {
+        return makeList(scope->GetPositionalArgs());
+    }
+
+    std::string ListPrototype::GetName() const
+    {
+        return "List";
     }
 
     std::shared_ptr<List> makeList()
