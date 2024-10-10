@@ -123,7 +123,7 @@ namespace spp::runtime
 
     std::shared_ptr<Object> Program::Eval(const std::shared_ptr<FunctionScope>& scope)
     {
-        auto txt = scope->FindArg("expr")->ToString();
+        auto txt = scope->FindArgument("expr")->ToString();
         return Eval(txt);
     }
 

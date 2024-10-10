@@ -231,16 +231,15 @@ namespace spp::runtime
         return _scope.lock();
     }
 
-    CallScope::CallScope(const frontend::TokenDebugInfo& calledAt, const std::shared_ptr<Function>& called,
-                         const std::shared_ptr<ScopeLike>& scope) : ScopeLikeProxyShared(scope)
+    CallScope::CallScope(const std::optional<frontend::TokenDebugInfo>& calledAt,
+        const std::shared_ptr<ScopeLike>& scope) : ScopeLikeProxyShared(scope)
     {
         _calledAt = calledAt;
-        _called = called;
     }
 
     std::string CallScope::ToString() const
     {
-        return join({_called->ToString(),_calledAt.ToString()}," @ ");
+        return _calledAt.has_value() ? _calledAt->ToString() : "<native>";
     }
 
     Reference::Reference(const std::shared_ptr<ScopeLike>& scope, const std::shared_ptr<Object>& val)
@@ -355,9 +354,10 @@ namespace spp::runtime
         return std::make_shared<ScopeLikeProxyWeak>(scope);
     }
 
-    std::shared_ptr<CallScope> makeCallScope(const frontend::TokenDebugInfo& calledAt,const std::shared_ptr<Function>& called,const std::shared_ptr<ScopeLike>& scope)
+    std::shared_ptr<CallScope> makeCallScope(const std::optional<frontend::TokenDebugInfo>& calledAt,
+        const std::shared_ptr<ScopeLike>& scope)
     {
-        return std::make_shared<CallScope>(calledAt,called,scope);
+        return std::make_shared<CallScope>(calledAt,scope);
     }
 
     std::shared_ptr<Object> resolveReference(const std::shared_ptr<Object>& obj)

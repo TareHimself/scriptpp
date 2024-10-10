@@ -40,11 +40,8 @@ namespace spp::runtime
         virtual void Init();
 
         virtual bool Equal(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope = {}) const;
-        virtual bool NotEqual(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope = {}) const;
         virtual bool Less(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope = {}) const;
-        virtual bool LessEqual(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope = {}) const;
         virtual bool Greater(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope = {}) const;
-        virtual bool GreaterEqual(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope = {}) const;
 
         virtual std::shared_ptr<Object> Add(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope = {});
         virtual std::shared_ptr<Object> Subtract(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope = {});

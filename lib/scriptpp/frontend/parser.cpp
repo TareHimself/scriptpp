@@ -386,17 +386,15 @@ namespace spp::frontend
                 break;
             case TokenType::Access:
                 {
-                    auto token = tokens.Front();
-                    tokens.RemoveFront();
+                    auto token = tokens.RemoveFront();
                     auto right = parsePrimary(tokens);
                     left = std::make_shared<AccessNode>(token.debugInfo,left, right);
                 }
                 break;
             case TokenType::OpenBracket:
                 {
-                    auto token = tokens.Front();
-                    tokens.RemoveFront();
-                    TokenList within;
+                    auto token = tokens.RemoveFront();
+                    TokenList within{};
                     getTokensTill(within,tokens,{TokenType::CloseBracket},1);
                     auto right = parseExpression(within);
                     left = std::make_shared<IndexNode>(token.debugInfo,left, right);
@@ -414,8 +412,17 @@ namespace spp::frontend
         while (tokens && (tokens.Front().type == TokenType::OpMultiply || tokens.Front().type == TokenType::OpDivide || tokens.
             Front().type == TokenType::OpMod))
         {
-            auto token = tokens.Front();
-            tokens.RemoveFront();
+            auto token = tokens.RemoveFront();
+
+            // For /= *= %=
+            if(tokens && tokens.Front().type == TokenType::Assign)
+            {
+                auto assign = tokens.RemoveFront();
+                auto binaryOp = std::make_shared<BinaryOpNode>(token.debugInfo,left, parseAccessors(tokens), token.type);
+                left = std::make_shared<AssignNode>(assign.debugInfo,left,binaryOp);
+                continue;
+            }
+            
             auto right = parseAccessors(tokens);
             left = std::make_shared<BinaryOpNode>(token.debugInfo,left, right, token.type);
         }
@@ -429,8 +436,17 @@ namespace spp::frontend
 
         while (tokens && (tokens.Front().type == TokenType::OpAdd || tokens.Front().type == TokenType::OpSubtract))
         {
-            auto token = tokens.Front();
-            tokens.RemoveFront();
+            auto token = tokens.RemoveFront();
+
+            // For += -=
+            if(tokens && tokens.Front().type == TokenType::Assign)
+            {
+                auto assign = tokens.RemoveFront();
+                auto binaryOp = std::make_shared<BinaryOpNode>(token.debugInfo,left, parseAccessors(tokens), token.type);
+                left = std::make_shared<AssignNode>(assign.debugInfo,left,binaryOp);
+                continue;
+            }
+            
             auto right = parseMultiplicativeExpression(tokens);
             left = std::make_shared<BinaryOpNode>(token.debugInfo,left, right, token.type);
         }
@@ -446,8 +462,7 @@ namespace spp::frontend
             tokens.Front().type == TokenType::OpLess || tokens.Front().type == TokenType::OpLessEqual || tokens.Front().type ==
             TokenType::OpGreater || tokens.Front().type == TokenType::OpGreaterEqual))
         {
-            auto token = tokens.Front();
-            tokens.RemoveFront();
+            auto token = tokens.RemoveFront();
             auto right = parseAdditiveExpression(tokens);
             left = std::make_shared<BinaryOpNode>(token.debugInfo,left, right, token.type);
         }
@@ -462,8 +477,7 @@ namespace spp::frontend
         while (tokens && (tokens.Front().type == TokenType::OpAnd || tokens.Front().type == TokenType::OpOr ||
             tokens.Front().type == TokenType::OpNot))
         {
-            auto token = tokens.Front();
-            tokens.RemoveFront();
+            auto token = tokens.RemoveFront();
             auto right = parseComparisonExpression(tokens);
             left = std::make_shared<BinaryOpNode>(token.debugInfo,left, right, token.type);
         }
@@ -477,8 +491,7 @@ namespace spp::frontend
 
         while (tokens && tokens.Front().type == TokenType::Assign)
         {
-            auto token = tokens.Front();
-            tokens.RemoveFront();
+            auto token = tokens.RemoveFront();
             auto right = parseLogicalExpression(tokens);
             left = std::make_shared<AssignNode>(token.debugInfo,left, right);
         }
@@ -493,15 +506,13 @@ namespace spp::frontend
 
     std::shared_ptr<ReturnNode> parseReturn(TokenList& tokens)
     {
-        auto token = tokens.Front();
-        tokens.RemoveFront();
+        auto token = tokens.RemoveFront();
         return std::make_shared<ReturnNode>(token.debugInfo,parseExpression(tokens));
     }
 
     std::shared_ptr<ForNode> parseFor(TokenList& tokens)
     {
         auto token = tokens.RemoveFront();
-        tokens.RemoveFront();
         TokenList targetTokens{};
         getTokensTill(targetTokens,tokens,std::set{TokenType::CloseParen},1);
         auto initStatement = parseStatement(targetTokens);
@@ -513,7 +524,6 @@ namespace spp::frontend
     std::shared_ptr<WhileNode> parseWhile(TokenList& tokens)
     {
         auto token = tokens.RemoveFront();
-        tokens.RemoveFront();
         TokenList targetTokens{};
         getTokensTill(targetTokens,tokens,std::set{TokenType::CloseParen},1);
         
@@ -524,7 +534,7 @@ namespace spp::frontend
 
     std::shared_ptr<TryCatchNode> parseTryCatch(TokenList& tokens)
     {
-        std::string catchArg;
+        std::string catchArg{};
         auto tryTok = tokens.ExpectFront(TokenType::Try).RemoveFront();
         TokenList tryScopeTokens;
         getTokensTill(tryScopeTokens,tokens,{TokenType::CloseBrace},false);
@@ -532,8 +542,7 @@ namespace spp::frontend
         tokens.ExpectFront(TokenType::Catch).RemoveFront();
         if(tokens.Front().type == TokenType::Unknown)
         {
-            catchArg = tokens.Front().value;
-            tokens.RemoveFront();
+            catchArg = tokens.RemoveFront().value;
         }
 
         TokenList catchScopeTokens;
@@ -562,16 +571,14 @@ namespace spp::frontend
         {
         case TokenType::Return:
             {
-                auto token = tokens.Front();
-                tokens.RemoveFront();
+                auto token = tokens.RemoveFront();
                 TokenList statement;
                 getStatementTokens(statement, tokens);
                 return std::make_shared<ReturnNode>(token.debugInfo,parseExpression(statement));
             }
         case TokenType::Throw:
             {
-                auto token = tokens.Front();
-                tokens.RemoveFront();
+                auto token = tokens.RemoveFront();
                 TokenList statement;
                 getStatementTokens(statement, tokens);
                 return std::make_shared<ThrowNode>(token.debugInfo,parseExpression(statement));

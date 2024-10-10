@@ -28,8 +28,7 @@ namespace spp::runtime
     std::pair<std::shared_ptr<Function>, std::shared_ptr<ScopeLike>> resolveCallable(
         const std::shared_ptr<Object>& target, const std::shared_ptr<ScopeLike>& scope);
     std::shared_ptr<Object> callFunction(const std::shared_ptr<frontend::CallNode>& ast,
-                                         const std::shared_ptr<Function>& fn, const std::shared_ptr<ScopeLike>& scope,
-                                         const std::shared_ptr<CallScope>& callScope);
+                                         const std::shared_ptr<Function>& fn, const std::shared_ptr<ScopeLike>& scope);
     std::shared_ptr<Object> evalCall(const std::shared_ptr<frontend::CallNode>& ast,
                                      const std::shared_ptr<ScopeLike>& scope);
     std::shared_ptr<Object> evalFor(const std::shared_ptr<frontend::ForNode>& ast,

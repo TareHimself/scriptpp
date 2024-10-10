@@ -20,29 +20,14 @@ namespace spp::runtime
         return GetType() == other->GetType();
     }
 
-    bool Object::NotEqual(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope) const
-    {
-        return !Equal(other, scope);
-    }
-
     bool Object::Less(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope) const
     {
         return this < other.get();
     }
 
-    bool Object::LessEqual(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope) const
-    {
-        return Less(other, scope) || Equal(other, scope);
-    }
-
     bool Object::Greater(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope) const
     {
         return this > other.get();
-    }
-
-    bool Object::GreaterEqual(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope) const
-    {
-        return Greater(other, scope) || Equal(other, scope);
     }
 
     std::shared_ptr<Object> Object::Add(const std::shared_ptr<Object>& other, const std::shared_ptr<ScopeLike>& scope)

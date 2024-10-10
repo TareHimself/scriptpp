@@ -136,7 +136,7 @@ namespace spp::runtime
 
     std::shared_ptr<Object> List::Map(const std::shared_ptr<FunctionScope>& fnScope)
     {
-        const auto arg = resolveReference(fnScope->GetArg(0));
+        const auto arg = resolveReference(fnScope->GetArgument(0));
         if (arg == makeNull())
         {
             throw makeException(fnScope,"No Callback passed to map");
@@ -159,7 +159,7 @@ namespace spp::runtime
 
     std::shared_ptr<Object> List::ForEach(const std::shared_ptr<FunctionScope>& fnScope)
     {
-        const auto arg = resolveReference(fnScope->GetArg(0));
+        const auto arg = resolveReference(fnScope->GetArgument(0));
         if (arg == makeNull())
         {
             throw makeException(fnScope,"No Callback passed to forEach");
@@ -179,7 +179,7 @@ namespace spp::runtime
 
     std::shared_ptr<Object> List::Filter(const std::shared_ptr<FunctionScope>& fnScope)
     {
-        const auto arg = resolveReference(fnScope->GetArg(0));
+        const auto arg = resolveReference(fnScope->GetArgument(0));
         if (arg == makeNull())
         {
             throw makeException(fnScope,"No Callback passed to filter");
@@ -205,7 +205,7 @@ namespace spp::runtime
 
     std::shared_ptr<Object> List::FindItem(const std::shared_ptr<FunctionScope>& fnScope)
     {
-        const auto arg = resolveReference(fnScope->GetArg(0));
+        const auto arg = resolveReference(fnScope->GetArgument(0));
         if (arg == makeNull())
         {
             throw makeException(fnScope,"No Callback passed to find");
@@ -228,7 +228,7 @@ namespace spp::runtime
 
     std::shared_ptr<Object> List::FindIndex(const std::shared_ptr<FunctionScope>& fnScope)
     {
-        const auto arg = resolveReference(fnScope->GetArg(0));
+        const auto arg = resolveReference(fnScope->GetArgument(0));
         if (arg == makeNull())
         {
             throw makeException(fnScope,"No Callback passed to findIndex");
@@ -255,7 +255,7 @@ namespace spp::runtime
         const auto args = fnScope->GetNamedArgs();
 
         std::function<int(const void*,const void*)> sortFn;
-        if (const auto fn = args.empty() ? std::shared_ptr<Function>(nullptr) : cast<Function>(resolveReference(fnScope->GetArg(0))))
+        if (const auto fn = args.empty() ? std::shared_ptr<Function>(nullptr) : cast<Function>(resolveReference(fnScope->GetArgument(0))))
         {
             const auto self = cast<DynamicObject>(this->GetRef());
             std::ranges::sort(_vec,[fn,self] (const std::shared_ptr<Object>& a,const std::shared_ptr<Object>& b)

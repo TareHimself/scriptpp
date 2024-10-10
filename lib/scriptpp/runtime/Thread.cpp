@@ -61,7 +61,7 @@ namespace spp::runtime
 
     std::shared_ptr<Object> Thread::Constructor(const std::shared_ptr<FunctionScope>& fnScope)
     {
-        auto callback = resolveReference(fnScope->GetArg(0));
+        auto callback = resolveReference(fnScope->GetArgument(0));
         _fn = resolveCallable(callback,fnScope);
         if(!_fn.first) throw makeException(fnScope, "Invalid callback");
         return makeNull();

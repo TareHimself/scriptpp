@@ -10,8 +10,10 @@ namespace spp::runtime
     {
         std::unordered_map<std::shared_ptr<Object>,std::shared_ptr<Object>> _entries{};
     public:
+        Dictionary();
+        
         Dictionary(const std::unordered_map<std::shared_ptr<Object>,std::shared_ptr<Object>>& data);
-
+        
         static std::shared_ptr<DictionaryPrototype> Prototype;
         
         void Init() override;
@@ -27,7 +29,9 @@ namespace spp::runtime
         std::string ToString(const std::shared_ptr<ScopeLike>&) const override;
     };
     
-    std::shared_ptr<Dictionary> makeDict(const std::unordered_map<std::shared_ptr<Object>,std::shared_ptr<Object>>& data);
+    std::shared_ptr<Dictionary> makeDictionary(const std::unordered_map<std::shared_ptr<Object>,std::shared_ptr<Object>>& data);
+    std::shared_ptr<Dictionary> makeDictionary(const std::unordered_map<std::string,std::shared_ptr<Object>>& data);
+    std::shared_ptr<Dictionary> makeDictionary();
 
     class DictionaryPrototype : public Prototype
     {

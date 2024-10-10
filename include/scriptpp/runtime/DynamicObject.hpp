@@ -14,13 +14,13 @@ namespace spp::runtime
         inline static std::string GET = "__get__";
         inline static std::string SET = "__set__";
         inline static std::string CONSTRUCTOR = "__ctor__";
-        inline static std::string ADD = "__add__";
+        inline static std::string ADD = "__add__"; 
         inline static std::string SUBTRACT = "__subtract__";
         inline static std::string DIVIDE = "__divide__";
         inline static std::string MULTIPLY = "__multiply__";
         inline static std::string MOD = "__mod__";
-        inline static std::string TO_STRING = "__to_string__";
-        inline static std::string TO_BOOLEAN = "__to_boolean__";
+        inline static std::string TO_STRING = "__string__";
+        inline static std::string TO_BOOLEAN = "__bool__";
         inline static std::string EQUAL = "__equal__";
         inline static std::string LESS = "__less__";
         inline static std::string GREATER = "__greater__";

@@ -117,10 +117,9 @@ namespace spp::runtime
     class CallScope : public ScopeLikeProxyShared
     {
     protected:
-        frontend::TokenDebugInfo _calledAt;
-        std::shared_ptr<Function> _called;
+        std::optional<frontend::TokenDebugInfo> _calledAt;
     public:
-        CallScope(const frontend::TokenDebugInfo& calledAt,const std::shared_ptr<Function>& called,const std::shared_ptr<ScopeLike>& scope);
+        CallScope(const std::optional<frontend::TokenDebugInfo>& calledAt,const std::shared_ptr<ScopeLike>& scope);
         std::string ToString() const;
     };
 
@@ -180,7 +179,7 @@ namespace spp::runtime
 
     std::shared_ptr<ScopeLikeProxyWeak> makeRefScopeProxy(const std::weak_ptr<ScopeLike>& scope);
 
-    std::shared_ptr<CallScope> makeCallScope(const frontend::TokenDebugInfo& calledAt,const std::shared_ptr<Function>& called,const std::shared_ptr<ScopeLike>& scope);
+    std::shared_ptr<CallScope> makeCallScope(const std::optional<frontend::TokenDebugInfo>& calledAt = {},const std::shared_ptr<ScopeLike>& scope = {});
 
     std::shared_ptr<Object> resolveReference(const std::shared_ptr<Object>& obj);
 

@@ -1,80 +1,24 @@
-/*
-fn main(){
-    let d = [1,2,3,4,5,6,7,8,9,10];
-    for(let i = 0; i < 10; i = i + 1){
-        print("Let my people go",i);
-        d[i] = 200;
-        print(d);
-        continue;
-    }
-    print("Should be null",f);
-    {
-        let f = {
-            fn () -> print("Hello");
-        };
 
-        f();
-    }
-    print("YO");
-    print("Should be null",f);
+fn time(function){
+    let start = now();
+    let result = function();
+    let elapsed = now() - start;
+    print(function,"took",elapsed,"seconds");
+    return result;
 }
 
-main();
-*/
-
-fn misc() {
-    print("Should be null",f);
-    // Scopes can return values
-    let x = {
-        print("YO");
-        // let statements return the value; so technically let x = let y = 20; is the same as let x y = 20;
-        let f = 2;
-    };
-    print("Should be null",f);
-    print("Should not be null",x);
-    let x y = 20;
-    print("x should equal y",x,y);
-    let z = let w = [0,1,2,3,4];
-    print("z should equal w",z,w,z == w);
-    let g = Dict();
-    g.put(2,29).put("2","200");
-    print(g);
+fn hello(data){
+    print("data is",__args__,__nargs__);
 }
 
 
-/*
-def Fibonacci(n):
-    if n < 0:
-        print("Incorrect input")
-    elif n == 0:
-        return 0
-    elif n == 1 or n == 2:
-        return 1
-    else:
-        return Fibonacci(n-1) + Fibonacci(n-2)
-*/
-// Computes fib(n) using dp
-fn fib(n,storage = Dict()) -> when {
-    storage.has(n) -> {
-        print("Using storage",n);
-        storage[n];
-    };
-    else -> {
-        print("Computing",n,storage);
-        let result = when {
-            n < 0 -> throw "Incorrect Input";
-            n == 0 -> 0;
-            n == 1 || n == 2 -> 1;
-            else -> fib(n - 1,storage) + fib(n - 2,storage);
-        };
-        storage.put(n,result);
-        result;
-    };
-}
+time(fn (){
 
-fn doThread(){
-    let x = Thread(fn () -> print("This is from a thread"));
-    x.start();
-    x.join();
-}
-doThread();
+    hello("one");
+    hello(data: "two", data: "YO", foo: "three", bar: 4);
+    let msg = input(prompt: "YO, TYPE SOME SHIT IN");
+    let z = 200;
+    z /= 10;
+    print(z);
+
+})

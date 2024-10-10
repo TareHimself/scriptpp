@@ -2,9 +2,14 @@
 
 #include "scriptpp/runtime/Boolean.hpp"
 #include "scriptpp/runtime/Null.hpp"
+#include "scriptpp/runtime/String.hpp"
 
 namespace spp::runtime
 {
+    Dictionary::Dictionary() : DynamicObject(makeScope())
+    {
+    }
+
     Dictionary::Dictionary(const std::unordered_map<std::shared_ptr<Object>, std::shared_ptr<Object>>& data) : DynamicObject(makeScope())
     {
         _entries = data;
@@ -22,15 +27,15 @@ namespace spp::runtime
 
     std::shared_ptr<Object> Dictionary::PutItem(const std::shared_ptr<FunctionScope>& fnScope)
     {
-        const auto key = fnScope->GetArg(0);
-        auto val = fnScope->GetArg(1);
+        const auto key = fnScope->GetArgument(0);
+        auto val = fnScope->GetArgument(1);
         _entries.insert_or_assign(key,val);
         return this->GetRef();
     }
 
     std::shared_ptr<Object> Dictionary::GetItem(const std::shared_ptr<FunctionScope>& fnScope)
     {
-        auto key = fnScope->GetArg(0);
+        auto key = fnScope->GetArgument(0);
         
         if(_entries.contains(key))
         {
@@ -42,7 +47,7 @@ namespace spp::runtime
 
     std::shared_ptr<Object> Dictionary::HasItem(const std::shared_ptr<FunctionScope>& fnScope)
     {
-        auto key = fnScope->GetArg(0);
+        auto key = fnScope->GetArgument(0);
         return makeBoolean(_entries.contains(key));
     }
 
@@ -78,17 +83,34 @@ namespace spp::runtime
         return result;
     }
 
-    std::shared_ptr<Dictionary> makeDict(const std::unordered_map<std::shared_ptr<Object>, std::shared_ptr<Object>>& data)
+    std::shared_ptr<Dictionary> makeDictionary(const std::unordered_map<std::shared_ptr<Object>, std::shared_ptr<Object>>& data)
     {
         return makeObject<Dictionary>(data);
     }
 
+    std::shared_ptr<Dictionary> makeDictionary(const std::unordered_map<std::string, std::shared_ptr<Object>>& data)
+    {
+        std::unordered_map<std::shared_ptr<Object>, std::shared_ptr<Object>> mapData{};
+        
+        for (auto &[id,obj] : data)
+        {
+            mapData.insert_or_assign(makeString(id),obj);
+        }
+
+        return makeDictionary(mapData);
+    }
+
+    std::shared_ptr<Dictionary> makeDictionary()
+    {
+        return makeObject<Dictionary>(); 
+    }
+
     DictionaryPrototype::DictionaryPrototype() : Prototype(makeScope(), makeNativeFunction(
-                                                   {}, ReservedDynamicFunctions::CALL,vectorOf<std::string>(),
-                                                   [](const std::shared_ptr<FunctionScope>& fnScope)
-                                                   {
-                                                       return makeDict({});
-                                                   }))
+                                                               {}, ReservedDynamicFunctions::CALL,vectorOf<std::string>(),
+                                                               [](const std::shared_ptr<FunctionScope>& fnScope)
+                                                               {
+                                                                   return makeDictionary();
+                                                               }))
     {
         
     }

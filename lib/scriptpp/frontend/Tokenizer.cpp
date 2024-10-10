@@ -46,6 +46,7 @@ namespace spp::frontend
         case TokenType::CloseParen:
         case TokenType::CloseBracket:
         case TokenType::Comma:
+        case TokenType::Colon:
         case TokenType::StatementEnd:
             return true;
         default:

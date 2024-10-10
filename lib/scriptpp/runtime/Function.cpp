@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include "scriptpp/utils.hpp"
+#include "scriptpp/runtime/Dictionary.hpp"
 #include "scriptpp/runtime/Exception.hpp"
 #include "scriptpp/runtime/eval.hpp"
 #include "scriptpp/runtime/List.hpp"
@@ -11,19 +12,20 @@
 namespace spp::runtime
 {
 
-    FunctionScope::FunctionScope(const std::weak_ptr<Function>& fn, const std::shared_ptr<ScopeLike>& calledFrom,
-        const std::shared_ptr<ScopeLike>& scope,
+    FunctionScope::FunctionScope(const std::weak_ptr<Function>& fn, const std::shared_ptr<ScopeLike>& callScope,
+        const std::shared_ptr<ScopeLike>& declarationScope,
         const std::vector<std::shared_ptr<frontend::ParameterNode>>& parameters,
         const std::unordered_map<std::string, std::shared_ptr<Object>>& args,
-        const std::vector<std::shared_ptr<Object>>& positionalArgs): Scope(scope)
+        const std::vector<std::shared_ptr<Object>>& positionalArgs): Scope(declarationScope)
     {
         _fn = fn;
-        _callerScope = calledFrom;
+        _callerScope = callScope;
         _arguments = args;
         _positionalArguments = positionalArgs;
         for (auto i = 0; i < parameters.size() && i < positionalArgs.size(); i++)
         {
             _arguments.insert_or_assign(std::to_string(i),_positionalArguments.at(i));
+            _arguments.insert_or_assign(parameters.at(i)->name,_positionalArguments.at(i));
         } 
     }
 
@@ -34,32 +36,34 @@ namespace spp::runtime
 
     std::shared_ptr<Object> FunctionScope::Find(const std::string& id, bool searchParent) const
     {
-        if(id == ARGUMENTS_KEY)
-        {
-            if(!Scope::Has(ARGUMENTS_KEY,false))
-            {
-                
-            }
-
-            return makeReferenceWithId(id,cast<FunctionScope>(this->GetRef()),Scope::Find(ARGUMENTS_KEY,false));
-        }
-
         if(_arguments.contains(id))
         {
             return _arguments.at(id);
+        }
+        
+        if(id == ARGUMENTS_KEY)
+        {
+            // if(!Scope::Has(ARGUMENTS_KEY,false))
+            // {
+            //     
+            // }
+
+            auto result = Scope::Find(ARGUMENTS_KEY,false);
+            if(result->GetType() != EObjectType::Reference) return makeNull();
+            return makeReferenceWithId(id,cast<FunctionScope>(this->GetRef()),resolveReference(result));
         }
 
         return Scope::Find(id);
     }
     
-    std::shared_ptr<Object> FunctionScope::FindArg(const std::string& id,bool required)
+    std::shared_ptr<Object> FunctionScope::FindArgument(const std::string& id,bool required)
     {
         if(!_arguments.contains(id)) throw makeException({},"Missing required argument : " + id);
 
         return _arguments.at(id);
     }
 
-    std::shared_ptr<Object> FunctionScope::GetArg(const uint32_t& index)
+    std::shared_ptr<Object> FunctionScope::GetArgument(const uint32_t& index)
     {
         if(index >= _positionalArguments.size()) return makeNull();
 
@@ -67,6 +71,7 @@ namespace spp::runtime
     }
 
     std::string FunctionScope::ARGUMENTS_KEY = "__args__";
+    std::string FunctionScope::NAMED_ARGUMENTS_KEY = "__nargs__";
 
     std::weak_ptr<Function> FunctionScope::GetFunction() const
     {
@@ -138,12 +143,12 @@ namespace spp::runtime
         return "fn " + _name +  + "(" + join(strParams,",") + ")";
     }
 
-    std::shared_ptr<Object> Function::Call(const std::shared_ptr<ScopeLike>& callerScope, const std::vector<std::shared_ptr<Object>>& positionalArgs, const std::
-                                           unordered_map<std::string, std::shared_ptr<Object>>& namedArgs)
+    std::shared_ptr<Object> Function::Call(const std::vector<std::shared_ptr<Object>>& positionalArgs, const std::unordered_map<std::string, std::shared_ptr<Object>>& namedArgs,const std::shared_ptr<ScopeLike>& callScope)
     {
         const auto myRef = cast<Function>(this->GetRef());
-        auto fnScope =  makeFunctionScope(myRef,callerScope ? callerScope : makeCallScope({"<native>",0,0},myRef,{}),_declarationScope,_params,namedArgs,positionalArgs);
+        auto fnScope =  makeFunctionScope(myRef,callScope ? callScope : makeCallScope(),_declarationScope,_params,namedArgs,positionalArgs);
         fnScope->Create(FunctionScope::ARGUMENTS_KEY,makeList(positionalArgs));
+        fnScope->Create(FunctionScope::NAMED_ARGUMENTS_KEY,makeDictionary(namedArgs));
         return HandleCall(fnScope);
     }
 

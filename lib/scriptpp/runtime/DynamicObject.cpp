@@ -33,7 +33,7 @@ namespace spp::runtime
             {
                 if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
                 {
-                    return actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope),key);
+                    return actualFn->Call(scope,key);
                 }
             }
         }
@@ -81,7 +81,7 @@ namespace spp::runtime
             {
                 if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
                 {
-                    actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope),key,val);
+                    actualFn->Call(scope,key,val);
                     return;
                 }
             }
@@ -162,7 +162,7 @@ namespace spp::runtime
             {
                 if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
                 {
-                    return actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope))->ToString(scope);
+                    return actualFn->Call(scope)->ToString(scope);
                 }
             }
         }
@@ -177,7 +177,7 @@ namespace spp::runtime
             {
                 if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
                 {
-                    return actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope))->ToBoolean(scope);
+                    return actualFn->Call(scope)->ToBoolean(scope);
                 }
             }
         }
@@ -203,7 +203,7 @@ namespace spp::runtime
             {
                 if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
                 {
-                    return actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope),other)->ToBoolean(scope);
+                    return actualFn->Call(scope,other)->ToBoolean(scope);
                 }
             }
         }
@@ -219,7 +219,7 @@ namespace spp::runtime
             {
                 if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
                 {
-                    return actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope),other)->ToBoolean(scope);
+                    return actualFn->Call(scope,other)->ToBoolean(scope);
                 }
             }
         }
@@ -235,7 +235,7 @@ namespace spp::runtime
             {
                 if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
                 {
-                    return actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope),other)->ToBoolean(scope);
+                    return actualFn->Call(scope,other)->ToBoolean(scope);
                 }
             }
         }
@@ -251,7 +251,7 @@ namespace spp::runtime
             {
                 if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
                 {
-                    return actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope),other);
+                    return actualFn->Call(scope,other);
                 }
             }
         }
@@ -266,7 +266,7 @@ namespace spp::runtime
             {
                 if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
                 {
-                    return actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope),other);
+                    return actualFn->Call(scope,other);
                 }
             }
         }
@@ -281,7 +281,7 @@ namespace spp::runtime
             {
                 if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
                 {
-                    return actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope),other);
+                    return actualFn->Call(scope,other);
                 }
             }
         }
@@ -296,7 +296,7 @@ namespace spp::runtime
             {
                 if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
                 {
-                    return actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope),other);
+                    return actualFn->Call(scope,other);
                 }
             }
         }
@@ -311,7 +311,7 @@ namespace spp::runtime
             {
                 if(auto [actualFn,callScope] = resolveCallable(fn,scope); actualFn)
                 {
-                    return actualFn->Call(makeCallScope({"<native>",0,0},actualFn,scope),other);
+                    return actualFn->Call(scope,other);
                 }
             }
         }

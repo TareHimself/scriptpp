@@ -19,36 +19,37 @@ namespace spp::runtime
     {
         auto left = resolveReference(evalExpression(ast->left,scope));
         auto right = resolveReference(evalExpression(ast->right,scope));
+        auto binOpScope = makeCallScope(ast->debugInfo,scope);
         switch (ast->op)
         {
         case frontend::EBinaryOp::Divide:
-            return left->Divide(right, scope);
+            return left->Divide(right, binOpScope);
         case frontend::EBinaryOp::Multiply:
-            return left->Multiply(right, scope);
+            return left->Multiply(right, binOpScope);
         case frontend::EBinaryOp::Add:
-            return left->Add(right, scope);
+            return left->Add(right, binOpScope);
         case frontend::EBinaryOp::Subtract:
-            return left->Subtract(right, scope);
+            return left->Subtract(right, binOpScope);
         case frontend::EBinaryOp::Mod:
-            return left->Mod(right, scope);
+            return left->Mod(right, binOpScope);
         case frontend::EBinaryOp::And:
-            return makeBoolean(left->ToBoolean(scope) && right->ToBoolean(scope));
+            return makeBoolean(left->ToBoolean(binOpScope) && right->ToBoolean(binOpScope));
         case frontend::EBinaryOp::Or:
-            return makeBoolean(left->ToBoolean(scope) || right->ToBoolean(scope));
+            return makeBoolean(left->ToBoolean(binOpScope) || right->ToBoolean(binOpScope));
         case frontend::EBinaryOp::Not:
             throw std::runtime_error("This needs work");
         case frontend::EBinaryOp::Equal:
-            return makeBoolean(left->Equal(right, scope));
+            return makeBoolean(left->Equal(right, binOpScope));
         case frontend::EBinaryOp::NotEqual:
-            return makeBoolean(left->NotEqual(right, scope));
+            return makeBoolean(!left->Equal(right, binOpScope));
         case frontend::EBinaryOp::Less:
-            return makeBoolean(left->Less(right, scope));
+            return makeBoolean(left->Less(right, binOpScope));
         case frontend::EBinaryOp::LessEqual:
-            return makeBoolean(left->LessEqual(right, scope));
+            return makeBoolean( left->Less(right,binOpScope) || left->Equal(right, binOpScope));
         case frontend::EBinaryOp::Greater:
-            return makeBoolean(left->Greater(right, scope));
+            return makeBoolean(left->Greater(right, binOpScope));
         case frontend::EBinaryOp::GreaterEqual:
-            return makeBoolean(left->GreaterEqual(right, scope));
+            return makeBoolean(left->Greater(right,binOpScope) || left->Equal(right, binOpScope));
         }
 
         return makeNull();
@@ -265,10 +266,11 @@ namespace spp::runtime
     }
 
     std::shared_ptr<Object> callFunction(const std::shared_ptr<frontend::CallNode>& ast, const std::shared_ptr<Function>& fn,
-                                         const std::shared_ptr<ScopeLike>& scope,const std::shared_ptr<CallScope>& callScope)
+                                         const std::shared_ptr<ScopeLike>& scope)
     {
         std::vector<std::shared_ptr<Object>> positionalArgs{};
         std::unordered_map<std::string,std::shared_ptr<Object>> namedArgs{};
+        
         for(auto &[id,arg] : ast->namedArguments)
         {
             namedArgs.insert_or_assign(id,evalExpression(arg,scope));
@@ -278,8 +280,8 @@ namespace spp::runtime
         {
             positionalArgs.push_back(evalExpression(arg,scope));
         }
-
-        return fn->Call(callScope,positionalArgs,namedArgs);
+        
+        return fn->Call(positionalArgs,namedArgs,makeCallScope(ast->debugInfo,scope));
     }
     
 
@@ -297,7 +299,7 @@ namespace spp::runtime
 
             if(auto [asCall,callScope] = resolveCallable(target,scope); asCall)
             {
-                return callFunction(ast, asCall, scope,makeCallScope(ast->debugInfo,asCall,callScope));
+                return callFunction(ast, asCall, scope);
             }
         }
 
@@ -604,7 +606,7 @@ namespace spp::runtime
     {
         auto mod = makeModule(program);
         
-        for (auto& statement : ast->statements)
+         for (auto& statement : ast->statements)
         {
             evalStatement(statement, mod);
         }

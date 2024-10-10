@@ -83,7 +83,6 @@ namespace spp::frontend
         LessEqual,
         Greater,
         GreaterEqual,
-            
     };
     
     struct BinaryOpNode : HasLeft

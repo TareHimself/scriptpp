@@ -24,19 +24,26 @@ namespace spp::runtime
         
         if(debugInfo.has_value())
         {
-            callstackVec.emplace_back(makeString(debugInfo.value().ToString()));
+            callstackVec.emplace_back(makeString("@ " + debugInfo.value().ToString()));
         }
         
         auto next = scope;
-        
+        std::shared_ptr<FunctionScope> lastFunction = {};
         while(next)
         {
-            
-            
             if(const auto asCallScope = cast<CallScope>(next))
             {
-                callstackVec.emplace_back(makeString(asCallScope->ToString()));
+                if(const auto function = lastFunction ? lastFunction->GetFunction().lock() : std::shared_ptr<Function>{})
+                {
+                    callstackVec.emplace_back(makeString(function->ToString(scope) + " @ " + asCallScope->ToString()));
+                }
+                else
+                {
+                    continue;
+                }
+                
                 next = asCallScope->GetActual();
+                lastFunction = {};
                 continue;
                 // if(asCallScope->GetScopeType() == ST_Function)
                 // {
@@ -51,6 +58,7 @@ namespace spp::runtime
 
             if(next->GetScopeType() == ST_Proxy)
             {
+                lastFunction = {};
                 next = cast<ScopeLikeProxy>(next)->GetActual();
                 continue;
             }
@@ -59,13 +67,13 @@ namespace spp::runtime
             {
                 if(const auto asFnScope = cast<FunctionScope>(next))
                 {
+                    lastFunction = asFnScope;
                     next = asFnScope->GetCallerScope();
                     continue;
                 }
             }
 
-            
-
+            lastFunction = {};
             next = next->GetOuter();
         }
 
